@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Input } from '../components/ui/Input';
@@ -21,6 +21,7 @@ import {
   isValidFullName,
   isValidPinfl,
   isValidYouthAge,
+  calculateAge,
   hasLetters,
   extractBirthDateFromPinfl,
 } from '../utils/validators';
@@ -91,6 +92,21 @@ export const NewSurveyPage: React.FC = () => {
   const [citizenSigned, setCitizenSigned] = useState<boolean>(true);
   const [operatorSigned, setOperatorSigned] = useState<boolean>(true);
 
+  // Yosh chegarasi: 18 - 35 yosh
+  const { maxBirthDate, minBirthDate } = useMemo(() => {
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const minDate = new Date(today.getFullYear() - 35, today.getMonth(), today.getDate());
+    return {
+      maxBirthDate: maxDate.toISOString().split('T')[0],
+      minBirthDate: minDate.toISOString().split('T')[0],
+    };
+  }, []);
+
+  const citizenAge = useMemo(() => {
+    return calculateAge(birthDate);
+  }, [birthDate]);
+
   // User ma'lumotlari yangilanganda avtomatik moslash
   useEffect(() => {
     if (user?.districtId && !selectedDistrictId && !isSuperAdmin) {
@@ -145,8 +161,14 @@ export const NewSurveyPage: React.FC = () => {
     // Agar 7 ta raqam bo'lsa va tug'ilgan sana hali kiritilmagan bo'lsa, avtomatik to'ldirish
     if (clean.length >= 7) {
       const extractedDate = extractBirthDateFromPinfl(clean);
-      if (extractedDate && !birthDate) {
-        setBirthDate(extractedDate);
+      if (extractedDate) {
+        if (!birthDate) {
+          setBirthDate(extractedDate);
+        }
+        const ageCheck = isValidYouthAge(extractedDate);
+        if (!ageCheck.valid) {
+          setPinflWarning(ageCheck.message || 'Yosh chegarasi notoʻgʻri');
+        }
       }
     }
 
@@ -695,13 +717,52 @@ export const NewSurveyPage: React.FC = () => {
                     {/* Tug'ilgan sana */}
                     <div>
                       <Input
-                        label="2. Tugʻilgan sanasi"
+                        label="2. Tugʻilgan sanasi (18 - 35 yosh)"
                         type="date"
                         required
+                        max={maxBirthDate}
+                        min={minBirthDate}
                         value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setBirthDate(val);
+                          if (val) {
+                            const check = isValidYouthAge(val);
+                            if (!check.valid) {
+                              setError(check.message || null);
+                            } else {
+                              setError(null);
+                            }
+                          }
+                        }}
                         icon={<Calendar className="w-4 h-4" />}
                       />
+                      {citizenAge !== null && (
+                        <div className="mt-1.5">
+                          {citizenAge < 18 ? (
+                            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center space-x-2">
+                              <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-500" />
+                              <span>
+                                <b>Yosh chegarasi:</b> Fuqaroning yoshi {citizenAge} da (voyaga yetmagan). Yoshlar monitoringiga faqat <b>18 yoshga toʻlgan</b> fuqarolar kiritiladi!
+                              </span>
+                            </div>
+                          ) : citizenAge > 35 ? (
+                            <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700 flex items-center space-x-2">
+                              <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-500" />
+                              <span>
+                                <b>Diqqat:</b> Fuqaroning yoshi {citizenAge} da. Yoshlar toifasiga 18 dan 35 yoshgacha boʻlgan fuqarolar kiradi.
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 flex items-center space-x-2">
+                              <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                              <span>
+                                Fuqaro yoshi: <b>{citizenAge} yoshda</b> (18-35 yosh toifasiga toʻliq mos).
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* JSHSHIR */}

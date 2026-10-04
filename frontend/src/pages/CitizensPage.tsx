@@ -6,6 +6,7 @@ import { Citizen, Mahalla, EmploymentCategory } from '../types/monitoring.types'
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatMahallaName } from '../utils/formatters';
+import { isValidYouthAge } from '../utils/validators';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import {
   Users,
@@ -41,6 +42,17 @@ export const CitizensPage: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Yosh chegarasi: 18 - 35 yosh
+  const { maxBirthDate, minBirthDate } = React.useMemo(() => {
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const minDate = new Date(today.getFullYear() - 35, today.getMonth(), today.getDate());
+    return {
+      maxBirthDate: maxDate.toISOString().split('T')[0],
+      minBirthDate: minDate.toISOString().split('T')[0],
+    };
+  }, []);
 
   // Filters
   const [search, setSearch] = useState<string>('');
@@ -161,6 +173,11 @@ export const CitizensPage: React.FC = () => {
     }
     if (!editForm.birthDate) {
       setEditError('Tugʻilgan sana kiritilishi shart');
+      return;
+    }
+    const ageValidation = isValidYouthAge(editForm.birthDate);
+    if (!ageValidation.valid) {
+      setEditError(ageValidation.message || 'Yosh chegarasi notoʻgʻri');
       return;
     }
     if (!editForm.address.trim()) {
@@ -629,6 +646,8 @@ export const CitizensPage: React.FC = () => {
                   <input
                     type="date"
                     required
+                    max={maxBirthDate}
+                    min={minBirthDate}
                     value={editForm.birthDate}
                     onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#163D5C]/20 focus:border-[#163D5C] bg-slate-50/50 text-slate-800 font-medium"

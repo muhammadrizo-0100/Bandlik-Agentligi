@@ -239,7 +239,29 @@ export class CitizensService {
     }
 
     if (updateDto.fullName !== undefined) citizen.fullName = updateDto.fullName.trim();
-    if (updateDto.birthDate !== undefined) citizen.birthDate = new Date(updateDto.birthDate);
+    if (updateDto.birthDate !== undefined) {
+      const birth = new Date(updateDto.birthDate);
+      if (isNaN(birth.getTime())) {
+        throw new BadRequestException('Tug\'ilgan sana formati noto\'g\'ri');
+      }
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        throw new BadRequestException(
+          `Fuqaro yoshi ${age} da (voyaga yetmagan bola). Faqat 18 yoshga to'lgan fuqarolar kiritilishi mumkin`,
+        );
+      }
+      if (age > 35) {
+        throw new BadRequestException(
+          `Fuqaro yoshi ${age} da. Yoshlar toifasiga 18 dan 35 yoshgacha bo'lgan fuqarolar kiradi`,
+        );
+      }
+      citizen.birthDate = birth;
+    }
     if (updateDto.phone !== undefined) citizen.phone = updateDto.phone ? updateDto.phone.trim() : undefined;
     if (updateDto.parentPhone !== undefined) citizen.parentPhone = updateDto.parentPhone ? updateDto.parentPhone.trim() : undefined;
     if (updateDto.address !== undefined) citizen.address = updateDto.address.trim();

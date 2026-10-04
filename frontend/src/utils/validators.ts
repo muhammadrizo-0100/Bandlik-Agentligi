@@ -169,22 +169,22 @@ export const extractBirthDateFromPinfl = (pinfl: string): string | null => {
 };
 
 /**
- * Yoshlar monitoringi bo'yicha yosh chegarasini tekshirish (14 - 35 yosh)
+ * Yoshlar monitoringi bo'yicha yosh chegarasini tekshirish (18 - 35 yosh)
  */
 export const isValidYouthAge = (
   birthDate: string
 ): { valid: boolean; message?: string } => {
-  if (!birthDate) return { valid: false, message: 'Tug\'ilgan sana majburiy' };
+  if (!birthDate) return { valid: false, message: 'Tugʻilgan sana majburiy' };
 
   const birth = new Date(birthDate);
   const today = new Date();
 
   if (isNaN(birth.getTime())) {
-    return { valid: false, message: 'Sana formati noto\'g\'ri' };
+    return { valid: false, message: 'Sana formati notoʻgʻri' };
   }
 
   if (birth > today) {
-    return { valid: false, message: 'Tug\'ilgan sana kelajakda bo\'lishi mumkin emas' };
+    return { valid: false, message: 'Tugʻilgan sana kelajakda boʻlishi mumkin emas' };
   }
 
   let age = today.getFullYear() - birth.getFullYear();
@@ -193,19 +193,35 @@ export const isValidYouthAge = (
     age--;
   }
 
-  if (age < 14) {
+  if (age < 18) {
     return {
       valid: false,
-      message: `Fuqaroning yoshi ${age} da. Yoshlar monitoringi faqat 14 yoshdan boshlab o'tkaziladi`,
+      message: `Fuqaroning yoshi ${age} da (voyaga yetmagan bola). Yoshlar bandligi monitoringi faqat 18 yoshga toʻlgan fuqarolar uchun oʻtkaziladi`,
     };
   }
 
   if (age > 35) {
     return {
       valid: false,
-      message: `Fuqaroning yoshi ${age} da. Yoshlar toifasiga 14 dan 35 yoshgacha bo'lgan fuqarolar kiradi`,
+      message: `Fuqaroning yoshi ${age} da. Yoshlar toifasiga 18 dan 35 yoshgacha boʻlgan fuqarolar kiradi`,
     };
   }
 
   return { valid: true };
+};
+
+/**
+ * Fuqaroning yoshini hisoblash
+ */
+export const calculateAge = (birthDate: string): number | null => {
+  if (!birthDate) return null;
+  const birth = new Date(birthDate);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
 };

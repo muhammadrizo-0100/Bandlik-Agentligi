@@ -65,6 +65,28 @@ export class SurveysService {
 
     const targetDistrictId = mahalla.districtId;
 
+    // 1.5. Yosh chegarasini tekshirish (18 - 35 yosh)
+    const birth = new Date(dto.birthDate);
+    if (isNaN(birth.getTime())) {
+      throw new BadRequestException('Tug\'ilgan sana formati noto\'g\'ri');
+    }
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      throw new BadRequestException(
+        `Fuqaro yoshi ${age} da (voyaga yetmagan bola). Yoshlar bandligi monitoringiga faqat 18 yoshga to'lgan fuqarolar kiritiladi`,
+      );
+    }
+    if (age > 35) {
+      throw new BadRequestException(
+        `Fuqaro yoshi ${age} da. Yoshlar toifasiga 18 dan 35 yoshgacha bo'lgan fuqarolar kiradi`,
+      );
+    }
+
     // 2. JSHSHIR dublikati va ziddiyatlarni tekshirish (Conflict Queue mantiqi)
     const existingCitizen = await this.citizenRepository.findOne({
       where: { pinfl: dto.pinfl },
