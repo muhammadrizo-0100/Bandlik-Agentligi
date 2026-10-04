@@ -255,9 +255,9 @@ export class CitizensService {
           `Fuqaro yoshi ${age} da (voyaga yetmagan bola). Faqat 18 yoshga to'lgan fuqarolar kiritilishi mumkin`,
         );
       }
-      if (age > 35) {
+      if (age > 60) {
         throw new BadRequestException(
-          `Fuqaro yoshi ${age} da. Yoshlar toifasiga 18 dan 35 yoshgacha bo'lgan fuqarolar kiradi`,
+          `Fuqaro yoshi ${age} da. Bandlik monitoringi 18 dan 60 yoshgacha bo'lgan fuqarolar uchun o'tkaziladi`,
         );
       }
       citizen.birthDate = birth;

@@ -65,7 +65,7 @@ export class SurveysService {
 
     const targetDistrictId = mahalla.districtId;
 
-    // 1.5. Yosh chegarasini tekshirish (18 - 35 yosh)
+    // 1.5. Yosh chegarasini tekshirish (18 - 60 yosh)
     const birth = new Date(dto.birthDate);
     if (isNaN(birth.getTime())) {
       throw new BadRequestException('Tug\'ilgan sana formati noto\'g\'ri');
@@ -78,12 +78,12 @@ export class SurveysService {
     }
     if (age < 18) {
       throw new BadRequestException(
-        `Fuqaro yoshi ${age} da (voyaga yetmagan bola). Yoshlar bandligi monitoringiga faqat 18 yoshga to'lgan fuqarolar kiritiladi`,
+        `Fuqaro yoshi ${age} da (voyaga yetmagan bola). Bandlik monitoringiga faqat 18 yoshga to'lgan fuqarolar kiritiladi`,
       );
     }
-    if (age > 35) {
+    if (age > 60) {
       throw new BadRequestException(
-        `Fuqaro yoshi ${age} da. Yoshlar toifasiga 18 dan 35 yoshgacha bo'lgan fuqarolar kiradi`,
+        `Fuqaro yoshi ${age} da. Bandlik monitoringi 18 dan 60 yoshgacha bo'lgan fuqarolar uchun o'tkaziladi`,
       );
     }
 

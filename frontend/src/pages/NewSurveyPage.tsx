@@ -92,11 +92,11 @@ export const NewSurveyPage: React.FC = () => {
   const [citizenSigned, setCitizenSigned] = useState<boolean>(true);
   const [operatorSigned, setOperatorSigned] = useState<boolean>(true);
 
-  // Yosh chegarasi: 18 - 35 yosh
+  // Yosh chegarasi: 18 - 60 yosh
   const { maxBirthDate, minBirthDate } = useMemo(() => {
     const today = new Date();
     const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-    const minDate = new Date(today.getFullYear() - 35, today.getMonth(), today.getDate());
+    const minDate = new Date(today.getFullYear() - 60, today.getMonth(), today.getDate());
     return {
       maxBirthDate: maxDate.toISOString().split('T')[0],
       minBirthDate: minDate.toISOString().split('T')[0],
@@ -717,7 +717,7 @@ export const NewSurveyPage: React.FC = () => {
                     {/* Tug'ilgan sana */}
                     <div>
                       <Input
-                        label="2. Tugʻilgan sanasi (18 - 35 yosh)"
+                        label="2. Tugʻilgan sanasi (18 - 60 yosh)"
                         type="date"
                         required
                         max={maxBirthDate}
@@ -743,21 +743,21 @@ export const NewSurveyPage: React.FC = () => {
                             <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center space-x-2">
                               <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-500" />
                               <span>
-                                <b>Yosh chegarasi:</b> Fuqaroning yoshi {citizenAge} da (voyaga yetmagan). Yoshlar monitoringiga faqat <b>18 yoshga toʻlgan</b> fuqarolar kiritiladi!
+                                <b>Yosh chegarasi:</b> Fuqaroning yoshi {citizenAge} da (voyaga yetmagan). Bandlik monitoringiga faqat <b>18 yoshga toʻlgan</b> fuqarolar kiritiladi!
                               </span>
                             </div>
-                          ) : citizenAge > 35 ? (
+                          ) : citizenAge > 60 ? (
                             <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700 flex items-center space-x-2">
                               <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-500" />
                               <span>
-                                <b>Diqqat:</b> Fuqaroning yoshi {citizenAge} da. Yoshlar toifasiga 18 dan 35 yoshgacha boʻlgan fuqarolar kiradi.
+                                <b>Diqqat:</b> Fuqaroning yoshi {citizenAge} da. Bandlik monitoringi 18 dan 60 yoshgacha boʻlgan fuqarolar uchun oʻtkaziladi.
                               </span>
                             </div>
                           ) : (
                             <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 flex items-center space-x-2">
                               <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
                               <span>
-                                Fuqaro yoshi: <b>{citizenAge} yoshda</b> (18-35 yosh toifasiga toʻliq mos).
+                                Fuqaro yoshi: <b>{citizenAge} yoshda</b> (18-60 yosh toifasiga toʻliq mos).
                               </span>
                             </div>
                           )}

@@ -43,11 +43,11 @@ export const CitizensPage: React.FC = () => {
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Yosh chegarasi: 18 - 35 yosh
+  // Yosh chegarasi: 18 - 60 yosh
   const { maxBirthDate, minBirthDate } = React.useMemo(() => {
     const today = new Date();
     const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-    const minDate = new Date(today.getFullYear() - 35, today.getMonth(), today.getDate());
+    const minDate = new Date(today.getFullYear() - 60, today.getMonth(), today.getDate());
     return {
       maxBirthDate: maxDate.toISOString().split('T')[0],
       minBirthDate: minDate.toISOString().split('T')[0],

@@ -169,7 +169,7 @@ export const extractBirthDateFromPinfl = (pinfl: string): string | null => {
 };
 
 /**
- * Yoshlar monitoringi bo'yicha yosh chegarasini tekshirish (18 - 35 yosh)
+ * Aholi bandligi monitoringi bo'yicha yosh chegarasini tekshirish (18 - 60 yosh)
  */
 export const isValidYouthAge = (
   birthDate: string
@@ -196,14 +196,14 @@ export const isValidYouthAge = (
   if (age < 18) {
     return {
       valid: false,
-      message: `Fuqaroning yoshi ${age} da (voyaga yetmagan bola). Yoshlar bandligi monitoringi faqat 18 yoshga toʻlgan fuqarolar uchun oʻtkaziladi`,
+      message: `Fuqaroning yoshi ${age} da (voyaga yetmagan bola). Bandlik monitoringiga faqat 18 yoshga toʻlgan fuqarolar kiritiladi`,
     };
   }
 
-  if (age > 35) {
+  if (age > 60) {
     return {
       valid: false,
-      message: `Fuqaroning yoshi ${age} da. Yoshlar toifasiga 18 dan 35 yoshgacha boʻlgan fuqarolar kiradi`,
+      message: `Fuqaroning yoshi ${age} da. Bandlik monitoringi 18 dan 60 yoshgacha boʻlgan fuqarolar uchun oʻtkaziladi`,
     };
   }
 
