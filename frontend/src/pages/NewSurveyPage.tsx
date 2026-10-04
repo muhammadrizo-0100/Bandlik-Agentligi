@@ -857,7 +857,7 @@ export const NewSurveyPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs font-bold text-slate-900">
-                            2.1. Расмий банд
+                            2.1. Rasmiy band
                           </span>
                           <span className="text-[11px] text-slate-500 block">
                             Qonuniy mehnat shartnomasiga ega boʻlgan fuqarolar
@@ -902,7 +902,7 @@ export const NewSurveyPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs font-bold text-slate-900">
-                            2.2. Норасмий банд
+                            2.2. Norasmiy band
                           </span>
                           <span className="text-[11px] text-slate-500 block">
                             Daromadga ega, lekin rasmiylashtirilmagan faoliyat turlari
@@ -947,7 +947,7 @@ export const NewSurveyPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs font-bold text-slate-900">
-                            2.3. Ишлаш истаги йўқ
+                            2.3. Ishlash istagi yoʻq
                           </span>
                           <span className="text-[11px] text-slate-500 block">
                             Hozirda mehnat bozoriga chiqishni istamaydigan fuqarolar
@@ -963,10 +963,10 @@ export const NewSurveyPage: React.FC = () => {
                           </p>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                             {[
-                              { id: 'CHILD_CARE', label: 'Бола тарбиясида' },
-                              { id: 'HOUSEWIFE', label: 'Уй бекаси' },
-                              { id: 'WEALTHY_FAMILY', label: 'Ўзига тўқ оила' },
-                              { id: 'APPLICANT', label: 'Абитуриент' },
+                              { id: 'CHILD_CARE', label: 'Bola tarbiyasida' },
+                              { id: 'HOUSEWIFE', label: 'Uy bekasi' },
+                              { id: 'WEALTHY_FAMILY', label: 'Oʻziga toʻq oila' },
+                              { id: 'APPLICANT', label: 'Abituriyent' },
                             ].map((reason) => (
                               <button
                                 key={reason.id}
@@ -1012,7 +1012,7 @@ export const NewSurveyPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs font-bold text-slate-900">
-                            2.4. Ишсиз ёш
+                            2.4. Ishsiz yosh
                           </span>
                           <span className="text-[11px] text-slate-500 block">
                             Ishlash istagi bor, amaliy yordam va bandlik choralari talab etiladi
@@ -1028,11 +1028,11 @@ export const NewSurveyPage: React.FC = () => {
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {[
-                              { id: 'PERMANENT_JOB', label: 'Доимий ишга жойлаштириш' },
-                              { id: 'SUBSIDY', label: 'Субсидия' },
-                              { id: 'VOCATIONAL_TRAINING', label: 'Касб-ҳунарга ўқитиш' },
-                              { id: 'LOAN_BUSINESS', label: 'Кредит орқали тадбиркорлик' },
-                              { id: 'ADDITIONAL', label: 'Қўшимча йўналиш' },
+                              { id: 'PERMANENT_JOB', label: 'Doimiy ishga joylashtirish' },
+                              { id: 'SUBSIDY', label: 'Subsidiya ajratish' },
+                              { id: 'VOCATIONAL_TRAINING', label: 'Kasb-hunarga oʻqitish' },
+                              { id: 'LOAN_BUSINESS', label: 'Kredit orqali tadbirkorlik' },
+                              { id: 'ADDITIONAL', label: 'Qoʻshimcha yoʻnalish' },
                             ].map((dir) => {
                               const isChecked = unemployedDirections.includes(
                                 dir.id as UnemployedDirection,
@@ -1098,7 +1098,7 @@ export const NewSurveyPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs font-bold text-slate-900">
-                            2.5. Бошқа
+                            2.5. Boshqa
                           </span>
                           <span className="text-[11px] text-slate-500 block">
                             Yuqoridagi toifalarga kirmaydigan alohida holatlar

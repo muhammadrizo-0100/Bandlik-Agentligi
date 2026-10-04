@@ -10,7 +10,6 @@ import {
   UserCheck,
   UserX,
   AlertTriangle,
-  ArrowUpRight,
   TrendingUp,
   MapPin,
   Calendar,
@@ -244,7 +243,7 @@ export const DashboardPage: React.FC = () => {
   // Hisobot ma'lumotlarini Excel/CSV formatida yuklab olish (Export)
   const handleExportData = () => {
     try {
-      const areaName = user?.mahallaName ? `${user.mahallaName} MFY` : user?.districtName || 'Davlatobod tumani';
+      const areaName = user?.mahallaName ? (user.mahallaName.includes('MFY') ? user.mahallaName : `${user.mahallaName} MFY`) : user?.districtName || 'Davlatobod tumani';
       let csv = `"O'ZBEKISTON RESPUBLIKASI YOSHLAR BANDLIGI MONITORINGI VA TAHLILI"\n`;
       csv += `"Hudud:","${areaName}"\n`;
       csv += `"Hisobot davri:","${timeFilterLabel}"\n`;
@@ -489,7 +488,7 @@ export const DashboardPage: React.FC = () => {
 
     return {
       dateText: parsedDate.fullLabel,
-      mahallaName: latest.mahalla?.name ? `${latest.mahalla.name} MFY` : 'Davlatobod',
+      mahallaName: latest.mahalla?.name ? (latest.mahalla.name.includes('MFY') ? latest.mahalla.name : `${latest.mahalla.name} MFY`) : 'Davlatobod',
       citizenName: latest.citizenFullName,
       category: latest.mainCategory,
     };
@@ -505,7 +504,7 @@ export const DashboardPage: React.FC = () => {
 
     setSelectedEventData({
       type: 'MAHALLA',
-      title: payload.fullName || `${payload.name} MFY`,
+      title: payload.fullName || (payload.name?.includes('MFY') ? payload.name : `${payload.name} MFY`),
       subtitle: payload.eventDateFull
         ? `Xatlov sanasi: ${payload.eventDateFull}`
         : 'Ushbu hudud boʻyicha oʻrganishlar jurnali',
@@ -677,7 +676,7 @@ export const DashboardPage: React.FC = () => {
             Xush kelibsiz, {user?.fullName?.split(' ')[0] || 'Foydalanuvchi'}.
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-            {user?.mahallaName ? `${user.mahallaName} MFY` : user?.districtName || 'Davlatobod tumani'} boʻyicha yoshlar bandligi koʻrsatkichlarini kuzatib boring.
+            {user?.mahallaName ? (user.mahallaName.includes('MFY') ? user.mahallaName : `${user.mahallaName} MFY`) : user?.districtName || 'Davlatobod tumani'} boʻyicha yoshlar bandligi koʻrsatkichlarini kuzatib boring.
           </p>
         </div>
 
@@ -1009,12 +1008,11 @@ export const DashboardPage: React.FC = () => {
             <div className="text-3xl font-black text-slate-900 tracking-tight my-1">
               {(kpi?.totalCitizens || 0).toLocaleString()}
             </div>
-            <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-600">
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                +14.2%
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-500">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#163D5C]/10 text-[#163D5C] border border-[#163D5C]/20">
+                Umumiy
               </span>
-              <span className="text-slate-400 font-medium text-[11px]">oʻtgan oydan</span>
+              <span className="text-slate-400 font-medium text-[11px]">xatlovdan oʻtganlar</span>
             </div>
           </div>
         </div>
@@ -1045,11 +1043,10 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-600">
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                +8.5%
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Qonuniy
               </span>
-              <span className="text-slate-400 font-medium text-[11px]">shartnoma asosida</span>
+              <span className="text-slate-400 font-medium text-[11px]">mehnat shartnomasi</span>
             </div>
           </div>
         </div>
