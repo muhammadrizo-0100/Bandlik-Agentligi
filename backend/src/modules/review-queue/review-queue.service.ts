@@ -162,22 +162,24 @@ export class ReviewQueueService {
     dto: ResolveSurveyDto,
     reviewer: UserEntity,
   ) {
-    const survey = await this.surveyRepository.findOne({
-      where: { id },
-      relations: { citizen: true },
-    });
-
-    if (!survey) {
-      throw new NotFoundException(`So'rovnoma topilmadi (ID: ${id})`);
-    }
-
-    if (survey.status !== SurveyStatus.PENDING_REVIEW) {
-      throw new BadRequestException(
-        `Ushbu so'rovnoma allaqachon ko'rib chiqilgan (Status: ${survey.status})`,
-      );
-    }
-
     return this.dataSource.transaction(async (manager) => {
+      // Bir vaqtning o'zida bir nechta xodim qabul qilishini oldini olish uchun qat'iy row-level lock (pessimistic_write)
+      const survey = await manager.findOne(SurveyEntity, {
+        where: { id },
+        relations: { citizen: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!survey) {
+        throw new NotFoundException(`So'rovnoma topilmadi (ID: ${id})`);
+      }
+
+      if (survey.status !== SurveyStatus.PENDING_REVIEW) {
+        throw new BadRequestException(
+          `Ushbu so'rovnoma allaqachon boshqa mas'ul xodim tomonidan ko'rib chiqilgan (Status: ${survey.status})`,
+        );
+      }
+
       // 1. Agar tasdiqlansa (APPROVE_UPDATE) -> Fuqaroning holati yangilanadi
       if (dto.action === ReviewAction.APPROVE_UPDATE) {
         if (!survey.citizen) {
