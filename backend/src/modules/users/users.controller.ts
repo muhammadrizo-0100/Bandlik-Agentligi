@@ -34,12 +34,17 @@ export class UsersController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.DISTRICT_ADMIN)
   @ApiOperation({ summary: 'Yangi xodim yaratish (Super Admin yoki Tuman Admini)' })
   create(@Body() createUserDto: CreateUserDto, @CurrentUser() currentUser: UserEntity) {
-    // Agar Tuman Admini yaratsa, faqat o'z tumaniga Mahalla Operatorini yarata oladi
+    // Agar Tuman Admini yaratsa, faqat o'z tumaniga xodim yarata oladi (Tuman Boshlig'i yoki Mahalla Operatori)
     if (currentUser.roleCode === UserRole.DISTRICT_ADMIN) {
-      if (createUserDto.role && createUserDto.role !== UserRole.MAHALLA_OPERATOR) {
-        throw new ForbiddenException('Tuman administratori faqat Mahalla yetakchilarini yarata oladi');
+      if (
+        createUserDto.role &&
+        createUserDto.role !== UserRole.MAHALLA_OPERATOR &&
+        createUserDto.role !== UserRole.DISTRICT_ADMIN
+      ) {
+        throw new ForbiddenException(
+          'Tuman administratori faqat Tuman Boshligʻi yoki Mahalla yetakchilarini yarata oladi',
+        );
       }
-      createUserDto.role = UserRole.MAHALLA_OPERATOR;
       createUserDto.districtId = currentUser.districtId;
     }
     return this.usersService.create(createUserDto);

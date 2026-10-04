@@ -309,15 +309,23 @@ export const UsersManagementPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Yagona professional asosiy tugma */}
-          <div>
+          {/* Ikkita alohida aniq harakat tugmasi */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => openAddModal('DISTRICT_ADMIN')}
+              className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#163D5C] bg-[#163D5C]/10 hover:bg-[#163D5C]/20 border border-[#163D5C]/30 shadow-2xs transition cursor-pointer"
+            >
+              <Building2 className="w-4 h-4 text-[#163D5C]" />
+              <span>+ Tuman boshligʻi qoʻshish</span>
+            </button>
             <button
               type="button"
               onClick={() => openAddModal('MAHALLA_OPERATOR')}
               className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#163D5C] hover:bg-[#11314a] shadow-xs transition cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>Yangi xodim qoʻshish</span>
+              <Users className="w-4 h-4" />
+              <span>+ Mahalla operatori qoʻshish</span>
             </button>
           </div>
         </div>
@@ -328,9 +336,9 @@ export const UsersManagementPage: React.FC = () => {
             {[
               { id: 'ALL', label: 'Barcha xodimlar', count: users.length },
               { id: 'MAHALLA_OPERATOR', label: 'Mahalla yetakchilari', count: countByRole('MAHALLA_OPERATOR') },
+              { id: 'DISTRICT_ADMIN', label: 'Tuman boshliqlari', count: countByRole('DISTRICT_ADMIN') },
               ...(isSuperAdmin
                 ? [
-                    { id: 'DISTRICT_ADMIN', label: 'Tuman boshliqlari', count: countByRole('DISTRICT_ADMIN') },
                     { id: 'DATA_REVIEWER', label: 'Tekshiruvchilar', count: countByRole('DATA_REVIEWER') },
                   ]
                 : []),
@@ -497,16 +505,33 @@ export const UsersManagementPage: React.FC = () => {
       {/* 5. Yangi xodim qo'shish modali */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-[480px] w-full p-6 sm:p-7 shadow-2xl border-2 border-slate-200 relative my-8 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border-2 border-slate-200 relative my-6 animate-in fade-in zoom-in-95">
             {/* Modal Sarlavhasi */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Yangi {getRoleTitle(modalRole).toLowerCase()}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Tizimda yangi xodim akkauntini yaratish
-                </p>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-xs ${
+                    modalRole === 'DISTRICT_ADMIN' ? 'bg-[#163D5C]' : 'bg-emerald-600'
+                  }`}
+                >
+                  {modalRole === 'DISTRICT_ADMIN' ? (
+                    <Building2 className="w-5 h-5" />
+                  ) : (
+                    <Users className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {modalRole === 'DISTRICT_ADMIN'
+                      ? 'Yangi Tuman Boshligʻi qoʻshish'
+                      : 'Yangi Mahalla Operatori qoʻshish'}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {modalRole === 'DISTRICT_ADMIN'
+                      ? 'Tuman darajasidagi masʼul rahbar akkauntini yaratish'
+                      : 'Mahalla boʻyicha yoshlar yetakchisi akkauntini yaratish'}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
@@ -515,6 +540,62 @@ export const UsersManagementPage: React.FC = () => {
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Qaysi rol kiritilayotganini aniq ko'rsatuvchi va o'zgartiruvchi blok */}
+            <div className="mb-4">
+              <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                Biriktiriladigan lavozim (Roli)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalRole('DISTRICT_ADMIN')}
+                  className={`p-3 rounded-xl border-2 text-left transition flex items-center space-x-3 cursor-pointer ${
+                    modalRole === 'DISTRICT_ADMIN'
+                      ? 'border-[#163D5C] bg-[#163D5C]/5 text-[#163D5C] ring-2 ring-[#163D5C]/15 font-bold'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      modalRole === 'DISTRICT_ADMIN'
+                        ? 'bg-[#163D5C] text-white'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold leading-tight">Tuman Boshligʻi</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Tuman boshqaruvi</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModalRole('MAHALLA_OPERATOR')}
+                  className={`p-3 rounded-xl border-2 text-left transition flex items-center space-x-3 cursor-pointer ${
+                    modalRole === 'MAHALLA_OPERATOR'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-600/15 font-bold'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      modalRole === 'MAHALLA_OPERATOR'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold leading-tight">Mahalla Operatori</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Yetakchi (Xatlovchi)</div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Xatolik xabari */}
@@ -526,130 +607,96 @@ export const UsersManagementPage: React.FC = () => {
             )}
 
             <form onSubmit={handleCreateUser} className="space-y-4">
-              {/* Rol tanlash (Super Admin uchun) */}
-              {isSuperAdmin && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1. Ism */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    Xodim toifasi (Roli) <span className="text-red-500">*</span>
+                    Ism <span className="text-red-500">*</span>
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs">
-                    {[
-                      { id: 'MAHALLA_OPERATOR', label: 'Yetakchi' },
-                      { id: 'DISTRICT_ADMIN', label: 'Tuman boshligʻi' },
-                      { id: 'DATA_REVIEWER', label: 'Tekshiruvchi' },
-                    ].map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => setModalRole(r.id as UserRole)}
-                        className={`py-2 text-center rounded-lg font-semibold transition cursor-pointer ${
-                          modalRole === r.id
-                            ? 'bg-white text-[#163D5C] shadow-xs font-bold border border-slate-200/80'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Masalan: Vali"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                  />
                 </div>
-              )}
 
-              {/* 1. Ism */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Ism <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Masalan: Vali"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
-                />
-              </div>
+                {/* 2. Familiya */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Familiya <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Masalan: Aliyev"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                  />
+                </div>
 
-              {/* 2. Familiya */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Familiya <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Masalan: Aliyev"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
-                />
-              </div>
+                {/* 3. Login */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Login (foydalanuvchi nomi) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Masalan: vali_aliyev"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm font-mono text-slate-800 placeholder-slate-400 outline-none transition"
+                  />
+                </div>
 
-              {/* 3. Login (foydalanuvchi nomi) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Login (foydalanuvchi nomi) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Masalan: vali_aliyev"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm font-mono text-slate-800 placeholder-slate-400 outline-none transition"
-                />
-              </div>
-
-              {/* 4. Telefon raqami (Majburiy!) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Telefon raqami <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
+                {/* 4. Telefon raqami */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Telefon raqami <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     placeholder="+998 (90) 123-45-67"
                     value={phone}
                     onChange={(e) => setPhone(formatUzPhone(e.target.value))}
-                    className="w-full pl-3.5 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm font-mono text-slate-800 placeholder-slate-400 outline-none transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm font-mono text-slate-800 placeholder-slate-400 outline-none transition"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Xodim bilan bogʻlanish uchun rasmiy telefon raqam
-                </p>
-              </div>
 
-              {/* 5. Parol (Ko'z belgisi bilan) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Parol <span className="text-red-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
-                  />
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-slate-400 hover:text-slate-600 p-0.5 focus:outline-none transition cursor-pointer"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                {/* 5. Parol */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Parol <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 text-slate-400 hover:text-slate-600 p-0.5 focus:outline-none transition cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* 6. Tuman tanlash (Tuman Admini yoki Mahalla Operatori bo'lsa) */}
-              {(modalRole === 'MAHALLA_OPERATOR' || modalRole === 'DISTRICT_ADMIN') && (
+                {/* 6. Tuman tanlash */}
                 <div>
                   <CustomSelect
-                    label="Qaysi tuman"
+                    label="Biriktirilgan tuman"
                     required
                     placeholder="Tumanni tanlang..."
                     disabled={isDistrictAdmin}
@@ -662,34 +709,34 @@ export const UsersManagementPage: React.FC = () => {
                     }))}
                   />
                 </div>
-              )}
 
-              {/* 7. Mahalla tanlash (Faqat Mahalla Operatori bo'lsa) */}
-              {modalRole === 'MAHALLA_OPERATOR' && (
-                <div>
-                  <CustomSelect
-                    label="Qaysi mahalla operatori (MFY)"
-                    required
-                    placeholder={
-                      selectedDistrictId
-                        ? 'Mahallani tanlang...'
-                        : 'Avval tumanni tanlang'
-                    }
-                    disabled={!selectedDistrictId}
-                    value={mahallaId}
-                    onChange={(val) => setMahallaId(val)}
-                    options={availableMahallas.map((m) => ({
-                      value: m.id,
-                      label: `${(m.name || '').replace(/\s*MFY\s*/gi, '')} MFY`,
-                    }))}
-                  />
-                  {selectedDistrictId && availableMahallas.length === 0 && (
-                    <p className="text-[11px] text-amber-600 mt-1">
-                      Ushbu tumanda hali mahallalar kiritilmagan.
-                    </p>
-                  )}
-                </div>
-              )}
+                {/* 7. Mahalla tanlash (Faqat Mahalla Operatori bo'lsa) */}
+                {modalRole === 'MAHALLA_OPERATOR' && (
+                  <div className="sm:col-span-2">
+                    <CustomSelect
+                      label="Biriktiriladigan mahalla (MFY)"
+                      required
+                      placeholder={
+                        selectedDistrictId
+                          ? 'Mahallani tanlang...'
+                          : 'Avval tumanni tanlang'
+                      }
+                      disabled={!selectedDistrictId}
+                      value={mahallaId}
+                      onChange={(val) => setMahallaId(val)}
+                      options={availableMahallas.map((m) => ({
+                        value: m.id,
+                        label: formatMahallaName(m.name),
+                      }))}
+                    />
+                    {selectedDistrictId && availableMahallas.length === 0 && (
+                      <p className="text-[11px] text-amber-600 mt-1">
+                        Ushbu tumanda hali mahallalar kiritilmagan.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Modal Tugmalari */}
               <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
