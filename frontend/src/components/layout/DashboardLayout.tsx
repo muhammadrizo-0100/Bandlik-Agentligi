@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, ChevronRight, ShieldCheck, X } from 'lucide-react';
+import { Search, Bell, ChevronRight, ShieldCheck, X, Clock, CheckCircle2 } from 'lucide-react';
 import { formatMahallaName } from '../../utils/formatters';
+import { monitoringApi } from '../../api/monitoring.api';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,45 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const [internalSearch, setInternalSearch] = useState(searchValue || '');
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCount = async () => {
+      try {
+        const res = await monitoringApi.getReviewQueueCount();
+        if (isMounted && res && typeof res.count === 'number') {
+          setPendingCount(res.count);
+        }
+      } catch (err) {
+        // Sukut saqlanadi
+      }
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 20000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    };
+    if (isNotifOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotifOpen]);
 
   useEffect(() => {
     if (searchValue !== undefined) {
@@ -102,14 +142,82 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </span>
             </div>
 
-            {/* Bildirishnomalar qo'ng'irog'i (Haqiqiy bildirishnoma bo'lmasa qizil doira chiqmaydi) */}
-            <button
-              type="button"
-              className="w-10 h-10 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50 border-2 border-slate-200 transition relative cursor-pointer flex items-center justify-center flex-shrink-0"
-              title="Bildirishnomalar"
-            >
-              <Bell className="w-4 h-4" />
-            </button>
+            {/* Bildirishnomalar qo'ng'irog'i */}
+            <div className="relative" ref={notifRef}>
+              <button
+                type="button"
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="w-10 h-10 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50 border-2 border-slate-200 transition relative cursor-pointer flex items-center justify-center flex-shrink-0"
+                title="Bildirishnomalar"
+              >
+                <Bell className="w-4 h-4" />
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
+                    {pendingCount > 99 ? '99+' : pendingCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Bildirishnomalar oynasi (Dropdown) */}
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border-2 border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Bell className="w-4 h-4 text-[#163D5C]" />
+                      <h4 className="text-xs font-bold text-slate-900">Bildirishnomalar</h4>
+                    </div>
+                    {pendingCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                        {pendingCount} ta yangi
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="p-4 max-h-[360px] overflow-y-auto">
+                    {pendingCount > 0 ? (
+                      <div className="space-y-3">
+                        <div className="p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl flex items-start space-x-3">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                            <Clock className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-900">
+                              Tekshiruv kutilayotgan soʻrovnomalar
+                            </p>
+                            <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                              Fuqarolar tomonidan onlayn toʻldirilgan yoki tekshiruvga yuborilgan{' '}
+                              <strong className="text-amber-800 font-bold">{pendingCount} ta</strong> anketa koʻrib chiqishni kutmoqda.
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsNotifOpen(false);
+                            navigate('/review-queue');
+                          }}
+                          className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-[#163D5C] hover:bg-[#11314a] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                        >
+                          <span>Tekshiruv navbatiga oʻtish</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">Yangi bildirishnomalar yoʻq</p>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Barcha anketalar va maʼlumotlar toʻliq tasdiqlangan
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Xodim kartasi (Screenshot 2-3 uslubi) */}
             <div className="flex items-center space-x-2.5 pl-2 sm:pl-3 border-l-2 border-slate-200 flex-shrink-0">

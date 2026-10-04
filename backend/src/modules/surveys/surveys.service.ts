@@ -15,6 +15,7 @@ import { CreateSurveyDto } from './dto/create-survey.dto';
 import { FilterSurveyDto } from './dto/filter-survey.dto';
 import {
   SurveyStatus,
+  SurveyMethod,
   UserRole,
   DataSource,
   EmploymentCategory,
@@ -34,6 +35,128 @@ export class SurveysService {
     private readonly historyRepository: Repository<EmploymentHistoryEntity>,
     private readonly dataSource: TypeOrmDataSource,
   ) {}
+
+  /**
+   * Fuqaroning ochiq portaldan mustaqil yuborgan anketasini qabul qilish
+   */
+  async createPublic(dto: CreateSurveyDto) {
+    if (!dto.mahallaId) {
+      throw new BadRequestException('Mahalla tanlanishi shart');
+    }
+
+    const mahalla = await this.mahallaRepository.findOne({
+      where: { id: dto.mahallaId },
+      relations: { district: true },
+    });
+    if (!mahalla) {
+      throw new NotFoundException(`Mahalla topilmadi (ID: ${dto.mahallaId})`);
+    }
+
+    const targetDistrictId = mahalla.districtId;
+
+    // Yosh chegarasini tekshirish (18 - 60 yosh)
+    const birth = new Date(dto.birthDate);
+    if (isNaN(birth.getTime())) {
+      throw new BadRequestException('Tug\'ilgan sana formati noto\'g\'ri');
+    }
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      throw new BadRequestException(
+        `Fuqaro yoshi ${age} da (voyaga yetmagan bola). Bandlik monitoringiga faqat 18 yoshga to'lgan fuqarolar kiritiladi`,
+      );
+    }
+    if (age > 60) {
+      throw new BadRequestException(
+        `Fuqaro yoshi ${age} da. Bandlik monitoringi 18 dan 60 yoshgacha bo'lgan fuqarolar uchun o'tkaziladi`,
+      );
+    }
+
+    const userRepo = this.dataSource.getRepository(UserEntity);
+    // Ushbu mahallaga biriktirilgan operatorni topish, bo'lmasa tuman admini yoki super admin
+    const operator =
+      (await userRepo.findOne({
+        where: { mahallaId: dto.mahallaId, roleCode: UserRole.MAHALLA_OPERATOR },
+      })) ||
+      (await userRepo.findOne({
+        where: { districtId: targetDistrictId },
+      })) ||
+      (await userRepo.findOne({
+        where: { roleCode: UserRole.SUPER_ADMIN },
+      }));
+
+    const operatorId = operator?.id;
+    if (!operatorId) {
+      throw new BadRequestException('Tizimda mas\'ul xodim topilmadi');
+    }
+
+    const existingCitizen = await this.citizenRepository.findOne({
+      where: { pinfl: dto.pinfl.trim() },
+      relations: { mahalla: true, district: true },
+    });
+
+    return this.dataSource.transaction(async (manager) => {
+      let citizenId = existingCitizen?.id;
+
+      if (!existingCitizen) {
+        const citizen = manager.create(CitizenEntity, {
+          fullName: dto.fullName.trim(),
+          birthDate: new Date(dto.birthDate),
+          pinfl: dto.pinfl.trim(),
+          phone: dto.phone?.trim(),
+          parentPhone: dto.parentPhone?.trim(),
+          address: dto.address?.trim() || `${mahalla.name} MFY`,
+          education: dto.education?.trim() || 'O\'rta',
+          specialty: dto.specialty?.trim(),
+          districtId: targetDistrictId,
+          mahallaId: dto.mahallaId,
+          currentCategory: dto.mainCategory,
+          currentStatusDetail: this.formatStatusSummary(dto),
+        });
+        const saved = await manager.save(CitizenEntity, citizen);
+        citizenId = saved.id;
+      }
+
+      // Online anketa doimo PENDING_REVIEW holatida tushadi!
+      const survey = manager.create(SurveyEntity, {
+        citizenId,
+        citizenPinfl: dto.pinfl.trim(),
+        citizenFullName: dto.fullName.trim(),
+        operatorId,
+        districtId: targetDistrictId,
+        mahallaId: dto.mahallaId,
+        surveyDate: dto.surveyDate ? new Date(dto.surveyDate) : new Date(),
+        surveyMethod: SurveyMethod.ONLINE,
+        dataSource: DataSource.CITIZEN_PUBLIC,
+        status: SurveyStatus.PENDING_REVIEW,
+        conflictReason: existingCitizen
+          ? `Fuqaro tomonidan onlayn yuborildi. Diqqat: Ushbu JSHSHIR bazada oldin mavjud bo'lgan (${existingCitizen.fullName}).`
+          : 'Fuqaro tomonidan onlayn portal orqali mustaqil to\'ldirildi. Mas\'ul xodim tekshiruvi talab etiladi.',
+        mainCategory: dto.mainCategory,
+        officialWorkplace: dto.officialWorkplace,
+        unofficialActivityType: dto.unofficialActivityType,
+        noWishReason: dto.noWishReason,
+        unemployedDirections: dto.unemployedDirections,
+        unemployedAdditionalNote: dto.unemployedAdditionalNote,
+        otherReasonNote: dto.otherReasonNote,
+        citizenSigned: true,
+        operatorSigned: false,
+      });
+
+      const savedSurvey = await manager.save(SurveyEntity, survey);
+
+      return {
+        isConflict: false,
+        message:
+          'Arizangiz muvaffaqiyatli qabul qilindi. Mahalla yetakchisi ma\'lumotlarni ko\'rib chiqib, tez orada siz bilan bog\'lanadi.',
+        survey: savedSurvey,
+      };
+    });
+  }
 
   /**
    * Yangi anketa yuborish (Operator yoki Admin)

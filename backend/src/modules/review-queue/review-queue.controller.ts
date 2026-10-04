@@ -27,12 +27,20 @@ export class ReviewQueueController {
   constructor(private readonly reviewQueueService: ReviewQueueService) {}
 
   @Get()
-  @Roles(UserRole.DATA_REVIEWER, UserRole.SUPER_ADMIN, UserRole.DISTRICT_ADMIN)
+  @Roles(
+    UserRole.DATA_REVIEWER,
+    UserRole.SUPER_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.MAHALLA_OPERATOR,
+  )
   @ApiOperation({
     summary: 'Tekshiruv kutayotgan ziddiyatli va dublikat anketalar ro\'yxati',
   })
-  getQueue(@Query() filterDto: FilterQueueDto) {
-    return this.reviewQueueService.getQueue(filterDto);
+  getQueue(
+    @Query() filterDto: FilterQueueDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.reviewQueueService.getQueue(filterDto, user);
   }
 
   @Get('count')
@@ -40,16 +48,22 @@ export class ReviewQueueController {
     UserRole.DATA_REVIEWER,
     UserRole.SUPER_ADMIN,
     UserRole.DISTRICT_ADMIN,
+    UserRole.MAHALLA_OPERATOR,
   )
   @ApiOperation({
     summary: 'Tekshiruv kutayotgan anketalar umumiy soni (Dashboard bildirishnomasi uchun)',
   })
-  getPendingCount() {
-    return this.reviewQueueService.getPendingCount();
+  getPendingCount(@CurrentUser() user: UserEntity) {
+    return this.reviewQueueService.getPendingCount(user);
   }
 
   @Get(':id')
-  @Roles(UserRole.DATA_REVIEWER, UserRole.SUPER_ADMIN, UserRole.DISTRICT_ADMIN)
+  @Roles(
+    UserRole.DATA_REVIEWER,
+    UserRole.SUPER_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.MAHALLA_OPERATOR,
+  )
   @ApiOperation({
     summary: 'Bitta tekshiruv elementi: yangi anketa va amaldagi fuqaro taqqoslashi',
   })
@@ -58,7 +72,12 @@ export class ReviewQueueController {
   }
 
   @Post(':id/resolve')
-  @Roles(UserRole.DATA_REVIEWER, UserRole.SUPER_ADMIN)
+  @Roles(
+    UserRole.DATA_REVIEWER,
+    UserRole.SUPER_ADMIN,
+    UserRole.DISTRICT_ADMIN,
+    UserRole.MAHALLA_OPERATOR,
+  )
   @ApiOperation({
     summary: 'Ziddiyatli anketani tekshirib tasdiqlash yoki rad etish',
   })

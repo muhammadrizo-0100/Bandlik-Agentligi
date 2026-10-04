@@ -15,6 +15,7 @@ import { FilterSurveyDto } from './dto/filter-survey.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserEntity } from '../../database/entities/user.entity';
 import { UserRole } from '../../database/enums';
@@ -25,6 +26,15 @@ import { UserRole } from '../../database/enums';
 @Controller('surveys')
 export class SurveysController {
   constructor(private readonly surveysService: SurveysService) {}
+
+  @Public()
+  @Post('public')
+  @ApiOperation({
+    summary: 'Fuqaro tomonidan ochiq portaldan mustaqil anketa yuborish',
+  })
+  createPublic(@Body() createSurveyDto: CreateSurveyDto) {
+    return this.surveysService.createPublic(createSurveyDto);
+  }
 
   @Post()
   @Roles(UserRole.MAHALLA_OPERATOR, UserRole.SUPER_ADMIN, UserRole.DISTRICT_ADMIN)

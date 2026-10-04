@@ -18,6 +18,7 @@ import { FilterMahallaDto } from './dto/filter-mahalla.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../../database/enums';
 import { UserEntity } from '../../database/entities/user.entity';
@@ -58,13 +59,8 @@ export class MahallasController {
     return this.mahallasService.findAll(filters);
   }
 
+  @Public()
   @Get('dropdown')
-  @Roles(
-    UserRole.SUPER_ADMIN,
-    UserRole.DISTRICT_ADMIN,
-    UserRole.MAHALLA_OPERATOR,
-    UserRole.DATA_REVIEWER,
-  )
   @ApiOperation({ summary: 'Dropdown tanlovlar uchun qisqa mahallalar ro\'yxati' })
   getDropdown(
     @Query('districtId') districtId?: string,

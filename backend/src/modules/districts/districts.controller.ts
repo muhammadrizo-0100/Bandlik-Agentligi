@@ -15,6 +15,7 @@ import { UpdateDistrictDto } from './dto/update-district.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { UserRole } from '../../database/enums';
 
 @ApiTags('Districts (Tumanlar)')
@@ -31,6 +32,7 @@ export class DistrictsController {
     return this.districtsService.findAll();
   }
 
+  @Public()
   @Get('dropdown')
   @ApiOperation({ summary: 'Tumanlar selektori uchun yengil ro\'yxat' })
   getDropdown() {

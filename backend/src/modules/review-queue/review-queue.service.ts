@@ -15,6 +15,7 @@ import {
   SurveyStatus,
   DataSource,
   EmploymentCategory,
+  UserRole,
 } from '../../database/enums';
 
 @Injectable()
@@ -32,7 +33,7 @@ export class ReviewQueueService {
   /**
    * Tekshiruv kutayotgan (ziddiyatli / dublikat) anketalar ro'yxati
    */
-  async getQueue(filterDto: FilterQueueDto) {
+  async getQueue(filterDto: FilterQueueDto, user?: UserEntity) {
     const page = Number(filterDto.page) || 1;
     const limit = Number(filterDto.limit) || 20;
     const skip = (page - 1) * limit;
@@ -43,6 +44,18 @@ export class ReviewQueueService {
       .leftJoinAndSelect('s.operator', 'operator')
       .leftJoinAndSelect('s.mahalla', 'mahalla')
       .where('s.status = :status', { status: SurveyStatus.PENDING_REVIEW });
+
+    if (user) {
+      if (user.roleCode === UserRole.MAHALLA_OPERATOR && user.mahallaId) {
+        queryBuilder.andWhere('s.mahallaId = :userMahallaId', {
+          userMahallaId: user.mahallaId,
+        });
+      } else if (user.roleCode === UserRole.DISTRICT_ADMIN && user.districtId) {
+        queryBuilder.andWhere('mahalla.districtId = :userDistrictId', {
+          userDistrictId: user.districtId,
+        });
+      }
+    }
 
     if (filterDto.search && filterDto.search.trim()) {
       const cleanSearch = filterDto.search.trim();
@@ -67,7 +80,7 @@ export class ReviewQueueService {
     }
 
     queryBuilder
-      .orderBy('s.createdAt', 'ASC')
+      .orderBy('s.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
 
@@ -85,10 +98,25 @@ export class ReviewQueueService {
   /**
    * Tekshiruv kutayotgan anketalar umumiy soni (Dashboard bildirishnomasi uchun)
    */
-  async getPendingCount(): Promise<{ count: number }> {
-    const count = await this.surveyRepository.count({
-      where: { status: SurveyStatus.PENDING_REVIEW },
-    });
+  async getPendingCount(user?: UserEntity): Promise<{ count: number }> {
+    const queryBuilder = this.surveyRepository
+      .createQueryBuilder('s')
+      .leftJoin('s.mahalla', 'mahalla')
+      .where('s.status = :status', { status: SurveyStatus.PENDING_REVIEW });
+
+    if (user) {
+      if (user.roleCode === UserRole.MAHALLA_OPERATOR && user.mahallaId) {
+        queryBuilder.andWhere('s.mahallaId = :userMahallaId', {
+          userMahallaId: user.mahallaId,
+        });
+      } else if (user.roleCode === UserRole.DISTRICT_ADMIN && user.districtId) {
+        queryBuilder.andWhere('mahalla.districtId = :userDistrictId', {
+          userDistrictId: user.districtId,
+        });
+      }
+    }
+
+    const count = await queryBuilder.getCount();
     return { count };
   }
 

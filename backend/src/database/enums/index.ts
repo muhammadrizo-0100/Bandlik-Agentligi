@@ -15,6 +15,7 @@ export enum SurveyMethod {
   HOME_VISIT = 'HOME_VISIT', // Uyma-uy
   PHONE = 'PHONE',           // Telefon orqali
   IN_PERSON = 'IN_PERSON',   // Qabulda
+  ONLINE = 'ONLINE',         // Fuqaro tomonidan onlayn to'ldirilgan
 }
 
 /**
@@ -64,6 +65,7 @@ export enum SurveyStatus {
  */
 export enum DataSource {
   SURVEY_OPERATOR = 'SURVEY_OPERATOR', // Yetakchi / Operator so'rovnomasi
+  CITIZEN_PUBLIC = 'CITIZEN_PUBLIC',   // Fuqaro ochiq portali orqali onlayn yuborilgan
   TAX_INTEGRATION = 'TAX_INTEGRATION', // Soliq qo'mitasi ma'lumotlar bazasi
   MANUAL_AUDIT = 'MANUAL_AUDIT',       // Ma'murlar tomonidan qo'lda tahrir
 }

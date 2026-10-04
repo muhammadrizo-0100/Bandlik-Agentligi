@@ -10,6 +10,7 @@ import { SurveysPage } from './pages/SurveysPage';
 import { ReviewQueuePage } from './pages/ReviewQueuePage';
 import { MahallasManagementPage } from './pages/MahallasManagementPage';
 import { UsersManagementPage } from './pages/UsersManagementPage';
+import { PublicSurveyPage } from './pages/PublicSurveyPage';
 
 // Himoyalangan marshrut (Protected Route)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -36,8 +37,10 @@ export const App: React.FC = () => {
       <ToastProvider>
         <AuthProvider>
           <Routes>
-          {/* Ochiq marshrut */}
+          {/* Ochiq marshrutlar (Aholi va Xodimlar uchun) */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/anketa" element={<PublicSurveyPage />} />
+          <Route path="/ariza" element={<PublicSurveyPage />} />
 
           {/* Himoyalangan marshrutlar */}
           <Route

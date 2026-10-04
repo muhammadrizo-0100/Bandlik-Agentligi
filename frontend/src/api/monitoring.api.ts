@@ -43,6 +43,14 @@ export const monitoringApi = {
     return apiClient.post('/surveys', data);
   },
 
+  submitPublicSurvey: async (data: CreateSurveyInput): Promise<{
+    isConflict: boolean;
+    message: string;
+    survey?: Survey;
+  }> => {
+    return apiClient.post('/surveys/public', data);
+  },
+
   getSurveys: async (params?: any): Promise<PaginatedResult<Survey>> => {
     return apiClient.get('/surveys', { params });
   },
