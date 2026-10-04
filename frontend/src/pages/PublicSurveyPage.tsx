@@ -95,6 +95,58 @@ export const PublicSurveyPage: React.FC = () => {
     return calculateAge(birthDate);
   }, [birthDate]);
 
+  // Tug'ilgan sanaga asoslangan JSHSHIR boshlang'ich 7 ta raqamlari (Erkak / Ayol)
+  const pinflPrefixes = useMemo(() => {
+    if (!birthDate) return null;
+    const parts = birthDate.split('-');
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts;
+    const is21st = y.startsWith('20');
+    const maleDigit = is21st ? '5' : '3';
+    const femaleDigit = is21st ? '6' : '4';
+    const dateSuffix = `${d}${m}${y.slice(2)}`;
+    return {
+      male: `${maleDigit}${dateSuffix}`,
+      female: `${femaleDigit}${dateSuffix}`,
+      formattedDate: `${d}.${m}.${y}`,
+    };
+  }, [birthDate]);
+
+  // Tug'ilgan sana o'zgarganda JSHSHIR boshini avtomatik chiqarib berish
+  const handleBirthDateChange = (newDate: string) => {
+    setBirthDate(newDate);
+    if (!newDate) return;
+
+    const check = isValidYouthAge(newDate);
+    if (!check.valid) {
+      setError(check.message || null);
+    } else {
+      setError(null);
+    }
+
+    const parts = newDate.split('-');
+    if (parts.length === 3) {
+      const [y, m, d] = parts;
+      const isFemale = /qizi\b|ova\b|yeva\b/i.test(fullName.toLowerCase());
+      const is21st = y.startsWith('20');
+      const centuryDigit = is21st ? (isFemale ? '6' : '5') : (isFemale ? '4' : '3');
+      const prefix = `${centuryDigit}${d}${m}${y.slice(2)}`;
+
+      // Agar JSHSHIR hali to'liq kiritilmagan bo'lsa, boshlang'ich 7 ta raqamni avtomatik chiqarib beradi:
+      if (!pinfl || pinfl.length <= 7) {
+        setPinfl(prefix);
+        setPinflWarning(null);
+      } else if (pinfl.length === 14) {
+        const pinflValidation = isValidPinfl(pinfl, newDate);
+        if (!pinflValidation.valid) {
+          setPinflWarning(pinflValidation.message || 'JSHSHIR tugʻilgan sanaga mos kelmadi');
+        } else {
+          setPinflWarning(null);
+        }
+      }
+    }
+  };
+
   // Tumanlar ro'yxatini yuklash
   useEffect(() => {
     monitoringApi
@@ -125,19 +177,25 @@ export const PublicSurveyPage: React.FC = () => {
     }
   }, [selectedDistrictId]);
 
-  // JSHSHIR kiritilganda avtomatik tug'ilgan sanani aniqlash
+  // JSHSHIR kiritilganda avtomatik tug'ilgan sanani aniqlash va tekshirish
   const handlePinflChange = (val: string) => {
     const clean = val.replace(/\D/g, '').slice(0, 14);
     setPinfl(clean);
     setPinflWarning(null);
 
+    // Agar 7 ta raqam kiritilsa va tug'ilgan sana kiritilmagan bo'lsa, avtomatik chiqarish
     if (clean.length >= 7) {
       const extracted = extractBirthDateFromPinfl(clean);
       if (extracted) {
         if (!birthDate) setBirthDate(extracted);
         const ageCheck = isValidYouthAge(extracted);
         if (!ageCheck.valid) {
-          setPinflWarning(ageCheck.message || 'Yosh chegarasi notoʻgʻri');
+          setPinflWarning(ageCheck.message || 'Yosh chegarasi 18 dan 60 yoshgacha');
+        }
+      } else {
+        const firstDigit = clean[0];
+        if (!['3', '4', '5', '6'].includes(firstDigit)) {
+          setPinflWarning('JSHSHIR 1-raqami 3, 4 (1900-yillar) yoki 5, 6 (2000-yillar) boʻlishi kerak');
         }
       }
     }
@@ -146,6 +204,8 @@ export const PublicSurveyPage: React.FC = () => {
       const pinflValidation = isValidPinfl(clean, birthDate || undefined);
       if (!pinflValidation.valid) {
         setPinflWarning(pinflValidation.message || 'JSHSHIR formati notoʻgʻri');
+      } else {
+        setPinflWarning(null);
       }
     }
   };
@@ -440,14 +500,7 @@ export const PublicSurveyPage: React.FC = () => {
                         max={maxBirthDate}
                         min={minBirthDate}
                         value={birthDate}
-                        onChange={(e) => {
-                          setBirthDate(e.target.value);
-                          if (e.target.value) {
-                            const check = isValidYouthAge(e.target.value);
-                            if (!check.valid) setError(check.message || null);
-                            else setError(null);
-                          }
-                        }}
+                        onChange={(e) => handleBirthDateChange(e.target.value)}
                         icon={<Calendar className="w-4 h-4" />}
                       />
                       {citizenAge !== null && (
@@ -480,11 +533,76 @@ export const PublicSurveyPage: React.FC = () => {
                         value={pinfl}
                         onChange={(e) => handlePinflChange(e.target.value)}
                         icon={<Hash className="w-4 h-4" />}
-                        helperText="Passportingiz yoki ID-kartangiz pastki qismidagi 14 ta raqam"
+                        helperText={
+                          pinfl.length > 0 && pinfl.length < 14
+                            ? `${pinfl.length}/14 raqam kiritildi (qolgan ${14 - pinfl.length} ta raqam)`
+                            : "Passportingiz yoki ID-kartangiz pastki qismidagi 14 ta raqam"
+                        }
                       />
+
+                      {/* JSHSHIR boshlang'ich raqamini chiqarib berish paneli */}
+                      {pinflPrefixes && (
+                        <div className="mt-2 p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/80 text-xs text-blue-950 space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <span className="text-[11px] font-medium text-blue-800">
+                              💡 <b>{pinflPrefixes.formattedDate}</b> uchun JSHSHIR boshi:
+                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const tail = pinfl.length > 7 ? pinfl.slice(7) : '';
+                                  handlePinflChange(`${pinflPrefixes.male}${tail}`);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1 ${
+                                  pinfl.startsWith(pinflPrefixes.male)
+                                    ? 'bg-[#163D5C] text-white shadow-xs'
+                                    : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-100/60'
+                                }`}
+                                title="Erkak fuqarolar uchun JSHSHIR boshini qoʻyish"
+                              >
+                                <span>Erkak:</span>
+                                <b>{pinflPrefixes.male}</b>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const tail = pinfl.length > 7 ? pinfl.slice(7) : '';
+                                  handlePinflChange(`${pinflPrefixes.female}${tail}`);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1 ${
+                                  pinfl.startsWith(pinflPrefixes.female)
+                                    ? 'bg-rose-600 text-white shadow-xs'
+                                    : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+                                }`}
+                                title="Ayol fuqarolar uchun JSHSHIR boshini qoʻyish"
+                              >
+                                <span>Ayol:</span>
+                                <b>{pinflPrefixes.female}</b>
+                              </button>
+                            </div>
+                          </div>
+                          {(!pinfl || pinfl.length < 7) && (
+                            <p className="text-[10px] text-blue-600">
+                              Tugmani bosing — JSHSHIR boshidagi 7 ta raqam avtomatik yoziladi.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Validatsiya xabarlari */}
                       {pinflWarning && (
-                        <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800">
-                          ⚠️ {pinflWarning}
+                        <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-1.5">
+                          <span className="shrink-0">⚠️</span>
+                          <span>{pinflWarning}</span>
+                        </div>
+                      )}
+
+                      {pinfl.length === 14 && !pinflWarning && (
+                        <div className="mt-1.5 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="font-semibold">JSHSHIR 14 ta raqam toʻliq va tugʻilgan sanaga mos!</span>
                         </div>
                       )}
                     </div>
