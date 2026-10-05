@@ -114,6 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const confirmLogout = () => {
     setIsLogoutModalOpen(false);
+    areaFilter.clearFilters();
     logout();
     toast.info('Tizimdan muvaffaqiyatli chiqildi');
     navigate('/login');

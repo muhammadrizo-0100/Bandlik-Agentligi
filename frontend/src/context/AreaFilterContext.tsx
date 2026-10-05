@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 
 interface AreaFilterContextType {
@@ -22,22 +22,59 @@ export const AreaFilterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return localStorage.getItem('global_selected_mahalla_id') || '';
   });
 
-  // Rolga qarab boshlang'ich qiymatni belgilash
+  // Oldingi user ID sini saqlab turish (Logout yoki Yangi Login holatini aniqlash uchun)
+  const prevUserRef = useRef<string | null>(user?.id || null);
+
   useEffect(() => {
-    if (isDistrictAdmin && user?.districtId) {
-      setSelectedDistrictIdState(user.districtId);
-      localStorage.setItem('global_selected_district_id', user.districtId);
-    } else if (isMahallaOperator) {
-      if (user?.districtId) {
+    const prevUserId = prevUserRef.current;
+    const currentUserId = user?.id || null;
+
+    if (!user) {
+      // User tizimdan chiqqan (Logout)
+      setSelectedDistrictIdState('');
+      setSelectedMahallaIdState('');
+      localStorage.removeItem('global_selected_district_id');
+      localStorage.removeItem('global_selected_mahalla_id');
+    } else if (prevUserId !== currentUserId) {
+      // Yangi foydalanuvchi tizimga kirdi (Login)
+      if (isDistrictAdmin && user?.districtId) {
         setSelectedDistrictIdState(user.districtId);
         localStorage.setItem('global_selected_district_id', user.districtId);
+      } else if (isMahallaOperator) {
+        if (user?.districtId) {
+          setSelectedDistrictIdState(user.districtId);
+          localStorage.setItem('global_selected_district_id', user.districtId);
+        }
+        if (user?.mahallaId) {
+          setSelectedMahallaIdState(user.mahallaId);
+          localStorage.setItem('global_selected_mahalla_id', user.mahallaId);
+        }
+      } else {
+        // Super Admin yoki boshqa rollar yangi kirganda default holat (Barcha tumanlar)
+        setSelectedDistrictIdState('');
+        setSelectedMahallaIdState('');
+        localStorage.removeItem('global_selected_district_id');
+        localStorage.removeItem('global_selected_mahalla_id');
       }
-      if (user?.mahallaId) {
-        setSelectedMahallaIdState(user.mahallaId);
-        localStorage.setItem('global_selected_mahalla_id', user.mahallaId);
+    } else {
+      // O'sha bir xil user davom etmoqda (masalan oddiy sahifa renderi yoki F5 refreshdan keyin)
+      if (isDistrictAdmin && user?.districtId && !selectedDistrictId) {
+        setSelectedDistrictIdState(user.districtId);
+        localStorage.setItem('global_selected_district_id', user.districtId);
+      } else if (isMahallaOperator) {
+        if (user?.districtId && !selectedDistrictId) {
+          setSelectedDistrictIdState(user.districtId);
+          localStorage.setItem('global_selected_district_id', user.districtId);
+        }
+        if (user?.mahallaId && !selectedMahallaId) {
+          setSelectedMahallaIdState(user.mahallaId);
+          localStorage.setItem('global_selected_mahalla_id', user.mahallaId);
+        }
       }
     }
-  }, [user, isDistrictAdmin, isMahallaOperator]);
+
+    prevUserRef.current = currentUserId;
+  }, [user, isSuperAdmin, isDistrictAdmin, isMahallaOperator]);
 
   const setSelectedDistrictId = (id: string) => {
     setSelectedDistrictIdState(id);
@@ -61,12 +98,10 @@ export const AreaFilterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const clearFilters = () => {
-    if (isSuperAdmin) {
-      setSelectedDistrictIdState('');
-      setSelectedMahallaIdState('');
-      localStorage.removeItem('global_selected_district_id');
-      localStorage.removeItem('global_selected_mahalla_id');
-    }
+    setSelectedDistrictIdState('');
+    setSelectedMahallaIdState('');
+    localStorage.removeItem('global_selected_district_id');
+    localStorage.removeItem('global_selected_mahalla_id');
   };
 
   return (

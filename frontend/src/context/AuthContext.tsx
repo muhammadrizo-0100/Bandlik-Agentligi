@@ -81,6 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token]);
 
   const login = async (credentials: LoginDto) => {
+    // Har yangi tizimga kirishda oldingi sessiya filtrlarini tozalab, default holatga keltirish
+    localStorage.removeItem('global_selected_district_id');
+    localStorage.removeItem('global_selected_mahalla_id');
+
     const res = await authApi.login(credentials);
     const normalized = normalizeUser(res.user);
     setUser(normalized);
@@ -97,6 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
     localStorage.removeItem('monitoring_token');
     localStorage.removeItem('monitoring_user');
+    localStorage.removeItem('global_selected_district_id');
+    localStorage.removeItem('global_selected_mahalla_id');
   };
 
   const userRole = user?.roleCode || (typeof user?.role === 'string' ? user.role : (user?.role as any)?.code);
