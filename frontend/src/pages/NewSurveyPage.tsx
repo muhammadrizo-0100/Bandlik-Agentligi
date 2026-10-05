@@ -68,7 +68,7 @@ export const NewSurveyPage: React.FC = () => {
   const [step, setStep] = useState<number>(initialDraft?.step || 1);
   const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>(
-    initialDraft?.selectedDistrictId || (isSuperAdmin ? globalDistrictId : '') || user?.districtId || '',
+    initialDraft?.selectedDistrictId || (isSuperAdmin ? '' : user?.districtId || ''),
   );
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,7 @@ export const NewSurveyPage: React.FC = () => {
 
   // Form State
   const [mahallaId, setMahallaId] = useState<string>(
-    initialDraft?.mahallaId || (isMahallaOperator ? user?.mahallaId : globalMahallaId) || '',
+    initialDraft?.mahallaId || (isMahallaOperator ? user?.mahallaId || '' : ''),
   );
   const [surveyMethod, setSurveyMethod] = useState<SurveyMethod>(
     initialDraft?.surveyMethod || 'HOME_VISIT',
@@ -228,17 +228,10 @@ export const NewSurveyPage: React.FC = () => {
         .getDistrictsDropdown()
         .then((data) => {
           setDistricts(data);
-          if (!selectedDistrictId && data.length > 0) {
-            const match =
-              (globalDistrictId && data.find((d) => d.id === globalDistrictId)) ||
-              data.find((d) => d.id === user?.districtId) ||
-              data[0];
-            setSelectedDistrictId(match.id);
-          }
         })
         .catch(() => {});
     }
-  }, [isSuperAdmin, globalDistrictId]);
+  }, [isSuperAdmin]);
 
   // Tanlangan tuman bo'yicha mahallalar ro'yxatini yuklash
   const isInitialMount = React.useRef(true);
@@ -472,6 +465,9 @@ export const NewSurveyPage: React.FC = () => {
     setStep(1);
     if (!isMahallaOperator) {
       setMahallaId('');
+    }
+    if (isSuperAdmin) {
+      setSelectedDistrictId('');
     }
     setFullName('');
     setBirthDate('');

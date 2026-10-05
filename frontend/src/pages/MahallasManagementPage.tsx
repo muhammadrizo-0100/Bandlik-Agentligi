@@ -34,13 +34,13 @@ export const MahallasManagementPage: React.FC = () => {
   // Mahalla qo'shish modal
   const [showAddMahallaModal, setShowAddMahallaModal] = useState(false);
   const [mahallaName, setMahallaName] = useState('');
-  const [selectedDistrictId, setSelectedDistrictId] = useState(globalDistrictId || user?.districtId || '');
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
   const [mahallaCode, setMahallaCode] = useState('');
 
   // Tuman qo'shish modal (Faqat Super Admin)
   const [showAddDistrictModal, setShowAddDistrictModal] = useState(false);
   const [districtName, setDistrictName] = useState('');
-  const [districtRegion, setDistrictRegion] = useState('Namangan viloyati');
+  const [districtRegion, setDistrictRegion] = useState('');
   const [districtCode, setDistrictCode] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -58,9 +58,6 @@ export const MahallasManagementPage: React.FC = () => {
       ]);
       setMahallas(mRes.items);
       setDistricts(dRes);
-      if (!selectedDistrictId && (globalDistrictId || dRes.length > 0)) {
-        setSelectedDistrictId(globalDistrictId || dRes[0].id);
-      }
     } catch {
       // error
     } finally {
@@ -74,19 +71,29 @@ export const MahallasManagementPage: React.FC = () => {
 
   const handleCreateMahalla = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mahallaName.trim()) return;
+    if (!mahallaName.trim()) {
+      setError('Iltimos, mahalla nomini kiriting');
+      return;
+    }
+
+    const targetDistrictId = isDistrictAdmin ? user?.districtId : selectedDistrictId;
+    if (!targetDistrictId) {
+      setError('Iltimos, mahallaga tegishli tumanni tanlang');
+      return;
+    }
 
     try {
       setSubmitting(true);
       setError(null);
       await monitoringApi.createMahalla({
         name: mahallaName.trim(),
-        districtId: isDistrictAdmin ? user?.districtId : (selectedDistrictId || globalDistrictId),
+        districtId: targetDistrictId,
         code: mahallaCode.trim() || undefined,
       } as any);
       setShowAddMahallaModal(false);
       setMahallaName('');
       setMahallaCode('');
+      setSelectedDistrictId('');
       fetchData();
     } catch (err: any) {
       setError(err.message || 'Mahallani qo\'shishda xatolik yuz berdi');
@@ -109,6 +116,7 @@ export const MahallasManagementPage: React.FC = () => {
       });
       setShowAddDistrictModal(false);
       setDistrictName('');
+      setDistrictRegion('');
       setDistrictCode('');
       fetchData();
     } catch (err: any) {
@@ -220,7 +228,13 @@ export const MahallasManagementPage: React.FC = () => {
               {isSuperAdmin && (
                 <button
                   type="button"
-                  onClick={() => setShowAddDistrictModal(true)}
+                  onClick={() => {
+                    setDistrictName('');
+                    setDistrictRegion('');
+                    setDistrictCode('');
+                    setError(null);
+                    setShowAddDistrictModal(true);
+                  }}
                   className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
@@ -230,7 +244,13 @@ export const MahallasManagementPage: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setShowAddMahallaModal(true)}
+                onClick={() => {
+                  setSelectedDistrictId(isDistrictAdmin ? user?.districtId || '' : '');
+                  setMahallaName('');
+                  setMahallaCode('');
+                  setError(null);
+                  setShowAddMahallaModal(true);
+                }}
                 className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -415,6 +435,7 @@ export const MahallasManagementPage: React.FC = () => {
                     <CustomSelect
                       label="Qaysi tumanga tegishli"
                       required
+                      searchable={true}
                       placeholder="Tumanni tanlang..."
                       value={selectedDistrictId}
                       onChange={(val) => setSelectedDistrictId(val)}
@@ -497,7 +518,7 @@ export const MahallasManagementPage: React.FC = () => {
                 <Input
                   label="Viloyat"
                   required
-                  placeholder="Namangan viloyati"
+                  placeholder="Masalan: Namangan viloyati"
                   value={districtRegion}
                   onChange={(e) => setDistrictRegion(e.target.value)}
                 />

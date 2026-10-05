@@ -43,8 +43,8 @@ export const UsersManagementPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('+998');
-  const [password, setPassword] = useState('Admin123!');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [selectedDistrictId, setSelectedDistrictId] = useState('');
   const [mahallaId, setMahallaId] = useState('');
@@ -87,14 +87,12 @@ export const UsersManagementPage: React.FC = () => {
     setLastName('');
     setUsername('');
     setPhone('');
-    setPassword('Admin123!');
+    setPassword('');
     setShowPassword(false);
     setError(null);
 
-    // Boshlang'ich tuman va mahalla tanlovi
-    const defaultDistrictId = isDistrictAdmin
-      ? currentUser?.districtId || ''
-      : districts[0]?.id || '';
+    // Boshlang'ich tuman va mahalla tanlovi (har doim bo'sh tanlanmagan holatda turadi)
+    const defaultDistrictId = isDistrictAdmin ? currentUser?.districtId || '' : '';
     setSelectedDistrictId(defaultDistrictId);
     setMahallaId('');
 
@@ -677,7 +675,7 @@ export const UsersManagementPage: React.FC = () => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="••••••••"
+                      placeholder="Parolni kiriting..."
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
@@ -698,6 +696,7 @@ export const UsersManagementPage: React.FC = () => {
                   <CustomSelect
                     label="Biriktirilgan tuman"
                     required
+                    searchable={true}
                     placeholder="Tumanni tanlang..."
                     disabled={isDistrictAdmin}
                     value={selectedDistrictId}
@@ -716,6 +715,7 @@ export const UsersManagementPage: React.FC = () => {
                     <CustomSelect
                       label="Biriktiriladigan mahalla (MFY)"
                       required
+                      searchable={true}
                       placeholder={
                         selectedDistrictId
                           ? 'Mahallani tanlang...'

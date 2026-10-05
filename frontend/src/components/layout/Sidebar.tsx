@@ -15,6 +15,7 @@ import {
   MapPin,
   Check,
   X,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -51,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
+  const [districtSearch, setDistrictSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -190,51 +192,89 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Super Admin Tuman Tanlash Dropdowni */}
             {isSuperAdmin && isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 max-h-56 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onDistrictChange && onDistrictChange('');
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2 rounded-xl transition ${
-                    !selectedDistrictId
-                      ? 'font-bold text-[#163D5C] bg-[#163D5C]/10 border border-[#163D5C]/20'
-                      : 'text-slate-600 hover:bg-slate-50 font-medium'
-                  }`}
-                >
-                  <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                    {!selectedDistrictId && (
-                      <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
-                    )}
-                  </div>
-                  <span>Barcha tumanlar</span>
-                </button>
-                {districts.map((d) => {
-                  const isSelected = selectedDistrictId === d.id;
-                  return (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                <div className="relative mb-2">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Tumanni qidirish..."
+                    value={districtSearch}
+                    onChange={(e) => setDistrictSearch(e.target.value)}
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163D5C] text-slate-800 placeholder-slate-400 font-medium"
+                  />
+                  {districtSearch && (
                     <button
-                      key={d.id}
                       type="button"
-                      onClick={() => {
-                        onDistrictChange && onDistrictChange(d.id);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2 rounded-xl transition ${
-                        isSelected
-                          ? 'font-bold text-[#163D5C] bg-[#163D5C]/10 border border-[#163D5C]/20'
-                          : 'text-slate-600 hover:bg-slate-50 font-medium'
-                      }`}
+                      onClick={() => setDistrictSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                        {isSelected && (
-                          <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
-                        )}
-                      </div>
-                      <span className="truncate">{d.name}</span>
+                      <X className="w-3.5 h-3.5" />
                     </button>
-                  );
-                })}
+                  )}
+                </div>
+
+                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDistrictChange && onDistrictChange('');
+                      setIsDropdownOpen(false);
+                      setDistrictSearch('');
+                    }}
+                    className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center gap-2 rounded-xl transition ${
+                      !selectedDistrictId
+                        ? 'font-bold text-[#163D5C] bg-[#163D5C]/10 border border-[#163D5C]/20'
+                        : 'text-slate-600 hover:bg-slate-50 font-medium'
+                    }`}
+                  >
+                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                      {!selectedDistrictId && (
+                        <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
+                      )}
+                    </div>
+                    <span>Barcha tumanlar</span>
+                  </button>
+
+                  {districts
+                    .filter((d) =>
+                      d.name.toLowerCase().includes(districtSearch.toLowerCase().trim()),
+                    )
+                    .map((d) => {
+                      const isSelected = selectedDistrictId === d.id;
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => {
+                            onDistrictChange && onDistrictChange(d.id);
+                            setIsDropdownOpen(false);
+                            setDistrictSearch('');
+                          }}
+                          className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center gap-2 rounded-xl transition ${
+                            isSelected
+                              ? 'font-bold text-[#163D5C] bg-[#163D5C]/10 border border-[#163D5C]/20'
+                              : 'text-slate-600 hover:bg-slate-50 font-medium'
+                          }`}
+                        >
+                          <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                            {isSelected && (
+                              <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
+                            )}
+                          </div>
+                          <span className="truncate">{d.name}</span>
+                        </button>
+                      );
+                    })}
+
+                  {districts.filter((d) =>
+                    d.name.toLowerCase().includes(districtSearch.toLowerCase().trim()),
+                  ).length === 0 && (
+                    <div className="px-3 py-3 text-center text-xs text-slate-400">
+                      Tuman topilmadi
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

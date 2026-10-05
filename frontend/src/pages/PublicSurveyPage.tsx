@@ -70,7 +70,7 @@ export const PublicSurveyPage: React.FC = () => {
   const [fullName, setFullName] = useState<string>(initialDraft?.fullName || '');
   const [birthDate, setBirthDate] = useState<string>(initialDraft?.birthDate || '');
   const [pinfl, setPinfl] = useState<string>(initialDraft?.pinfl || '');
-  const [phone, setPhone] = useState<string>(initialDraft?.phone || '+998');
+  const [phone, setPhone] = useState<string>(initialDraft?.phone || '');
   const [parentPhone, setParentPhone] = useState<string>(initialDraft?.parentPhone || '');
   const [pinflWarning, setPinflWarning] = useState<string | null>(null);
 
@@ -97,10 +97,13 @@ export const PublicSurveyPage: React.FC = () => {
     localStorage.removeItem('public_survey_draft');
     setDraftSaved(false);
     setStep(1);
+    setSelectedDistrictId('');
+    setMahallaId('');
+    setCustomMahallaName('');
     setFullName('');
     setBirthDate('');
     setPinfl('');
-    setPhone('+998');
+    setPhone('');
     setParentPhone('');
     setMahallaId('');
     setCustomMahallaName('');
@@ -255,14 +258,6 @@ export const PublicSurveyPage: React.FC = () => {
       .getDistrictsDropdown()
       .then((data) => {
         setDistricts(data);
-        if (data && data.length > 0) {
-          // Boshlang'ich tuman (agar draftdan olinmagan bo'lsa)
-          setSelectedDistrictId((curr) => {
-            if (curr) return curr;
-            const def = data.find((d) => d.name.toLowerCase().includes('davlatobod')) || data[0];
-            return def.id;
-          });
-        }
       })
       .catch((err) => console.error('Tumanlarni yuklashda xatolik:', err));
   }, []);

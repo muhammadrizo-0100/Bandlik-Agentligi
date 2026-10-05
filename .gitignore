@@ -38,4 +38,5 @@ yarn-error.log*
 
 # Docker
 postgres_data/
+*.tsbuildinfo
 pgadmin_data/

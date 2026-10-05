@@ -124,7 +124,7 @@ export const LoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  placeholder="••••••••"
+                  placeholder="Parolni kiriting..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#163D5C] focus:ring-2 focus:ring-[#163D5C]/15 transition"

@@ -32,13 +32,14 @@ import { useAreaFilter } from '../context/AreaFilterContext';
 
 export const CitizensPage: React.FC = () => {
   const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator, isDataReviewer } = useAuth();
-  const { selectedDistrictId, selectedMahallaId, setSelectedMahallaId } = useAreaFilter();
+  const { selectedDistrictId, setSelectedDistrictId, selectedMahallaId, setSelectedMahallaId } = useAreaFilter();
   const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const canEditOrDelete = isSuperAdmin || isDistrictAdmin || isMahallaOperator;
 
+  const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
   const [citizens, setCitizens] = useState<Citizen[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
@@ -121,6 +122,15 @@ export const CitizensPage: React.FC = () => {
       .then((res) => setMahallas(res as any))
       .catch(() => {});
   }, [selectedDistrictId]);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      monitoringApi
+        .getDistrictsDropdown()
+        .then((res) => setDistricts(res))
+        .catch(() => {});
+    }
+  }, [isSuperAdmin]);
 
   // Avtomatik to'g'ridan-to'g'ri (debounced live search) qidirish
   useEffect(() => {
@@ -299,10 +309,34 @@ export const CitizensPage: React.FC = () => {
             )}
           </div>
 
+          {isSuperAdmin && (
+            <div className="w-full md:w-52">
+              <CustomSelect
+                placeholder="Barcha tumanlar"
+                searchable={true}
+                value={selectedDistrictId}
+                onChange={(val) => {
+                  setSelectedDistrictId(val);
+                  setSelectedMahalla('');
+                  setSelectedMahallaId('');
+                  setPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Barcha tumanlar' },
+                  ...districts.map((d) => ({
+                    value: d.id,
+                    label: d.name,
+                  })),
+                ]}
+              />
+            </div>
+          )}
+
           {!isMahallaOperator && (
             <div className="w-full md:w-56">
               <CustomSelect
                 placeholder="Barcha mahallalar"
+                searchable={true}
                 value={selectedMahalla}
                 onChange={(val) => {
                   setSelectedMahalla(val);
@@ -757,6 +791,7 @@ export const CitizensPage: React.FC = () => {
                       <CustomSelect
                         label="Mahalla nomi"
                         required
+                        searchable={true}
                         placeholder="Mahallani tanlang..."
                         value={editForm.mahallaId}
                         onChange={(val) => setEditForm({ ...editForm, mahallaId: val })}

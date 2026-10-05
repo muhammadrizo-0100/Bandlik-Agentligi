@@ -34,12 +34,13 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   helperText,
   disabled = false,
   required = false,
-  searchable = false,
+  searchable,
   className = '',
   triggerClassName = '',
   icon,
   id,
 }) => {
+  const isSearchable = searchable !== undefined ? searchable : options.length >= 4;
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +60,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       // Auto-focus search input if searchable
-      if (searchable) {
+      if (isSearchable) {
         setTimeout(() => searchInputRef.current?.focus(), 60);
       }
     } else {
@@ -68,7 +69,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, searchable]);
+  }, [isOpen, isSearchable]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -80,7 +81,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     setIsOpen(false);
   };
 
-  const filteredOptions = searchable && searchQuery.trim()
+  const filteredOptions = isSearchable && searchQuery.trim()
     ? options.filter((opt) => 
         opt.label.toLowerCase().includes(searchQuery.toLowerCase()) || 
         opt.sublabel?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -123,7 +124,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-            {searchable && (
+            {isSearchable && (
               <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-normal hidden sm:inline-block">
                 Qidiruv
               </span>
@@ -139,7 +140,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         {/* Floating Dropdown Menu */}
         {isOpen && !disabled && (
           <div className="absolute left-0 right-0 mt-1.5 max-h-72 flex flex-col bg-white rounded-2xl shadow-2xl shadow-slate-300/80 border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
-            {searchable && (
+            {isSearchable && (
               <div className="p-2.5 border-b border-slate-100 bg-slate-50/80">
                 <div className="relative flex items-center">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
