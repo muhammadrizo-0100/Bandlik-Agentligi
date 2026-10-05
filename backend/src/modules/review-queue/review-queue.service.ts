@@ -166,7 +166,6 @@ export class ReviewQueueService {
       // Bir vaqtning o'zida bir nechta xodim qabul qilishini oldini olish uchun qat'iy row-level lock (pessimistic_write)
       const survey = await manager.findOne(SurveyEntity, {
         where: { id },
-        relations: { citizen: true },
         lock: { mode: 'pessimistic_write' },
       });
 
@@ -182,7 +181,7 @@ export class ReviewQueueService {
 
       // 1. Agar tasdiqlansa (APPROVE_UPDATE) -> Fuqaroning holati yangilanadi
       if (dto.action === ReviewAction.APPROVE_UPDATE) {
-        if (!survey.citizen) {
+        if (!survey.citizenId) {
           throw new BadRequestException(
             'Bog\'langan fuqaro topilmadi, to\'g\'ridan to\'g\'ri tasdiqlab bo\'lmaydi',
           );
