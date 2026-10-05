@@ -6,6 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MahallaEntity } from '../../database/entities/mahalla.entity';
+import { DistrictEntity } from '../../database/entities/district.entity';
+import { NAMANGAN_MAHALLAS } from '../../database/namangan-data.js';
 import { CreateMahallaDto } from './dto/create-mahalla.dto';
 import { UpdateMahallaDto } from './dto/update-mahalla.dto';
 import { FilterMahallaDto } from './dto/filter-mahalla.dto';
@@ -96,7 +98,7 @@ export class MahallasService {
       where.districtId = districtId;
     }
 
-    return this.mahallaRepository.find({
+    let items = await this.mahallaRepository.find({
       where,
       select: {
         id: true,
@@ -106,6 +108,49 @@ export class MahallasService {
       relations: { district: true },
       order: { name: 'ASC' },
     });
+
+    if (districtId && items.length < 5) {
+      await this.ensureMahallasForDistrict(districtId);
+      items = await this.mahallaRepository.find({
+        where,
+        select: {
+          id: true,
+          name: true,
+          districtId: true,
+        },
+        relations: { district: true },
+        order: { name: 'ASC' },
+      });
+    }
+
+    return items;
+  }
+
+  private async ensureMahallasForDistrict(districtId: string) {
+    try {
+      const distRepo = this.mahallaRepository.manager.getRepository(DistrictEntity);
+      const district = await distRepo.findOne({ where: { id: districtId } });
+      if (!district) return;
+
+      const mahallasList = NAMANGAN_MAHALLAS[district.name] || [];
+
+      for (const mName of mahallasList) {
+        const exists = await this.mahallaRepository.findOne({
+          where: { name: mName, districtId: district.id },
+        });
+        if (!exists) {
+          const entity = this.mahallaRepository.create({
+            name: mName,
+            district,
+            districtId: district.id,
+            region: 'Namangan viloyati',
+          });
+          await this.mahallaRepository.save(entity);
+        }
+      }
+    } catch (e) {
+      // safely ignore
+    }
   }
 
   /**

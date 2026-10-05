@@ -5,6 +5,8 @@ import { DistrictEntity } from '../../database/entities/district.entity';
 import { CreateDistrictDto } from './dto/create-district.dto';
 import { UpdateDistrictDto } from './dto/update-district.dto';
 
+import { NAMANGAN_DISTRICTS } from '../../database/namangan-data.js';
+
 @Injectable()
 export class DistrictsService {
   constructor(
@@ -20,11 +22,51 @@ export class DistrictsService {
   }
 
   async getDropdown() {
-    return this.districtRepo.find({
+    let list = await this.districtRepo.find({
       where: { isActive: true },
       select: { id: true, name: true, code: true, region: true },
       order: { name: 'ASC' },
     });
+
+    if (list.length < NAMANGAN_DISTRICTS.length) {
+      await this.ensureAllDistricts();
+      list = await this.districtRepo.find({
+        where: { isActive: true },
+        select: { id: true, name: true, code: true, region: true },
+        order: { name: 'ASC' },
+      });
+    }
+
+    return list;
+  }
+
+  private async ensureAllDistricts() {
+    for (const item of NAMANGAN_DISTRICTS) {
+      try {
+        const existing = await this.districtRepo.findOne({
+          where: [
+            { name: item.name },
+            { code: item.code },
+            { name: item.name.replace(' tumani', '') }
+          ],
+        });
+
+        if (!existing) {
+          const district = this.districtRepo.create({
+            name: item.name,
+            region: 'Namangan viloyati',
+            code: item.code,
+            isActive: true,
+          });
+          await this.districtRepo.save(district);
+        } else if (existing.name !== item.name) {
+          existing.name = item.name;
+          await this.districtRepo.save(existing);
+        }
+      } catch (err) {
+        // ignore unique constraint collisions safely
+      }
+    }
   }
 
   async findOne(id: string) {
