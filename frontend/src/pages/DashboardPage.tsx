@@ -422,41 +422,14 @@ export const DashboardPage: React.FC = () => {
     const now = new Date();
     const currentDay = now.getDay();
     const distanceToMonday = (currentDay + 6) % 7;
-    const currentMonday = new Date(now);
-    currentMonday.setDate(now.getDate() - distanceToMonday);
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - distanceToMonday);
 
-    // 1. Joriy haftada xatlov ma'lumotlari bormi-yo'qligini tekshirish
-    let hasCurrentWeekData = false;
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(currentMonday);
-      d.setDate(currentMonday.getDate() + i);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
-      const matched = trendList.find((t) => t.date === dateStr);
-      if (matched && Number(matched.count) > 0) {
-        hasCurrentWeekData = true;
-        break;
-      }
-    }
-
-    // 2. Agar joriy haftada ma'lumot bo'lmasa, eng so'nggi xatlov o'tgan haftaning to'liq 7 kunini olamiz (chiziq uzilmasligi uchun)
-    let baseMonday = currentMonday;
-    if (!hasCurrentWeekData && trendList.length > 0) {
-      const lastItemDate = new Date(trendList[trendList.length - 1].date + 'T00:00:00');
-      if (!isNaN(lastItemDate.getTime())) {
-        const lastDay = lastItemDate.getDay();
-        const dist = (lastDay + 6) % 7;
-        baseMonday = new Date(lastItemDate);
-        baseMonday.setDate(lastItemDate.getDate() - dist);
-      }
-    }
-
+    // Faqat joriy haftaning 7 kuni (Dushanbadan Yakshanbagacha)
     const weekDays = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(baseMonday);
-      d.setDate(baseMonday.getDate() + i);
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -663,6 +636,42 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
       </div>
+    );
+  };
+
+  // Haftalik trend chizig'ida bugungi kunning nuqtasini YASHIL qilib ko'rsatish
+  const renderWeeklyTrendDot = (dotProps: any) => {
+    const { cx, cy, payload } = dotProps;
+    if (cx == null || cy == null) return null;
+
+    if (payload?.isToday) {
+      return (
+        <g key={`dot-today-${payload.dayLabel}`}>
+          {/* Yashil tashqi nurlanish (halo halqa) */}
+          <circle cx={cx} cy={cy} r={8} fill="#10B981" opacity={0.3} />
+          {/* Asosiy yashil nuqta */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={4.5}
+            fill="#10B981"
+            stroke="#FFFFFF"
+            strokeWidth={2}
+          />
+        </g>
+      );
+    }
+
+    return (
+      <circle
+        key={`dot-${payload?.dayLabel}`}
+        cx={cx}
+        cy={cy}
+        r={3}
+        fill="#163D5C"
+        stroke="#FFFFFF"
+        strokeWidth={1.5}
+      />
     );
   };
 
@@ -1503,7 +1512,21 @@ export const DashboardPage: React.FC = () => {
                       dataKey="dayLabel"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#64748B', fontSize: 11, fontWeight: 700 }}
+                      tick={({ x, y, payload }) => {
+                        const isToday = weeklyTrendData.find((d) => d.dayLabel === payload.value)?.isToday;
+                        return (
+                          <text
+                            x={x}
+                            y={Number(y) + 12}
+                            textAnchor="middle"
+                            fill={isToday ? '#10B981' : '#64748B'}
+                            fontSize={isToday ? 12 : 11}
+                            fontWeight={isToday ? 900 : 700}
+                          >
+                            {payload.value}
+                          </text>
+                        );
+                      }}
                     />
                     <Tooltip content={<CustomWeeklyTrendTooltip />} />
                     <Line
@@ -1511,8 +1534,8 @@ export const DashboardPage: React.FC = () => {
                       dataKey="count"
                       stroke="#163D5C"
                       strokeWidth={2.5}
-                      dot={{ r: 3.5, fill: '#163D5C', strokeWidth: 2, stroke: '#FFFFFF' }}
-                      activeDot={{ r: 5.5, fill: '#163D5C', stroke: '#93C5FD', strokeWidth: 3 }}
+                      dot={renderWeeklyTrendDot}
+                      activeDot={{ r: 6, fill: '#10B981', stroke: '#FFFFFF', strokeWidth: 2 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
