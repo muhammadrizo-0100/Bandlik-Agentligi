@@ -422,15 +422,41 @@ export const DashboardPage: React.FC = () => {
     const now = new Date();
     const currentDay = now.getDay();
     const distanceToMonday = (currentDay + 6) % 7;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - distanceToMonday);
+    const currentMonday = new Date(now);
+    currentMonday.setDate(now.getDate() - distanceToMonday);
+
+    // 1. Joriy haftada xatlov ma'lumotlari bormi-yo'qligini tekshirish
+    let hasCurrentWeekData = false;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(currentMonday);
+      d.setDate(currentMonday.getDate() + i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const matched = trendList.find((t) => t.date === dateStr);
+      if (matched && Number(matched.count) > 0) {
+        hasCurrentWeekData = true;
+        break;
+      }
+    }
+
+    // 2. Agar joriy haftada ma'lumot bo'lmasa, eng so'nggi xatlov o'tgan haftaning to'liq 7 kunini olamiz (chiziq uzilmasligi uchun)
+    let baseMonday = currentMonday;
+    if (!hasCurrentWeekData && trendList.length > 0) {
+      const lastItemDate = new Date(trendList[trendList.length - 1].date + 'T00:00:00');
+      if (!isNaN(lastItemDate.getTime())) {
+        const lastDay = lastItemDate.getDay();
+        const dist = (lastDay + 6) % 7;
+        baseMonday = new Date(lastItemDate);
+        baseMonday.setDate(lastItemDate.getDate() - dist);
+      }
+    }
 
     const weekDays = [];
-    let currentWeekHasData = false;
-
     for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+      const d = new Date(baseMonday);
+      d.setDate(baseMonday.getDate() + i);
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -438,7 +464,6 @@ export const DashboardPage: React.FC = () => {
 
       const matched = trendList.find((t) => t.date === dateStr);
       const count = matched ? Number(matched.count) || 0 : 0;
-      if (count > 0) currentWeekHasData = true;
 
       weekDays.push({
         dayLabel: uzDaysShort[i],
@@ -454,28 +479,7 @@ export const DashboardPage: React.FC = () => {
       });
     }
 
-    if (currentWeekHasData || trendList.length === 0) {
-      return weekDays;
-    }
-
-    return trendList.slice(-7).map((t) => {
-      const d = new Date(t.date + 'T00:00:00');
-      const dayIdx = (d.getDay() + 6) % 7;
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      return {
-        dayLabel: uzDaysShort[dayIdx] || 'Kun',
-        fullDayName: uzDaysFull[dayIdx] || 'Kun',
-        dateStr: t.date,
-        displayDate: `${dd}.${mm}`,
-        count: Number(t.count) || 0,
-        official: Number((t as any).official) || 0,
-        unofficial: Number((t as any).unofficial) || 0,
-        unemployed: Number((t as any).unemployed) || 0,
-        noWish: Number((t as any).noWish) || 0,
-        isToday: d.toDateString() === now.toDateString(),
-      };
-    });
+    return weekDays;
   }, [summary?.trendData]);
 
   // So'nggi xatlov eventining sanasi va tafsilotlari (soatsiz, faqat rasmiy sana)
