@@ -52,7 +52,7 @@ export const MahallasManagementPage: React.FC = () => {
       const [mRes, dRes] = await Promise.all([
         monitoringApi.getMahallas({
           districtId: globalDistrictId || undefined,
-          limit: 200,
+          limit: 100,
         }),
         isSuperAdmin ? monitoringApi.getDistricts() : Promise.resolve([]),
       ]);
@@ -248,7 +248,11 @@ export const MahallasManagementPage: React.FC = () => {
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h4 className="text-base font-black text-slate-900 tracking-tight">
-                  {user?.districtName || 'Davlatobod tumani'} mahallalari
+                  {isSuperAdmin
+                    ? (globalDistrictId
+                        ? `${districts.find((d) => d.id === globalDistrictId)?.name || 'Tanlangan tuman'} mahallalari`
+                        : 'Barcha mahallalar (Viloyat boʻyicha)')
+                    : `${user?.districtName || 'Tuman'} mahallalari`}
                 </h4>
                 <p className="text-xs text-slate-400">
                   Biriktirilgan operatorlar va yoshlar xatlovi hududlari ({filteredMahallas.length} ta)
