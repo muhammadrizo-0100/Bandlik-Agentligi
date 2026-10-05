@@ -19,9 +19,11 @@ import {
   Search,
 } from 'lucide-react';
 import { formatMahallaName } from '../utils/formatters';
+import { useAreaFilter } from '../context/AreaFilterContext';
 
 export const MahallasManagementPage: React.FC = () => {
   const { user, isSuperAdmin, isDistrictAdmin } = useAuth();
+  const { selectedDistrictId: globalDistrictId } = useAreaFilter();
 
   const [activeTab, setActiveTab] = useState<'MAHALLAS' | 'DISTRICTS'>('MAHALLAS');
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
@@ -32,7 +34,7 @@ export const MahallasManagementPage: React.FC = () => {
   // Mahalla qo'shish modal
   const [showAddMahallaModal, setShowAddMahallaModal] = useState(false);
   const [mahallaName, setMahallaName] = useState('');
-  const [selectedDistrictId, setSelectedDistrictId] = useState(user?.districtId || '');
+  const [selectedDistrictId, setSelectedDistrictId] = useState(globalDistrictId || user?.districtId || '');
   const [mahallaCode, setMahallaCode] = useState('');
 
   // Tuman qo'shish modal (Faqat Super Admin)
@@ -48,13 +50,16 @@ export const MahallasManagementPage: React.FC = () => {
     try {
       setLoading(true);
       const [mRes, dRes] = await Promise.all([
-        monitoringApi.getMahallas({ limit: 100 }),
+        monitoringApi.getMahallas({
+          districtId: globalDistrictId || undefined,
+          limit: 200,
+        }),
         isSuperAdmin ? monitoringApi.getDistricts() : Promise.resolve([]),
       ]);
       setMahallas(mRes.items);
       setDistricts(dRes);
-      if (!selectedDistrictId && dRes.length > 0) {
-        setSelectedDistrictId(dRes[0].id);
+      if (!selectedDistrictId && (globalDistrictId || dRes.length > 0)) {
+        setSelectedDistrictId(globalDistrictId || dRes[0].id);
       }
     } catch {
       // error
@@ -65,7 +70,7 @@ export const MahallasManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, globalDistrictId]);
 
   const handleCreateMahalla = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +81,7 @@ export const MahallasManagementPage: React.FC = () => {
       setError(null);
       await monitoringApi.createMahalla({
         name: mahallaName.trim(),
-        districtId: isDistrictAdmin ? user?.districtId : selectedDistrictId,
+        districtId: isDistrictAdmin ? user?.districtId : (selectedDistrictId || globalDistrictId),
         code: mahallaCode.trim() || undefined,
       } as any);
       setShowAddMahallaModal(false);

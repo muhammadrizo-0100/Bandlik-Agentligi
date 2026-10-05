@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useAreaFilter } from '../../context/AreaFilterContext';
 import { monitoringApi } from '../../api/monitoring.api';
 
 interface SidebarProps {
@@ -26,9 +27,18 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  selectedDistrictId,
-  onDistrictChange,
+  selectedDistrictId: propDistrictId,
+  onDistrictChange: propOnDistrictChange,
 }) => {
+  const areaFilter = useAreaFilter();
+  const selectedDistrictId = propDistrictId !== undefined ? propDistrictId : areaFilter.selectedDistrictId;
+  const onDistrictChange = (id: string) => {
+    areaFilter.setSelectedDistrictId(id);
+    if (propOnDistrictChange) {
+      propOnDistrictChange(id);
+    }
+  };
+
   const {
     user,
     logout,

@@ -43,43 +43,144 @@ import {
   Search,
 } from 'lucide-react';
 
+const getInitialPublicDraft = () => {
+  try {
+    const raw = localStorage.getItem('public_survey_draft');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const PublicSurveyPage: React.FC = () => {
   const navigate = useNavigate();
+  const initialDraft = React.useMemo(() => getInitialPublicDraft(), []);
 
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(initialDraft?.step || 1);
   const [districts, setDistricts] = useState<Array<{ id: string; name: string; region: string }>>([]);
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>('');
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>(initialDraft?.selectedDistrictId || '');
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [loadingMahallas, setLoadingMahallas] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const [draftSaved, setDraftSaved] = useState<boolean>(Boolean(initialDraft));
 
   // 1-bosqich: Shaxsiy ma'lumotlar
-  const [fullName, setFullName] = useState<string>('');
-  const [birthDate, setBirthDate] = useState<string>('');
-  const [pinfl, setPinfl] = useState<string>('');
-  const [phone, setPhone] = useState<string>('+998');
-  const [parentPhone, setParentPhone] = useState<string>('');
+  const [fullName, setFullName] = useState<string>(initialDraft?.fullName || '');
+  const [birthDate, setBirthDate] = useState<string>(initialDraft?.birthDate || '');
+  const [pinfl, setPinfl] = useState<string>(initialDraft?.pinfl || '');
+  const [phone, setPhone] = useState<string>(initialDraft?.phone || '+998');
+  const [parentPhone, setParentPhone] = useState<string>(initialDraft?.parentPhone || '');
   const [pinflWarning, setPinflWarning] = useState<string | null>(null);
 
   // 2-bosqich: Yashash hududi
-  const [mahallaId, setMahallaId] = useState<string>('');
-  const [customMahallaName, setCustomMahallaName] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [education, setEducation] = useState<string>('');
-  const [specialty, setSpecialty] = useState<string>('');
+  const [mahallaId, setMahallaId] = useState<string>(initialDraft?.mahallaId || '');
+  const [customMahallaName, setCustomMahallaName] = useState<string>(initialDraft?.customMahallaName || '');
+  const [address, setAddress] = useState<string>(initialDraft?.address || '');
+  const [education, setEducation] = useState<string>(initialDraft?.education || '');
+  const [specialty, setSpecialty] = useState<string>(initialDraft?.specialty || '');
 
   // 3-bosqich: Bandlik holati
-  const [mainCategory, setMainCategory] = useState<EmploymentCategory>('UNEMPLOYED');
-  const [officialWorkplace, setOfficialWorkplace] = useState<string>('');
-  const [unofficialActivityType, setUnofficialActivityType] = useState<string>('');
-  const [noWishReason, setNoWishReason] = useState<NoWishReason>('CHILD_CARE');
-  const [unemployedDirections, setUnemployedDirections] = useState<UnemployedDirection[]>([
-    'PERMANENT_JOB',
+  const [mainCategory, setMainCategory] = useState<EmploymentCategory>(initialDraft?.mainCategory || 'UNEMPLOYED');
+  const [officialWorkplace, setOfficialWorkplace] = useState<string>(initialDraft?.officialWorkplace || '');
+  const [unofficialActivityType, setUnofficialActivityType] = useState<string>(initialDraft?.unofficialActivityType || '');
+  const [noWishReason, setNoWishReason] = useState<NoWishReason>(initialDraft?.noWishReason || 'CHILD_CARE');
+  const [unemployedDirections, setUnemployedDirections] = useState<UnemployedDirection[]>(
+    initialDraft?.unemployedDirections || ['PERMANENT_JOB'],
+  );
+  const [unemployedAdditionalNote, setUnemployedAdditionalNote] = useState<string>(initialDraft?.unemployedAdditionalNote || '');
+  const [otherReasonNote, setOtherReasonNote] = useState<string>(initialDraft?.otherReasonNote || '');
+
+  // Qoralamani tozalash
+  const clearDraft = () => {
+    localStorage.removeItem('public_survey_draft');
+    setDraftSaved(false);
+    setStep(1);
+    setFullName('');
+    setBirthDate('');
+    setPinfl('');
+    setPhone('+998');
+    setParentPhone('');
+    setMahallaId('');
+    setCustomMahallaName('');
+    setAddress('');
+    setEducation('');
+    setSpecialty('');
+    setMainCategory('UNEMPLOYED');
+    setOfficialWorkplace('');
+    setUnofficialActivityType('');
+    setNoWishReason('CHILD_CARE');
+    setUnemployedDirections(['PERMANENT_JOB']);
+    setUnemployedAdditionalNote('');
+    setOtherReasonNote('');
+    setPinflWarning(null);
+    setError(null);
+  };
+
+  // Avtomatik qoralamani saqlash (Auto-save draft)
+  useEffect(() => {
+    if (success) return;
+
+    const hasData =
+      Boolean(fullName.trim()) ||
+      Boolean(birthDate) ||
+      Boolean(pinfl.trim()) ||
+      (Boolean(phone.trim()) && phone !== '+998') ||
+      Boolean(address.trim()) ||
+      Boolean(education.trim());
+
+    if (!hasData) return;
+
+    const timer = setTimeout(() => {
+      const draft = {
+        step,
+        selectedDistrictId,
+        mahallaId,
+        customMahallaName,
+        fullName,
+        birthDate,
+        pinfl,
+        phone,
+        parentPhone,
+        address,
+        education,
+        specialty,
+        mainCategory,
+        officialWorkplace,
+        unofficialActivityType,
+        noWishReason,
+        unemployedDirections,
+        unemployedAdditionalNote,
+        otherReasonNote,
+      };
+      localStorage.setItem('public_survey_draft', JSON.stringify(draft));
+      setDraftSaved(true);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [
+    success,
+    step,
+    selectedDistrictId,
+    mahallaId,
+    customMahallaName,
+    fullName,
+    birthDate,
+    pinfl,
+    phone,
+    parentPhone,
+    address,
+    education,
+    specialty,
+    mainCategory,
+    officialWorkplace,
+    unofficialActivityType,
+    noWishReason,
+    unemployedDirections,
+    unemployedAdditionalNote,
+    otherReasonNote,
   ]);
-  const [unemployedAdditionalNote, setUnemployedAdditionalNote] = useState<string>('');
-  const [otherReasonNote, setOtherReasonNote] = useState<string>('');
 
   // Yosh chegarasi: 18 - 60 yosh
   const { maxBirthDate, minBirthDate } = useMemo(() => {
@@ -155,19 +256,27 @@ export const PublicSurveyPage: React.FC = () => {
       .then((data) => {
         setDistricts(data);
         if (data && data.length > 0) {
-          // Boshlang'ich tuman (masalan birinchisi yoki Davlatobod)
-          const def = data.find((d) => d.name.toLowerCase().includes('davlatobod')) || data[0];
-          setSelectedDistrictId(def.id);
+          // Boshlang'ich tuman (agar draftdan olinmagan bo'lsa)
+          setSelectedDistrictId((curr) => {
+            if (curr) return curr;
+            const def = data.find((d) => d.name.toLowerCase().includes('davlatobod')) || data[0];
+            return def.id;
+          });
         }
       })
       .catch((err) => console.error('Tumanlarni yuklashda xatolik:', err));
   }, []);
 
   // Tanlangan tumanga mos mahallalarni yuklash
+  const isInitialMount = React.useRef(true);
   useEffect(() => {
     if (selectedDistrictId) {
       setLoadingMahallas(true);
-      setMahallaId('');
+      if (!isInitialMount.current) {
+        setMahallaId('');
+      } else {
+        isInitialMount.current = false;
+      }
       monitoringApi
         .getMahallasDropdown(selectedDistrictId)
         .then((data) => setMahallas(data as any))
@@ -323,6 +432,8 @@ export const PublicSurveyPage: React.FC = () => {
         operatorSigned: false,
       });
 
+      localStorage.removeItem('public_survey_draft');
+      setDraftSaved(false);
       setSuccess(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
@@ -361,6 +472,25 @@ export const PublicSurveyPage: React.FC = () => {
             <span>Rasmiy davlat xizmati • Barcha arizalar kafolatlangan holda koʻrib chiqiladi</span>
           </div>
         </div>
+
+        {/* Qoralama saqlanganligi haqida bildirishnoma */}
+        {!success && (fullName || pinfl || address || phone !== '+998') && (
+          <div className="flex items-center justify-between px-4 py-2.5 bg-sky-50/90 border border-sky-200 rounded-xl text-xs text-sky-900 mb-4 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-sky-600 flex-shrink-0" />
+              <span>
+                <b>Avto-saqlash faol:</b> Siz kiritgan maʼlumotlar saqlab qolinmoqda. Sahifa yangilansa (refresh) ham oʻchib ketmaydi.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={clearDraft}
+              className="text-xs font-bold text-rose-600 hover:text-rose-800 underline ml-3 cursor-pointer flex-shrink-0"
+            >
+              Formani tozalash
+            </button>
+          </div>
+        )}
 
         {/* Muvaffaqiyat ekrani (Success State) */}
         {success ? (
@@ -404,13 +534,8 @@ export const PublicSurveyPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
+                  clearDraft();
                   setSuccess(false);
-                  setStep(1);
-                  setFullName('');
-                  setBirthDate('');
-                  setPinfl('');
-                  setAddress('');
-                  setCustomMahallaName('');
                 }}
                 className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#163D5C] text-white text-xs font-bold hover:bg-[#11314a] transition cursor-pointer shadow-xs"
               >

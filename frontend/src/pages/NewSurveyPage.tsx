@@ -46,15 +46,30 @@ import {
   Square,
   Sparkles,
 } from 'lucide-react';
+import { useAreaFilter } from '../context/AreaFilterContext';
+
+const getInitialOperatorDraft = () => {
+  try {
+    const raw = localStorage.getItem('operator_survey_draft');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
 
 export const NewSurveyPage: React.FC = () => {
   const { user, isMahallaOperator, isDistrictAdmin, isSuperAdmin } = useAuth();
+  const { selectedDistrictId: globalDistrictId, selectedMahallaId: globalMahallaId } = useAreaFilter();
   const toast = useToast();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<number>(1);
+  const initialDraft = React.useMemo(() => getInitialOperatorDraft(), []);
+
+  const [step, setStep] = useState<number>(initialDraft?.step || 1);
   const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>(user?.districtId || '');
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>(
+    initialDraft?.selectedDistrictId || (isSuperAdmin ? globalDistrictId : '') || user?.districtId || '',
+  );
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -64,33 +79,53 @@ export const NewSurveyPage: React.FC = () => {
   const [result, setResult] = useState<{ isConflict: boolean; message: string } | null>(null);
 
   // Form State
-  const [mahallaId, setMahallaId] = useState<string>(user?.mahallaId || '');
-  const [surveyMethod, setSurveyMethod] = useState<SurveyMethod>('HOME_VISIT');
+  const [mahallaId, setMahallaId] = useState<string>(
+    initialDraft?.mahallaId || (isMahallaOperator ? user?.mahallaId : globalMahallaId) || '',
+  );
+  const [surveyMethod, setSurveyMethod] = useState<SurveyMethod>(
+    initialDraft?.surveyMethod || 'HOME_VISIT',
+  );
   const [surveyDate, setSurveyDate] = useState<string>(
-    new Date().toISOString().split('T')[0],
+    initialDraft?.surveyDate || new Date().toISOString().split('T')[0],
   );
 
-  const [fullName, setFullName] = useState<string>('');
-  const [birthDate, setBirthDate] = useState<string>('');
-  const [pinfl, setPinfl] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [education, setEducation] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [parentPhone, setParentPhone] = useState<string>('');
-  const [specialty, setSpecialty] = useState<string>('');
+  const [fullName, setFullName] = useState<string>(initialDraft?.fullName || '');
+  const [birthDate, setBirthDate] = useState<string>(initialDraft?.birthDate || '');
+  const [pinfl, setPinfl] = useState<string>(initialDraft?.pinfl || '');
+  const [address, setAddress] = useState<string>(initialDraft?.address || '');
+  const [education, setEducation] = useState<string>(initialDraft?.education || '');
+  const [phone, setPhone] = useState<string>(initialDraft?.phone || '');
+  const [parentPhone, setParentPhone] = useState<string>(initialDraft?.parentPhone || '');
+  const [specialty, setSpecialty] = useState<string>(initialDraft?.specialty || '');
 
-  const [mainCategory, setMainCategory] = useState<EmploymentCategory>('OFFICIALLY_EMPLOYED');
-  const [officialWorkplace, setOfficialWorkplace] = useState<string>('');
-  const [unofficialActivityType, setUnofficialActivityType] = useState<string>('');
-  const [noWishReason, setNoWishReason] = useState<NoWishReason>('CHILD_CARE');
-  const [unemployedDirections, setUnemployedDirections] = useState<UnemployedDirection[]>([
-    'PERMANENT_JOB',
-  ]);
-  const [unemployedAdditionalNote, setUnemployedAdditionalNote] = useState<string>('');
-  const [otherReasonNote, setOtherReasonNote] = useState<string>('');
+  const [mainCategory, setMainCategory] = useState<EmploymentCategory>(
+    initialDraft?.mainCategory || 'OFFICIALLY_EMPLOYED',
+  );
+  const [officialWorkplace, setOfficialWorkplace] = useState<string>(
+    initialDraft?.officialWorkplace || '',
+  );
+  const [unofficialActivityType, setUnofficialActivityType] = useState<string>(
+    initialDraft?.unofficialActivityType || '',
+  );
+  const [noWishReason, setNoWishReason] = useState<NoWishReason>(
+    initialDraft?.noWishReason || 'CHILD_CARE',
+  );
+  const [unemployedDirections, setUnemployedDirections] = useState<UnemployedDirection[]>(
+    initialDraft?.unemployedDirections || ['PERMANENT_JOB'],
+  );
+  const [unemployedAdditionalNote, setUnemployedAdditionalNote] = useState<string>(
+    initialDraft?.unemployedAdditionalNote || '',
+  );
+  const [otherReasonNote, setOtherReasonNote] = useState<string>(
+    initialDraft?.otherReasonNote || '',
+  );
 
-  const [citizenSigned, setCitizenSigned] = useState<boolean>(true);
-  const [operatorSigned, setOperatorSigned] = useState<boolean>(true);
+  const [citizenSigned, setCitizenSigned] = useState<boolean>(
+    initialDraft?.citizenSigned !== undefined ? initialDraft.citizenSigned : true,
+  );
+  const [operatorSigned, setOperatorSigned] = useState<boolean>(
+    initialDraft?.operatorSigned !== undefined ? initialDraft.operatorSigned : true,
+  );
 
   // Yosh chegarasi: 18 - 60 yosh
   const { maxBirthDate, minBirthDate } = useMemo(() => {
@@ -106,6 +141,75 @@ export const NewSurveyPage: React.FC = () => {
   const citizenAge = useMemo(() => {
     return calculateAge(birthDate);
   }, [birthDate]);
+
+  // Avtomatik qoralamani saqlash (Auto-save draft)
+  useEffect(() => {
+    if (result) return;
+
+    const hasData =
+      Boolean(fullName.trim()) ||
+      Boolean(birthDate) ||
+      Boolean(pinfl.trim()) ||
+      Boolean(address.trim()) ||
+      Boolean(phone.trim()) ||
+      Boolean(education.trim());
+
+    if (!hasData) return;
+
+    const timer = setTimeout(() => {
+      const draft = {
+        step,
+        selectedDistrictId,
+        mahallaId,
+        surveyMethod,
+        surveyDate,
+        fullName,
+        birthDate,
+        pinfl,
+        address,
+        education,
+        phone,
+        parentPhone,
+        specialty,
+        mainCategory,
+        officialWorkplace,
+        unofficialActivityType,
+        noWishReason,
+        unemployedDirections,
+        unemployedAdditionalNote,
+        otherReasonNote,
+        citizenSigned,
+        operatorSigned,
+      };
+      localStorage.setItem('operator_survey_draft', JSON.stringify(draft));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [
+    result,
+    step,
+    selectedDistrictId,
+    mahallaId,
+    surveyMethod,
+    surveyDate,
+    fullName,
+    birthDate,
+    pinfl,
+    address,
+    education,
+    phone,
+    parentPhone,
+    specialty,
+    mainCategory,
+    officialWorkplace,
+    unofficialActivityType,
+    noWishReason,
+    unemployedDirections,
+    unemployedAdditionalNote,
+    otherReasonNote,
+    citizenSigned,
+    operatorSigned,
+  ]);
 
   // User ma'lumotlari yangilanganda avtomatik moslash
   useEffect(() => {
@@ -125,18 +229,27 @@ export const NewSurveyPage: React.FC = () => {
         .then((data) => {
           setDistricts(data);
           if (!selectedDistrictId && data.length > 0) {
-            const match = data.find((d) => d.id === user?.districtId) || data[0];
+            const match =
+              (globalDistrictId && data.find((d) => d.id === globalDistrictId)) ||
+              data.find((d) => d.id === user?.districtId) ||
+              data[0];
             setSelectedDistrictId(match.id);
           }
         })
         .catch(() => {});
     }
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, globalDistrictId]);
 
   // Tanlangan tuman bo'yicha mahallalar ro'yxatini yuklash
+  const isInitialMount = React.useRef(true);
   useEffect(() => {
     const districtIdToFetch = isSuperAdmin ? selectedDistrictId : user?.districtId;
     if (districtIdToFetch) {
+      if (!isInitialMount.current && isSuperAdmin) {
+        setMahallaId('');
+      } else {
+        isInitialMount.current = false;
+      }
       monitoringApi
         .getMahallasDropdown(districtIdToFetch)
         .then((data) => setMahallas(data as any))
@@ -332,6 +445,7 @@ export const NewSurveyPage: React.FC = () => {
 
       const res = await monitoringApi.createSurvey(payload);
       setResult(res);
+      localStorage.removeItem('operator_survey_draft');
       if (res.isConflict) {
         toast.warning(
           res.message || 'Soʻrovnoma tekshiruv navbatiga yoʻnaltirildi (Ziddiyat aniqlandi)',
@@ -353,6 +467,7 @@ export const NewSurveyPage: React.FC = () => {
   };
 
   const handleReset = () => {
+    localStorage.removeItem('operator_survey_draft');
     setResult(null);
     setStep(1);
     if (!isMahallaOperator) {
@@ -438,6 +553,24 @@ export const NewSurveyPage: React.FC = () => {
                 Anketalar roʻyxatiga oʻtish
               </button>
             </div>
+          </div>
+        )}
+
+        {!result && (fullName || pinfl || address || phone) && (
+          <div className="flex items-center justify-between px-4 py-2.5 bg-sky-50/90 border border-sky-200/80 rounded-2xl text-xs text-sky-900 mb-4 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-sky-600 flex-shrink-0" />
+              <span>
+                <b>Avto-saqlash faol:</b> Soʻrovnoma qoralama sifatida brauzerda saqlab qolinmoqda. Sahifa yangilansa (refresh) maʼlumotlar yoʻqolmaydi.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-xs font-bold text-rose-600 hover:text-rose-800 underline ml-3 cursor-pointer flex-shrink-0"
+            >
+              Formani tozalash
+            </button>
           </div>
         )}
 

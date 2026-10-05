@@ -28,9 +28,11 @@ import {
   CheckCircle2,
   Building2,
 } from 'lucide-react';
+import { useAreaFilter } from '../context/AreaFilterContext';
 
 export const CitizensPage: React.FC = () => {
   const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator, isDataReviewer } = useAuth();
+  const { selectedDistrictId, selectedMahallaId, setSelectedMahallaId } = useAreaFilter();
   const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -57,8 +59,12 @@ export const CitizensPage: React.FC = () => {
   // Filters
   const [search, setSearch] = useState<string>('');
   const [selectedMahalla, setSelectedMahalla] = useState<string>(
-    searchParams.get('mahallaId') || '',
+    searchParams.get('mahallaId') || selectedMahallaId || '',
   );
+
+  useEffect(() => {
+    setSelectedMahalla(selectedMahallaId || '');
+  }, [selectedMahallaId]);
   const [selectedCategory, setSelectedCategory] = useState<string>(
     searchParams.get('category') || '',
   );
@@ -94,6 +100,7 @@ export const CitizensPage: React.FC = () => {
       setLoading(true);
       const res = await monitoringApi.getCitizens({
         search: search || undefined,
+        districtId: selectedDistrictId || undefined,
         mahallaId: selectedMahalla || undefined,
         category: (selectedCategory as EmploymentCategory) || undefined,
         page,
@@ -109,8 +116,11 @@ export const CitizensPage: React.FC = () => {
   };
 
   useEffect(() => {
-    monitoringApi.getMahallasDropdown().then((res) => setMahallas(res as any)).catch(() => {});
-  }, []);
+    monitoringApi
+      .getMahallasDropdown(selectedDistrictId || undefined)
+      .then((res) => setMahallas(res as any))
+      .catch(() => {});
+  }, [selectedDistrictId]);
 
   // Avtomatik to'g'ridan-to'g'ri (debounced live search) qidirish
   useEffect(() => {
@@ -118,7 +128,7 @@ export const CitizensPage: React.FC = () => {
       fetchCitizens();
     }, 250);
     return () => clearTimeout(timer);
-  }, [page, search, selectedMahalla, selectedCategory]);
+  }, [page, search, selectedDistrictId, selectedMahalla, selectedCategory]);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
@@ -296,6 +306,7 @@ export const CitizensPage: React.FC = () => {
                 value={selectedMahalla}
                 onChange={(val) => {
                   setSelectedMahalla(val);
+                  setSelectedMahallaId(val);
                   setPage(1);
                 }}
                 options={[

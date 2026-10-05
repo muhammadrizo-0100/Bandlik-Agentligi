@@ -41,18 +41,21 @@ import {
   Line,
 } from 'recharts';
 
+import { useAreaFilter } from '../context/AreaFilterContext';
+
 export const DashboardPage: React.FC = () => {
   const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator } = useAuth();
   const navigate = useNavigate();
 
+  const {
+    selectedDistrictId,
+    setSelectedDistrictId,
+    selectedMahallaId,
+    setSelectedMahallaId,
+  } = useAreaFilter();
+
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>(
-    user?.districtId || '',
-  );
-  const [selectedMahallaId, setSelectedMahallaId] = useState<string>(
-    user?.mahallaId || '',
-  );
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

@@ -16,7 +16,10 @@ import {
   X,
 } from 'lucide-react';
 
+import { useAreaFilter } from '../context/AreaFilterContext';
+
 export const SurveysPage: React.FC = () => {
+  const { selectedDistrictId, selectedMahallaId } = useAreaFilter();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,6 +31,8 @@ export const SurveysPage: React.FC = () => {
       setLoading(true);
       const res = await monitoringApi.getSurveys({
         search: search.trim() || undefined,
+        districtId: selectedDistrictId || undefined,
+        mahallaId: selectedMahallaId || undefined,
         limit: 50,
       });
       setSurveys(res.items);
@@ -44,7 +49,7 @@ export const SurveysPage: React.FC = () => {
       fetchSurveys();
     }, 250);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, selectedDistrictId, selectedMahallaId]);
 
   const filteredSurveys = surveys.filter((s) => {
     if (statusFilter === 'ALL') return true;

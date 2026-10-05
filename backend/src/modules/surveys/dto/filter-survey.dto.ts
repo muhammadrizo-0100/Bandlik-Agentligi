@@ -28,6 +28,11 @@ export class FilterSurveyDto extends PaginationDto {
   @IsEnum(SurveyMethod)
   method?: SurveyMethod;
 
+  @ApiPropertyOptional({ description: 'Tuman ID' })
+  @IsOptional()
+  @IsUUID('4')
+  districtId?: string;
+
   @ApiPropertyOptional({ description: 'Mahalla ID' })
   @IsOptional()
   @IsUUID('4')

@@ -12,4 +12,9 @@ export class FilterMahallaDto extends PaginationDto {
   @IsOptional()
   @IsString()
   district?: string;
+
+  @ApiPropertyOptional({ description: 'Tuman ID bo\'yicha filter' })
+  @IsOptional()
+  @IsString()
+  districtId?: string;
 }

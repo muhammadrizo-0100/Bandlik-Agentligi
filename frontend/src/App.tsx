@@ -12,6 +12,8 @@ import { MahallasManagementPage } from './pages/MahallasManagementPage';
 import { UsersManagementPage } from './pages/UsersManagementPage';
 import { PublicSurveyPage } from './pages/PublicSurveyPage';
 
+import { AreaFilterProvider } from './context/AreaFilterContext';
+
 // Himoyalangan marshrut (Protected Route)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,11 +38,12 @@ export const App: React.FC = () => {
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <Routes>
-          {/* Ochiq marshrutlar (Aholi va Xodimlar uchun) */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/anketa" element={<PublicSurveyPage />} />
-          <Route path="/ariza" element={<PublicSurveyPage />} />
+          <AreaFilterProvider>
+            <Routes>
+              {/* Ochiq marshrutlar (Aholi va Xodimlar uchun) */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/anketa" element={<PublicSurveyPage />} />
+              <Route path="/ariza" element={<PublicSurveyPage />} />
 
           {/* Himoyalangan marshrutlar */}
           <Route
@@ -103,7 +106,8 @@ export const App: React.FC = () => {
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </AuthProvider>
+          </AreaFilterProvider>
+        </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
   );
