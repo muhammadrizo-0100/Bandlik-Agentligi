@@ -48,6 +48,8 @@ export const UsersManagementPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginReadOnly, setLoginReadOnly] = useState(true);
+  const [passwordReadOnly, setPasswordReadOnly] = useState(true);
   const [selectedDistrictId, setSelectedDistrictId] = useState('');
   const [mahallaId, setMahallaId] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -87,6 +89,20 @@ export const UsersManagementPage: React.FC = () => {
     setPage(1);
   }, [activeTab, searchQuery]);
 
+  useEffect(() => {
+    if (showAddModal) {
+      setUsername('');
+      setPassword('');
+      setLoginReadOnly(true);
+      setPasswordReadOnly(true);
+      const timer = setTimeout(() => {
+        setUsername('');
+        setPassword('');
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [showAddModal, modalRole]);
+
   const openAddModal = (roleToCreate: UserRole) => {
     setModalRole(roleToCreate);
     setFirstName('');
@@ -94,6 +110,8 @@ export const UsersManagementPage: React.FC = () => {
     setUsername('');
     setPhone('');
     setPassword('');
+    setLoginReadOnly(true);
+    setPasswordReadOnly(true);
     setShowPassword(false);
     setError(null);
 
@@ -622,7 +640,35 @@ export const UsersManagementPage: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleCreateUser} className="space-y-4">
+            <form onSubmit={handleCreateUser} className="space-y-4" autoComplete="off">
+              {/* Brauzer avtomatik to'ldirishi (Chrome/Edge autofill) ni to'xtatuvchi tuzoq */}
+              <div
+                style={{
+                  opacity: 0,
+                  position: 'absolute',
+                  top: -9999,
+                  left: -9999,
+                  height: 0,
+                  width: 0,
+                  overflow: 'hidden',
+                }}
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                <input
+                  type="text"
+                  name="fake_autofill_username"
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+                <input
+                  type="password"
+                  name="fake_autofill_password"
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* 1. Ism */}
                 <div>
@@ -660,10 +706,19 @@ export const UsersManagementPage: React.FC = () => {
                     Login (foydalanuvchi nomi) <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="emp_acc_alias"
+                    name="emp_acc_alias"
                     type="text"
                     required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     placeholder="Masalan: vali_aliyev"
                     value={username}
+                    readOnly={loginReadOnly}
+                    onFocus={() => setLoginReadOnly(false)}
+                    onMouseDown={() => setLoginReadOnly(false)}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm font-mono text-slate-800 placeholder-slate-400 outline-none transition"
                   />
@@ -691,12 +746,26 @@ export const UsersManagementPage: React.FC = () => {
                   </label>
                   <div className="relative flex items-center">
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      id="emp_sec_token"
+                      name="emp_sec_token"
+                      type="text"
                       required
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-form-type="other"
+                      style={
+                        {
+                          WebkitTextSecurity: showPassword ? 'none' : 'disc',
+                        } as React.CSSProperties
+                      }
                       placeholder="Parolni kiriting..."
                       value={password}
+                      readOnly={passwordReadOnly}
+                      onFocus={() => setPasswordReadOnly(false)}
+                      onMouseDown={() => setPasswordReadOnly(false)}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                      className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 text-sm text-slate-800 placeholder-slate-400 outline-none transition font-mono"
                     />
                     <button
                       type="button"
