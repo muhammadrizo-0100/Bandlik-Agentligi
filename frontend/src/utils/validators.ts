@@ -2,8 +2,11 @@
  * O'zbekiston telefon raqamini formatlash (+998 XX XXX-XX-XX)
  */
 export const formatUzPhone = (value: string): string => {
+  if (!value) return '';
+
   // Faqat raqamlarni ajratib olish
   const numbers = value.replace(/\D/g, '');
+  if (!numbers) return '';
 
   // Agar 998 bilan boshlangan bo'lsa uni olib tashlaymiz (biz o'zimiz qo'shamiz)
   let localNumbers = numbers;
@@ -14,27 +17,24 @@ export const formatUzPhone = (value: string): string => {
   // Maksimal 9 ta raqam (operator kodi 2 ta + 7 ta raqam)
   localNumbers = localNumbers.slice(0, 9);
 
+  if (localNumbers.length === 0) {
+    return numbers.startsWith('9') ? '+998' : '';
+  }
+
   let formatted = '+998';
-  if (localNumbers.length > 0) {
-    formatted += ' (' + localNumbers.slice(0, 2);
+
+  if (localNumbers.length <= 2) {
+    return `${formatted} (${localNumbers}`;
   }
-  if (localNumbers.length >= 2) {
-    formatted += ') ';
-  }
-  if (localNumbers.length > 2) {
-    formatted += localNumbers.slice(2, 5);
-  }
-  if (localNumbers.length >= 5) {
-    formatted += '-';
-  }
+
+  formatted += ` (${localNumbers.slice(0, 2)}) ${localNumbers.slice(2, 5)}`;
+
   if (localNumbers.length > 5) {
-    formatted += localNumbers.slice(5, 7);
+    formatted += `-${localNumbers.slice(5, 7)}`;
   }
-  if (localNumbers.length >= 7) {
-    formatted += '-';
-  }
+
   if (localNumbers.length > 7) {
-    formatted += localNumbers.slice(7, 9);
+    formatted += `-${localNumbers.slice(7, 9)}`;
   }
 
   return formatted;

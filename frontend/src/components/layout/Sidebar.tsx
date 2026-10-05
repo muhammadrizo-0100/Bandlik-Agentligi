@@ -24,17 +24,20 @@ import { useToast } from '../../context/ToastContext';
 import { useAreaFilter } from '../../context/AreaFilterContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { monitoringApi } from '../../api/monitoring.api';
+import { realtimeService } from '../../services/realtime.service';
 
 interface SidebarProps {
   selectedDistrictId?: string;
   onDistrictChange?: (districtId: string) => void;
   isMobileDrawer?: boolean;
+  pendingCount?: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   selectedDistrictId: propDistrictId,
   onDistrictChange: propOnDistrictChange,
   isMobileDrawer = false,
+  pendingCount: propPendingCount,
 }) => {
   const areaFilter = useAreaFilter();
   const { isCollapsed: contextCollapsed, toggleSidebar, closeMobileDrawer } = useSidebar();
@@ -58,20 +61,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
   } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [internalPendingCount, setInternalPendingCount] = useState<number>(0);
+  const effectivePendingCount = propPendingCount !== undefined ? propPendingCount : internalPendingCount;
   const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
   const [districtSearch, setDistrictSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
-    // Review navbati hisoblagichi
-    if (isDataReviewer || isSuperAdmin || isDistrictAdmin) {
-      monitoringApi
-        .getReviewQueueCount()
-        .then((res) => setPendingCount(res.count))
-        .catch(() => {});
-    }
+    const fetchPending = () => {
+      if (isDataReviewer || isSuperAdmin || isDistrictAdmin) {
+        monitoringApi
+          .getReviewQueueCount()
+          .then((res) => {
+            if (res && typeof res.count === 'number') {
+              setInternalPendingCount(res.count);
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    fetchPending();
+
+    // Real-time yangi arizalarni qabul qilish
+    const unsubscribe = realtimeService.subscribe((event) => {
+      if (event.type === 'NEW_SURVEY') {
+        setInternalPendingCount((prev) => prev + 1);
+        fetchPending();
+      }
+    });
+
+    const interval = setInterval(fetchPending, 15000);
 
     // Super Admin uchun tumanlar ro'yxati
     if (isSuperAdmin) {
@@ -80,6 +101,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         .then((res) => setDistricts(res))
         .catch(() => {});
     }
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, [isDataReviewer, isSuperAdmin, isDistrictAdmin]);
 
   const handleLogout = () => {
@@ -188,11 +214,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && <span className="truncate">{label}</span>}
           {badgeCount !== undefined && badgeCount > 0 && (
             !isCollapsed ? (
-              <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto shadow-xs flex-shrink-0">
-                {badgeCount}
+              <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto shadow-xs flex-shrink-0 animate-pulse">
+                {badgeCount > 99 ? '99+' : badgeCount}
               </span>
             ) : (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white shadow-xs">
+              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
                 {badgeCount > 99 ? '99+' : badgeCount}
               </span>
             )
@@ -491,7 +517,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {renderNavItem('/new-survey', 'Yangi soʻrovnoma', FilePlus)}
               {renderNavItem('/citizens', 'Fuqarolar reyestri', Users)}
               {renderNavItem('/surveys', 'Soʻrovnomalar jurnali', FileSpreadsheet)}
-              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, pendingCount, 'text-amber-500')}
+              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, effectivePendingCount, 'text-amber-500')}
 
               {renderSectionHeader('Tizim boshqaruvi')}
               {renderNavItem('/mahallas', 'Tuman & Mahallalar', Building2)}
@@ -509,7 +535,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {renderNavItem('/new-survey', 'Yangi soʻrovnoma', FilePlus)}
               {renderNavItem('/citizens', 'Tuman yoshlari', Users)}
               {renderNavItem('/surveys', 'Tuman soʻrovnomalari', FileSpreadsheet)}
-              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, pendingCount, 'text-amber-500')}
+              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, effectivePendingCount, 'text-amber-500')}
 
               {renderSectionHeader('Tuman boshqaruvi')}
               {renderNavItem('/mahallas', 'Mahallalar', Building2)}
@@ -536,7 +562,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {isDataReviewer && (
             <>
               {renderSectionHeader('Kunlik ish')}
-              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, pendingCount, 'text-amber-500')}
+              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, effectivePendingCount, 'text-amber-500')}
               {renderNavItem('/dashboard', 'Boshqaruv paneli', LayoutDashboard)}
               {renderNavItem('/citizens', 'Fuqarolar reyestri', Users)}
               {renderNavItem('/surveys', 'Soʻrovnomalar jurnali', FileSpreadsheet)}

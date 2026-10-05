@@ -152,6 +152,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <Sidebar
           selectedDistrictId={selectedDistrictId}
           onDistrictChange={onDistrictChange}
+          pendingCount={pendingCount}
         />
 
         {/* Toggle Collapse/Expand Button (< va >): Desktopda sidebarni markazida */}
@@ -187,6 +188,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           selectedDistrictId={selectedDistrictId}
           onDistrictChange={onDistrictChange}
           isMobileDrawer={true}
+          pendingCount={pendingCount}
         />
       </div>
 
