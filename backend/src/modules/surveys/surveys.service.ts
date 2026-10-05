@@ -40,19 +40,12 @@ export class SurveysService {
    * Fuqaroning ochiq portaldan mustaqil yuborgan anketasini qabul qilish
    */
   async createPublic(dto: CreateSurveyDto) {
-    if (!dto.mahallaId) {
-      throw new BadRequestException('Mahalla tanlanishi shart');
+    if (!dto.mahallaId && !dto.customMahallaName) {
+      throw new BadRequestException('Mahalla tanlanishi yoki qo\'lda kiritilishi shart');
     }
-
-    const mahalla = await this.mahallaRepository.findOne({
-      where: { id: dto.mahallaId },
-      relations: { district: true },
-    });
-    if (!mahalla) {
-      throw new NotFoundException(`Mahalla topilmadi (ID: ${dto.mahallaId})`);
+    if (!dto.mahallaId && !dto.districtId) {
+      throw new BadRequestException('Yangi mahalla kiritish uchun tuman tanlanishi shart');
     }
-
-    const targetDistrictId = mahalla.districtId;
 
     // Yosh chegarasini tekshirish (18 - 60 yosh)
     const birth = new Date(dto.birthDate);
@@ -76,18 +69,33 @@ export class SurveysService {
       );
     }
 
+    let targetDistrictId = dto.districtId;
+    if (dto.mahallaId) {
+      const existingMahalla = await this.mahallaRepository.findOne({ where: { id: dto.mahallaId } });
+      if (!existingMahalla) {
+        throw new NotFoundException(`Mahalla topilmadi (ID: ${dto.mahallaId})`);
+      }
+      targetDistrictId = existingMahalla.districtId;
+    }
+
     const userRepo = this.dataSource.getRepository(UserEntity);
     // Ushbu mahallaga biriktirilgan operatorni topish, bo'lmasa tuman admini yoki super admin
-    const operator =
-      (await userRepo.findOne({
+    let operator: UserEntity | null = null;
+    if (dto.mahallaId) {
+      operator = await userRepo.findOne({
         where: { mahallaId: dto.mahallaId, roleCode: UserRole.MAHALLA_OPERATOR },
-      })) ||
-      (await userRepo.findOne({
-        where: { districtId: targetDistrictId },
-      })) ||
-      (await userRepo.findOne({
+      });
+    }
+    if (!operator && targetDistrictId) {
+      operator = await userRepo.findOne({
+        where: { districtId: targetDistrictId, roleCode: UserRole.DISTRICT_ADMIN },
+      });
+    }
+    if (!operator) {
+      operator = await userRepo.findOne({
         where: { roleCode: UserRole.SUPER_ADMIN },
-      }));
+      });
+    }
 
     const operatorId = operator?.id;
     if (!operatorId) {
@@ -100,6 +108,28 @@ export class SurveysService {
     });
 
     return this.dataSource.transaction(async (manager) => {
+      let finalMahallaId = dto.mahallaId;
+      let mahallaName = '';
+
+      if (!finalMahallaId && dto.customMahallaName && targetDistrictId) {
+        let mahalla = await manager.findOne(MahallaEntity, {
+          where: { name: dto.customMahallaName, districtId: targetDistrictId }
+        });
+        if (!mahalla) {
+          mahalla = manager.create(MahallaEntity, {
+            name: dto.customMahallaName,
+            districtId: targetDistrictId,
+            region: 'Namangan viloyati',
+          });
+          mahalla = await manager.save(MahallaEntity, mahalla);
+        }
+        finalMahallaId = mahalla.id;
+        mahallaName = mahalla.name;
+      } else if (finalMahallaId) {
+        const m = await manager.findOne(MahallaEntity, { where: { id: finalMahallaId }});
+        if (m) mahallaName = m.name;
+      }
+
       let citizenId = existingCitizen?.id;
 
       if (!existingCitizen) {
@@ -109,11 +139,11 @@ export class SurveysService {
           pinfl: dto.pinfl.trim(),
           phone: dto.phone?.trim(),
           parentPhone: dto.parentPhone?.trim(),
-          address: dto.address?.trim() || `${mahalla.name} MFY`,
+          address: dto.address?.trim() || `${mahallaName} MFY`,
           education: dto.education?.trim() || 'O\'rta',
           specialty: dto.specialty?.trim(),
           districtId: targetDistrictId,
-          mahallaId: dto.mahallaId,
+          mahallaId: finalMahallaId,
           currentCategory: dto.mainCategory,
           currentStatusDetail: this.formatStatusSummary(dto),
         });
@@ -128,7 +158,7 @@ export class SurveysService {
         citizenFullName: dto.fullName.trim(),
         operatorId,
         districtId: targetDistrictId,
-        mahallaId: dto.mahallaId,
+        mahallaId: finalMahallaId,
         surveyDate: dto.surveyDate ? new Date(dto.surveyDate) : new Date(),
         surveyMethod: SurveyMethod.ONLINE,
         dataSource: DataSource.CITIZEN_PUBLIC,

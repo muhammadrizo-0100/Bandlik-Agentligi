@@ -113,7 +113,9 @@ export interface EmploymentHistory {
 }
 
 export interface CreateSurveyInput {
+  districtId?: string;
   mahallaId?: string;
+  customMahallaName?: string;
   surveyMethod: SurveyMethod;
   surveyDate: string;
   fullName: string;

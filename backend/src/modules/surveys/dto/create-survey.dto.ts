@@ -36,6 +36,13 @@ export class CreateSurveyDto {
   @IsUUID('4')
   mahallaId?: string;
 
+  @ApiPropertyOptional({
+    description: 'Mahalla ro\'yxatda bo\'lmasa, qo\'lda kiritilgan nomi',
+  })
+  @IsOptional()
+  @IsString()
+  customMahallaName?: string;
+
   @ApiProperty({
     enum: SurveyMethod,
     example: SurveyMethod.HOME_VISIT,

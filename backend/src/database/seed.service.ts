@@ -38,8 +38,12 @@ export class SeedService implements OnModuleInit, OnApplicationBootstrap {
 
     try {
       await this.seedRoles();
-      const davlatobod = await this.seedDistricts();
-      await this.seedMahallas(davlatobod);
+      const districts = await this.seedDistricts();
+      await this.seedAllMahallas(districts);
+      const davlatobod = districts.find(d => d.name === 'Davlatobod tumani');
+      if (davlatobod) {
+        await this.seedStaffUsers(davlatobod);
+      }
       await this.seedSuperAdmin();
     } catch (error: any) {
       this.logger.warn(`Seed jarayonida ogohlantirish: ${error.message}`);
@@ -86,54 +90,129 @@ export class SeedService implements OnModuleInit, OnApplicationBootstrap {
   }
 
   /**
-   * 2. Boshlang'ich tuman - Davlatobod tumani
+   * 2. Boshlang'ich tumanlar - Namangan viloyatining barcha 14 ta tuman va shahri
    */
-  private async seedDistricts(): Promise<DistrictEntity> {
-    let davlatobod = await this.districtRepository.findOne({
-      where: { name: 'Davlatobod tumani' },
-    });
+  private async seedDistricts(): Promise<DistrictEntity[]> {
+    const districtsList = [
+      { name: 'Namangan shahri', code: 'NSH' },
+      { name: 'Davlatobod tumani', code: 'DAV' },
+      { name: 'Yangi Namangan tumani', code: 'YN2' },
+      { name: 'Chortoq tumani', code: 'CHO' },
+      { name: 'Chust tumani', code: 'CHU' },
+      { name: 'Kosonsoy tumani', code: 'KOS' },
+      { name: 'Mingbuloq tumani', code: 'MIN' },
+      { name: 'Namangan tumani', code: 'NAM' },
+      { name: 'Norin tumani', code: 'NOR' },
+      { name: 'Pop tumani', code: 'POP' },
+      { name: 'To\'raqo\'rg\'on tumani', code: 'TOR' },
+      { name: 'Uychi tumani', code: 'UYI' },
+      { name: 'Uchqo\'rg\'on tumani', code: 'UCH' },
+      { name: 'Yangiqo\'rg\'on tumani', code: 'YAQ' },
+    ];
 
-    if (!davlatobod) {
-      davlatobod = this.districtRepository.create({
-        name: 'Davlatobod tumani',
-        region: 'Namangan viloyati',
-        code: 'DAV',
-        isActive: true,
+    const savedDistricts: DistrictEntity[] = [];
+
+    for (const item of districtsList) {
+      let district = await this.districtRepository.findOne({
+        where: { name: item.name },
       });
-      davlatobod = await this.districtRepository.save(davlatobod);
-      this.logger.log('✅ Davlatobod tumani yaratildi');
+
+      if (!district) {
+        district = this.districtRepository.create({
+          name: item.name,
+          region: 'Namangan viloyati',
+          code: item.code,
+          isActive: true,
+        });
+        district = await this.districtRepository.save(district);
+        this.logger.log(`✅ ${item.name} yaratildi`);
+      }
+      savedDistricts.push(district);
     }
 
-    return davlatobod;
+    return savedDistricts;
   }
 
   /**
-   * 3. Davlatobod tumani mahallalari
+   * 3. Barcha 14 ta tuman va shaharning 171 ta mahallalari
    */
-  private async seedMahallas(district: DistrictEntity) {
-    const mahallasList = [
-      'Guliston',
-      'Yuksalish',
-      'Yangi tong',
-      'Navbahor',
-      'Orzu',
-      'Elxona',
-      'Damariq',
-      'Porloq',
-    ];
+  private async seedAllMahallas(districts: DistrictEntity[]) {
+    const data: Record<string, string[]> = {
+      'Namangan shahri': [
+        'Goʻzal', 'Bobur', 'Chorsu', 'Lolazor', 'Shodlik', 'Guliston', 'Gʻalaba', 'Istiqlol',
+        'Yangi hayot', 'Nodirabegim', 'Navroʻz', 'Zarafshon', 'Toʻqimachi', 'Qoradaryo',
+        'Mehnatobod', 'Yuksalish', 'Bunyodkor', 'Doʻstlik', 'Mustaqillik', 'Navbahor', 'Orzu', 'Mashrab'
+      ],
+      'Davlatobod tumani': [
+        'Guliston', 'Yuksalish', 'Barkamol', 'Yangi tong', 'Navbahor', 'Orzu', 'Elxona',
+        'Damariq', 'Porloq', 'Quyi Gʻirvon', 'Yuqori Gʻirvon', 'Madaniy yer', 'Porloq tong',
+        'Shifokor', 'Yoshlik'
+      ],
+      'Yangi Namangan tumani': [
+        'Sihatgoh', 'Orzu', 'Mingchinor', 'Goʻzal', 'Ishonch', 'Shomahalla', 'Qahramon',
+        'Gulshan', 'Maʼrifat', 'Oydin', 'Mustaqillik', 'Sherbuloq'
+      ],
+      'Chortoq tumani': [
+        'Alisher Navoiy', 'Bogʻiston', 'Chortoq', 'Guliston', 'Hazrati Shoh', 'Mustaqillik',
+        'Namuna', 'Oromgoh', 'Pastki Bogʻ', 'Tinchlik', 'Yuqori Chortoq', 'Sohil', 'Beshkapa'
+      ],
+      'Chust tumani': [
+        'Chust', 'Bibiona', 'Bogʻishamol', 'Varzik', 'Gʻova', 'Doʻstlik', 'Kamarsada',
+        'Karkidon', 'Olmos', 'Qoʻgʻay', 'Sadacha', 'Chustiy', 'Baymoq', 'Yorqishloq'
+      ],
+      'Kosonsoy tumani': [
+        'Koson', 'Bogʻbon', 'Gulbogʻ', 'Kasan', 'Ozod', 'Soyboʻyi', 'Tergachi',
+        'Chindovul', 'Yangiyoʻl', 'Qoraqoʻrgʻon', 'Qorasuv', 'Oʻzbekiston'
+      ],
+      'Mingbuloq tumani': [
+        'Jumabozor', 'Doʻstlik', 'Goʻzal', 'Qiziltepa', 'Mehnatobod', 'Momoxon',
+        'Yangihayot', 'Oltinkoʻl', 'Gulbogʻ', 'Qoʻgʻayguzar'
+      ],
+      'Namangan tumani': [
+        'Toshbuloq', 'Mirishkor', 'Qumqoʻrgʻon', 'Xonobod', 'Shurqoʻrgʻon', 'Bogʻishamol',
+        'Shoʻrbuloq', 'Yangiqishloq', 'Irvadan', 'Tepaqoʻrgʻon'
+      ],
+      'Norin tumani': [
+        'Haqqulobod', 'Shoʻrariq', 'Boʻston', 'Qoraxitoy', 'Toʻlqin', 'Norinkapa',
+        'Uchtepa', 'Qoratepa', 'Oʻzbekiston', 'Pastki Choʻja'
+      ],
+      'Pop tumani': [
+        'Pop', 'Chorkesar', 'Uygʻursoy', 'Chustobod', 'Sang', 'Qandgʻon',
+        'Oltinkon', 'Xalqobod', 'Vodiy', 'Gʻurrum', 'Navbahor'
+      ],
+      'Toʻraqoʻrgʻon tumani': [
+        'Toʻraqoʻrgʻon', 'Islohot', 'Shahand', 'Mozorkoʻhna', 'Oqtosh', 'Yandama',
+        'Buramatut', 'Saroy', 'Kumidon', 'Sayram', 'Qatagʻon'
+      ],
+      'Uychi tumani': [
+        'Uychi', 'Jiydakapa', 'Churtuk', 'Fayziobod', 'Qumtepa', 'Birlik',
+        'Mashad', 'Boygʻon', 'Ziyokor', 'Kizilravot'
+      ],
+      'Uchqoʻrgʻon tumani': [
+        'Uchqoʻrgʻon', 'Qoʻgʻay', 'Yangiobod', 'Mashrab', 'Yoshlik', 'Qayqi',
+        'Paxtachi', 'Madaniyat', 'Doʻstlik', 'Dehqonobod'
+      ],
+      'Yangiqoʻrgʻon tumani': [
+        'Yangiqoʻrgʻon', 'Bekobod', 'Nanay', 'Poramon', 'Zarkent', 'Qizil yoz',
+        'Birlashgan', 'Navroʻz', 'Gʻovazon', 'Rovot'
+      ]
+    };
 
-    for (const name of mahallasList) {
-      const exists = await this.mahallaRepository.findOne({
-        where: { name, districtId: district.id },
-      });
-      if (!exists) {
-        const mahalla = this.mahallaRepository.create({
-          name,
-          district,
-          districtId: district.id,
-          region: 'Namangan viloyati',
+    for (const district of districts) {
+      const mahallasList = data[district.name] || [];
+      for (const name of mahallasList) {
+        const exists = await this.mahallaRepository.findOne({
+          where: { name, districtId: district.id },
         });
-        await this.mahallaRepository.save(mahalla);
+        if (!exists) {
+          const mahalla = this.mahallaRepository.create({
+            name,
+            district,
+            districtId: district.id,
+            region: 'Namangan viloyati',
+          });
+          await this.mahallaRepository.save(mahalla);
+        }
       }
     }
   }

@@ -65,6 +65,7 @@ export const PublicSurveyPage: React.FC = () => {
 
   // 2-bosqich: Yashash hududi
   const [mahallaId, setMahallaId] = useState<string>('');
+  const [customMahallaName, setCustomMahallaName] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [education, setEducation] = useState<string>('');
   const [specialty, setSpecialty] = useState<string>('');
@@ -260,6 +261,10 @@ export const PublicSurveyPage: React.FC = () => {
       setError('Iltimos, mahallangizni (MFY) tanlang');
       return false;
     }
+    if (mahallaId === '_CUSTOM_' && (!customMahallaName.trim() || !hasLetters(customMahallaName))) {
+      setError('Iltimos, mahallangiz nomini toʻgʻri kiriting');
+      return false;
+    }
     if (!address.trim() || !hasLetters(address)) {
       setError('Yashash manzilingizni (koʻcha, uy raqami) kiriting');
       return false;
@@ -296,7 +301,9 @@ export const PublicSurveyPage: React.FC = () => {
       await monitoringApi.submitPublicSurvey({
         surveyDate: new Date().toISOString().split('T')[0],
         surveyMethod: 'ONLINE' as any,
-        mahallaId,
+        districtId: selectedDistrictId,
+        mahallaId: mahallaId === '_CUSTOM_' ? undefined : mahallaId,
+        customMahallaName: mahallaId === '_CUSTOM_' ? customMahallaName.trim() : undefined,
         fullName: fullName.trim(),
         birthDate,
         pinfl: pinfl.trim(),
@@ -403,6 +410,7 @@ export const PublicSurveyPage: React.FC = () => {
                   setBirthDate('');
                   setPinfl('');
                   setAddress('');
+                  setCustomMahallaName('');
                 }}
                 className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#163D5C] text-white text-xs font-bold hover:bg-[#11314a] transition cursor-pointer shadow-xs"
               >
@@ -668,6 +676,7 @@ export const PublicSurveyPage: React.FC = () => {
                       <CustomSelect
                         label="1. Tuman / Shahringizni tanlang"
                         required
+                        searchable
                         placeholder="Tumanni tanlang..."
                         value={selectedDistrictId}
                         onChange={(val) => setSelectedDistrictId(val)}
@@ -685,15 +694,22 @@ export const PublicSurveyPage: React.FC = () => {
                       <CustomSelect
                         label="2. Mahallangizni (MFY) tanlang"
                         required
+                        searchable
                         placeholder={loadingMahallas ? 'Mahallalar yuklanmoqda...' : 'Mahallangizni tanlang yoki qidiring...'}
-                        disabled={loadingMahallas || mahallas.length === 0}
+                        disabled={loadingMahallas || (mahallas.length === 0 && !selectedDistrictId)}
                         value={mahallaId}
                         onChange={(val) => setMahallaId(val)}
                         icon={<Home className="w-4 h-4 text-emerald-600" />}
-                        options={mahallas.map((m) => ({
-                          value: m.id,
-                          label: formatMahallaName(m.name),
-                        }))}
+                        options={[
+                          ...mahallas.map((m) => ({
+                            value: m.id,
+                            label: formatMahallaName(m.name),
+                          })),
+                          {
+                            value: '_CUSTOM_',
+                            label: '+ Mahallam roʻyxatda yoʻq (qoʻlda kiritish)',
+                          }
+                        ]}
                       />
                       {mahallas.length === 0 && selectedDistrictId && !loadingMahallas && (
                         <p className="text-[11px] text-amber-600 mt-1">
@@ -701,6 +717,21 @@ export const PublicSurveyPage: React.FC = () => {
                         </p>
                       )}
                     </div>
+
+                    {/* Mahallam ro'yxatda yo'q kiritish maydoni */}
+                    {mahallaId === '_CUSTOM_' && (
+                      <div className="sm:col-span-2">
+                        <Input
+                          label="Mahallangiz nomi"
+                          required
+                          placeholder="Masalan: Navbahor MFY"
+                          value={customMahallaName}
+                          onChange={(e) => setCustomMahallaName(e.target.value)}
+                          icon={<Home className="w-4 h-4 text-blue-600" />}
+                          helperText="Iltimos, mahallangiz nomini to'liq kiriting"
+                        />
+                      </div>
+                    )}
 
                     {/* Yashash manzili */}
                     <div className="sm:col-span-2">
