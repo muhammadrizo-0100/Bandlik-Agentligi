@@ -7,7 +7,10 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  Sse,
 } from '@nestjs/common';
+import { Observable, interval, merge } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SurveysService } from './surveys.service';
 import { CreateSurveyDto } from './dto/create-survey.dto';
@@ -26,6 +29,21 @@ import { UserRole } from '../../database/enums';
 @Controller('surveys')
 export class SurveysController {
   constructor(private readonly surveysService: SurveysService) {}
+
+  @Public()
+  @Sse('stream')
+  @ApiOperation({
+    summary: 'Real-time bildirishnomalar oqimi (Server-Sent Events)',
+  })
+  stream(): Observable<{ data: any }> {
+    const heartbeat$ = interval(25000).pipe(
+      map(() => ({ data: { type: 'HEARTBEAT', time: new Date().toISOString() } })),
+    );
+    const events$ = this.surveysService.surveyEvents$.pipe(
+      map((event) => ({ data: event })),
+    );
+    return merge(events$, heartbeat$);
+  }
 
   @Public()
   @Post('public')

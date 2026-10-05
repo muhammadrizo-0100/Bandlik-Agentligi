@@ -6,6 +6,7 @@ import { Search, Bell, ChevronRight, ChevronLeft, ShieldCheck, X, Clock, CheckCi
 import { formatMahallaName } from '../../utils/formatters';
 import { monitoringApi } from '../../api/monitoring.api';
 import { useSidebar } from '../../context/SidebarContext';
+import { realtimeService, RealtimeSurveyEvent } from '../../services/realtime.service';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,7 +37,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [internalSearch, setInternalSearch] = useState(searchValue || '');
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [latestRealtimeEvent, setLatestRealtimeEvent] = useState<RealtimeSurveyEvent['data'] | null>(null);
+  const [isWiggling, setIsWiggling] = useState<boolean>(false);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  // Web Audio API orqali yumshoq bildirishnoma qo'ng'irog'i
+  const playNotificationSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch {
+      // Audio playback siyosati
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -54,11 +79,36 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     fetchCount();
     const interval = setInterval(fetchCount, 20000);
 
+    // Real-time oqimga obuna bo'lish (SSE + BroadcastChannel + localStorage)
+    const unsubscribe = realtimeService.subscribe((event) => {
+      if (event.type === 'NEW_SURVEY' && event.data) {
+        setPendingCount((prev) => prev + 1);
+        setLatestRealtimeEvent(event.data);
+        setIsWiggling(true);
+        playNotificationSound();
+
+        setTimeout(() => setIsWiggling(false), 2000);
+
+        // Server bilan aniq sinxronizatsiya
+        fetchCount();
+      }
+    });
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      unsubscribe();
     };
   }, []);
+
+  // Real-time toast bildirishnomani 8 soniyada avtomatik yopish
+  useEffect(() => {
+    if (!latestRealtimeEvent) return;
+    const timer = setTimeout(() => {
+      setLatestRealtimeEvent(null);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [latestRealtimeEvent]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -197,10 +247,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="w-10 h-10 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50 border-2 border-slate-200 transition relative cursor-pointer flex items-center justify-center flex-shrink-0"
+                className={`w-10 h-10 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50 border-2 border-slate-200 transition relative cursor-pointer flex items-center justify-center flex-shrink-0 ${
+                  isWiggling ? 'animate-bounce ring-4 ring-rose-400/20 text-[#163D5C]' : ''
+                }`}
                 title="Bildirishnomalar"
               >
-                <Bell className="w-4 h-4" />
+                <Bell className={`w-4 h-4 ${isWiggling ? 'text-rose-600' : ''}`} />
                 {pendingCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
                     {pendingCount > 99 ? '99+' : pendingCount}
@@ -304,6 +356,58 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {children}
         </main>
       </div>
+
+      {/* Real-time Toast Bildirishnoma (Onlayn ariza yuborilganda darhol chiqadi) */}
+      {latestRealtimeEvent && (
+        <div className="fixed top-5 right-5 z-50 max-w-sm w-full bg-white rounded-2xl shadow-2xl border-2 border-[#163D5C]/30 p-4 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#163D5C] text-white flex items-center justify-center shrink-0 shadow-sm shadow-[#163D5C]/30">
+              <Bell className="w-5 h-5 animate-bounce" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <h5 className="text-xs font-bold text-slate-900 tracking-tight">
+                  Yangi onlayn soʻrovnoma!
+                </h5>
+              </div>
+              <p className="text-xs font-bold text-slate-800 mt-1 truncate">
+                {latestRealtimeEvent.citizenFullName}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                {latestRealtimeEvent.mahallaName ? `${latestRealtimeEvent.mahallaName} MFY` : 'Davlatobod tumani'}
+              </p>
+              <div className="mt-2.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLatestRealtimeEvent(null);
+                    navigate('/review-queue');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#163D5C] hover:bg-[#11314a] text-white font-bold text-[11px] transition shadow-xs cursor-pointer flex items-center gap-1"
+                >
+                  <span>Koʻrib chiqish</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLatestRealtimeEvent(null)}
+                  className="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 text-[11px] font-semibold cursor-pointer"
+                >
+                  Yopish
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLatestRealtimeEvent(null)}
+              className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

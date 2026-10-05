@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { formatMahallaName } from '../utils/formatters';
 import { Pagination } from '../components/ui/Pagination';
+import { realtimeService } from '../services/realtime.service';
 
 export const ReviewQueuePage: React.FC = () => {
   const [queue, setQueue] = useState<Survey[]>([]);
@@ -59,6 +60,16 @@ export const ReviewQueuePage: React.FC = () => {
     }, 250);
 
     return () => clearTimeout(handler);
+  }, [search, page]);
+
+  // Real-time yangi ariza kelganda jadvalni avtomatik yangilash
+  useEffect(() => {
+    const unsubscribe = realtimeService.subscribe((event) => {
+      if (event.type === 'NEW_SURVEY') {
+        fetchQueue(search, page);
+      }
+    });
+    return () => unsubscribe();
   }, [search, page]);
 
   const handleOpenReview = async (id: string) => {

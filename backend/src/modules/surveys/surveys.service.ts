@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { Subject } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource as TypeOrmDataSource } from 'typeorm';
 import { SurveyEntity } from '../../database/entities/survey.entity';
@@ -24,6 +25,15 @@ import {
 
 @Injectable()
 export class SurveysService {
+  private readonly surveyEventsSubject = new Subject<{
+    type: string;
+    data?: any;
+  }>();
+
+  get surveyEvents$() {
+    return this.surveyEventsSubject.asObservable();
+  }
+
   constructor(
     @InjectRepository(SurveyEntity)
     private readonly surveyRepository: Repository<SurveyEntity>,
@@ -192,6 +202,26 @@ export class SurveysService {
       });
 
       const savedSurvey = await manager.save(SurveyEntity, survey);
+
+      // Real-time bildirishnoma oqimiga yuborish
+      try {
+        this.surveyEventsSubject.next({
+          type: 'NEW_SURVEY',
+          data: {
+            id: savedSurvey.id,
+            citizenFullName: savedSurvey.citizenFullName,
+            citizenPinfl: savedSurvey.citizenPinfl,
+            mahallaId: savedSurvey.mahallaId,
+            mahallaName: mahallaName || undefined,
+            districtId: savedSurvey.districtId,
+            surveyMethod: savedSurvey.surveyMethod,
+            mainCategory: savedSurvey.mainCategory,
+            createdAt: savedSurvey.createdAt ? savedSurvey.createdAt.toISOString() : new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        // SSE xatoligi tranzaksiyaga ta'sir qilmaydi
+      }
 
       return {
         isConflict: false,

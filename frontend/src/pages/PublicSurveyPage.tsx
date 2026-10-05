@@ -41,7 +41,10 @@ import {
   Sparkles,
   ShieldCheck,
   Search,
+  Layers,
+  RotateCcw,
 } from 'lucide-react';
+import { realtimeService } from '../services/realtime.service';
 
 const getInitialPublicDraft = () => {
   try {
@@ -402,7 +405,7 @@ export const PublicSurveyPage: React.FC = () => {
       setSubmitting(true);
       setError(null);
 
-      await monitoringApi.submitPublicSurvey({
+      const res = await monitoringApi.submitPublicSurvey({
         surveyDate: new Date().toISOString().split('T')[0],
         surveyMethod: 'ONLINE' as any,
         districtId: selectedDistrictId,
@@ -427,6 +430,26 @@ export const PublicSurveyPage: React.FC = () => {
         operatorSigned: false,
       });
 
+      // Real-time bildirishnoma uzatish (boshqa ochiq tablar yoki admin oynalar uchun 0ms)
+      try {
+        realtimeService.emitLocal({
+          type: 'NEW_SURVEY',
+          data: {
+            id: (res as any)?.survey?.id || '',
+            citizenFullName: fullName.trim(),
+            citizenPinfl: pinfl.trim(),
+            mahallaId: mahallaId === '_CUSTOM_' ? undefined : mahallaId,
+            mahallaName: mahallaId === '_CUSTOM_' ? customMahallaName.trim() : selectedMahallaName,
+            districtId: selectedDistrictId,
+            surveyMethod: 'ONLINE',
+            mainCategory,
+            createdAt: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Realtime emit xatoligi ta'sir qilmaydi
+      }
+
       localStorage.removeItem('public_survey_draft');
       setDraftSaved(false);
       setSuccess(true);
@@ -442,64 +465,43 @@ export const PublicSurveyPage: React.FC = () => {
   const selectedMahallaName = mahallas.find((m) => m.id === mahallaId)?.name || '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 py-6 sm:py-10 px-4">
+    <div className="min-h-screen bg-[#F8FAFC] py-6 sm:py-10 px-4">
       <div className="max-w-3xl mx-auto">
-        {/* 1. Rasmiy Davlat Tashkiloti Sarlavhasi (Header) */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-7 mb-6 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#163D5C] via-sky-500 to-emerald-500" />
-          
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#163D5C]/10 text-[#163D5C] mb-3 border border-[#163D5C]/20 shadow-xs">
-            <Building2 className="w-7 h-7" />
+        {/* Rasmiy Davlat Portali Sarlavhasi (Header) */}
+        <div className="text-center py-4 mb-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#163D5C] text-white mb-3 shadow-md shadow-[#163D5C]/15">
+            <Layers className="w-6 h-6 text-white" />
           </div>
 
-          <h2 className="text-[11px] sm:text-xs font-black tracking-widest uppercase text-[#163D5C] mb-1">
+          <h2 className="text-[11px] sm:text-xs font-bold tracking-widest uppercase text-slate-500 mb-1">
             Oʻzbekiston Respublikasi Kambagʻallikni qisqartirish va bandlik vazirligi
           </h2>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Namangan Viloyati Aholi Bandligi Portali
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto mt-1.5">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mt-1.5 leading-relaxed">
             Doimiy ish oʻrniga ega boʻlish, davlat subsidiyasi yoki imtiyozli kreditlar olish, bepul kasb-hunarga oʻqish uchun rasmiy soʻrovnoma
           </p>
-
-          <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Rasmiy davlat xizmati • Barcha arizalar kafolatlangan holda koʻrib chiqiladi</span>
-          </div>
         </div>
-
-        {/* Qoralama saqlanganligi haqida bildirishnoma */}
-        {!success && (fullName || pinfl || address || phone !== '+998') && (
-          <div className="flex items-center justify-between px-4 py-2.5 bg-sky-50/90 border border-sky-200 rounded-xl text-xs text-sky-900 mb-4 animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-sky-600 flex-shrink-0" />
-              <span>
-                <b>Avto-saqlash faol:</b> Siz kiritgan maʼlumotlar saqlab qolinmoqda. Sahifa yangilansa (refresh) ham oʻchib ketmaydi.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={clearDraft}
-              className="text-xs font-bold text-rose-600 hover:text-rose-800 underline ml-3 cursor-pointer flex-shrink-0"
-            >
-              Formani tozalash
-            </button>
-          </div>
-        )}
 
         {/* Muvaffaqiyat ekrani (Success State) */}
         {success ? (
-          <div className="bg-white rounded-2xl shadow-md border-2 border-emerald-500 p-8 sm:p-10 text-center animate-in fade-in zoom-in-95">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-emerald-50">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-8 sm:p-10 text-center animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 ring-8 ring-emerald-50/50">
+              <CheckCircle2 className="w-9 h-9" />
             </div>
 
-            <h3 className="text-2xl font-black text-slate-900 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 mb-3">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Real-vaqtda tekshiruvga yuborildi</span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
               Arizangiz muvaffaqiyatli qabul qilindi!
             </h3>
             <p className="text-sm text-slate-600 max-w-md mx-auto mb-6">
               Hurmatli <b>{fullName}</b>, sizning arizangiz <b>{selectedDistrictName}</b>,{' '}
-              <b>{formatMahallaName(selectedMahallaName)}</b> yetakchisi koʻrib chiqishi uchun navbatga yoʻnaltirildi.
+              <b>{formatMahallaName(selectedMahallaName || customMahallaName)}</b> yetakchisi koʻrib chiqishi uchun tekshiruv navbatiga yoʻnaltirildi.
             </p>
 
             <div className="bg-slate-50 rounded-xl p-4 max-w-md mx-auto border border-slate-200 text-left text-xs space-y-2 mb-6">
@@ -509,7 +511,7 @@ export const PublicSurveyPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Hudud:</span>
-                <span className="font-bold text-slate-800">{selectedDistrictName}, {formatMahallaName(selectedMahallaName)}</span>
+                <span className="font-bold text-slate-800">{selectedDistrictName}, {formatMahallaName(selectedMahallaName || customMahallaName)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Telefon:</span>
@@ -517,7 +519,7 @@ export const PublicSurveyPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Holati:</span>
-                <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Koʻrib chiqishda</span>
+                <span className="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">Koʻrib chiqish kutilmoqda</span>
               </div>
             </div>
 
@@ -596,14 +598,27 @@ export const PublicSurveyPage: React.FC = () => {
               {/* ============================================================== */}
               {step === 1 && (
                 <div className="space-y-4">
-                  <div className="border-b border-slate-100 pb-3 mb-4">
-                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#163D5C]" />
-                      <span>1-qadam. Shaxsiy maʼlumotlaringiz</span>
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Passport yoki ID-kartangizdagi maʼlumotlarni aniq kiriting
-                    </p>
+                  <div className="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <User className="w-4 h-4 text-[#163D5C]" />
+                        <span>1-qadam. Shaxsiy maʼlumotlaringiz</span>
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Passport yoki ID-kartangizdagi maʼlumotlarni aniq kiriting
+                      </p>
+                    </div>
+                    {Boolean(fullName || pinfl || address || (phone && phone !== '+998')) && (
+                      <button
+                        type="button"
+                        onClick={clearDraft}
+                        className="text-[11px] font-semibold text-slate-400 hover:text-rose-600 transition flex items-center gap-1 cursor-pointer"
+                        title="Formadagi kiritilgan maʼlumotlarni tozalash"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Tozalash</span>
+                      </button>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
