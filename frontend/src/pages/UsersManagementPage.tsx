@@ -6,7 +6,6 @@ import { Mahalla, District } from '../types/monitoring.types';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { Pagination } from '../components/ui/Pagination';
 import { useAuth } from '../context/AuthContext';
-import { useAreaFilter } from '../context/AreaFilterContext';
 import { formatUzPhone, isValidUzPhone } from '../utils/validators';
 import { formatMahallaName } from '../utils/formatters';
 import {
@@ -29,17 +28,17 @@ type TabRoleFilter = 'ALL' | UserRole;
 
 export const UsersManagementPage: React.FC = () => {
   const { user: currentUser, isSuperAdmin, isDistrictAdmin } = useAuth();
-  const {
-    selectedDistrictId: globalDistrictId,
-    setSelectedDistrictId: setGlobalDistrictId,
-    selectedMahallaId: globalMahallaId,
-    setSelectedMahallaId: setGlobalMahallaId,
-  } = useAreaFilter();
+
+  // Sahifaning o'ziga xos lokal filtrlari (opshiydagi/sidebardagi tumanga ta'sir qilmaydi)
+  const [filterDistrictId, setFilterDistrictId] = useState<string>(() => {
+    return isDistrictAdmin ? currentUser?.districtId || '' : '';
+  });
+  const [filterMahallaId, setFilterMahallaId] = useState<string>('');
 
   const currentFilterDistrictId = isDistrictAdmin
     ? currentUser?.districtId || ''
-    : globalDistrictId;
-  const currentFilterMahallaId = globalMahallaId;
+    : filterDistrictId;
+  const currentFilterMahallaId = filterMahallaId;
 
   const [users, setUsers] = useState<User[]>([]);
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
@@ -506,10 +505,10 @@ export const UsersManagementPage: React.FC = () => {
               <CustomSelect
                 placeholder="Barcha tumanlar"
                 searchable={true}
-                value={currentFilterDistrictId}
+                value={filterDistrictId}
                 onChange={(val) => {
-                  setGlobalDistrictId(val);
-                  setGlobalMahallaId('');
+                  setFilterDistrictId(val);
+                  setFilterMahallaId('');
                   setPage(1);
                 }}
                 icon={<MapPin className="w-3.5 h-3.5 text-[#163D5C]" />}
@@ -537,9 +536,9 @@ export const UsersManagementPage: React.FC = () => {
               }
               searchable={true}
               disabled={isSuperAdmin && !currentFilterDistrictId}
-              value={currentFilterMahallaId}
+              value={filterMahallaId}
               onChange={(val) => {
-                setGlobalMahallaId(val);
+                setFilterMahallaId(val);
                 setPage(1);
               }}
               icon={<Building2 className="w-3.5 h-3.5 text-[#163D5C]" />}
@@ -554,12 +553,12 @@ export const UsersManagementPage: React.FC = () => {
           </div>
 
           {/* Filtrlarni tozalash tugmasi */}
-          {(currentFilterDistrictId || currentFilterMahallaId || searchQuery) && (
+          {(filterDistrictId || filterMahallaId || searchQuery) && (
             <button
               type="button"
               onClick={() => {
-                if (isSuperAdmin) setGlobalDistrictId('');
-                setGlobalMahallaId('');
+                if (isSuperAdmin) setFilterDistrictId('');
+                setFilterMahallaId('');
                 setSearchQuery('');
                 setPage(1);
               }}

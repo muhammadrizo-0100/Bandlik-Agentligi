@@ -29,11 +29,8 @@ import {
   CheckCircle2,
   Building2,
 } from 'lucide-react';
-import { useAreaFilter } from '../context/AreaFilterContext';
-
 export const CitizensPage: React.FC = () => {
   const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator, isDataReviewer } = useAuth();
-  const { selectedDistrictId, setSelectedDistrictId, selectedMahallaId, setSelectedMahallaId } = useAreaFilter();
   const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -58,18 +55,22 @@ export const CitizensPage: React.FC = () => {
     };
   }, []);
 
-  // Filters
+  // Sahifaning o'ziga xos lokal filtrlari (opshiydagi/sidebardagi tumanga ta'sir qilmaydi)
   const [search, setSearch] = useState<string>('');
-  const [selectedMahalla, setSelectedMahalla] = useState<string>(
-    searchParams.get('mahallaId') || selectedMahallaId || '',
-  );
-
-  useEffect(() => {
-    setSelectedMahalla(selectedMahallaId || '');
-  }, [selectedMahallaId]);
+  const [filterDistrictId, setFilterDistrictId] = useState<string>(() => {
+    if (isDistrictAdmin) return user?.districtId || '';
+    return searchParams.get('districtId') || '';
+  });
+  const [filterMahallaId, setFilterMahallaId] = useState<string>(() => {
+    if (isMahallaOperator) return user?.mahallaId || '';
+    return searchParams.get('mahallaId') || '';
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>(
     searchParams.get('category') || '',
   );
+
+  const currentDistrictId = isDistrictAdmin ? user?.districtId || '' : filterDistrictId;
+  const currentMahallaId = isMahallaOperator ? user?.mahallaId || '' : filterMahallaId;
 
   // Modal State (Batafsil ma'lumot va bandlik tarixi)
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
@@ -102,8 +103,8 @@ export const CitizensPage: React.FC = () => {
       setLoading(true);
       const res = await monitoringApi.getCitizens({
         search: search || undefined,
-        districtId: selectedDistrictId || undefined,
-        mahallaId: selectedMahalla || undefined,
+        districtId: currentDistrictId || undefined,
+        mahallaId: currentMahallaId || undefined,
         category: (selectedCategory as EmploymentCategory) || undefined,
         page,
         limit: 10,
@@ -119,10 +120,10 @@ export const CitizensPage: React.FC = () => {
 
   useEffect(() => {
     monitoringApi
-      .getMahallasDropdown(selectedDistrictId || undefined)
+      .getMahallasDropdown(currentDistrictId || undefined)
       .then((res) => setMahallas(res as any))
       .catch(() => {});
-  }, [selectedDistrictId]);
+  }, [currentDistrictId]);
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -139,7 +140,7 @@ export const CitizensPage: React.FC = () => {
       fetchCitizens();
     }, 250);
     return () => clearTimeout(timer);
-  }, [page, search, selectedDistrictId, selectedMahalla, selectedCategory]);
+  }, [page, search, currentDistrictId, currentMahallaId, selectedCategory]);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
@@ -315,11 +316,10 @@ export const CitizensPage: React.FC = () => {
               <CustomSelect
                 placeholder="Barcha tumanlar"
                 searchable={true}
-                value={selectedDistrictId}
+                value={filterDistrictId}
                 onChange={(val) => {
-                  setSelectedDistrictId(val);
-                  setSelectedMahalla('');
-                  setSelectedMahallaId('');
+                  setFilterDistrictId(val);
+                  setFilterMahallaId('');
                   setPage(1);
                 }}
                 options={[
@@ -338,10 +338,9 @@ export const CitizensPage: React.FC = () => {
               <CustomSelect
                 placeholder="Barcha mahallalar"
                 searchable={true}
-                value={selectedMahalla}
+                value={filterMahallaId}
                 onChange={(val) => {
-                  setSelectedMahalla(val);
-                  setSelectedMahallaId(val);
+                  setFilterMahallaId(val);
                   setPage(1);
                 }}
                 options={[
