@@ -102,6 +102,20 @@ export class SurveysService {
       throw new BadRequestException('Tizimda mas\'ul xodim topilmadi');
     }
 
+    // 1. Agar ushbu JSHSHIR bo'yicha ayni paytda ko'rib chiqilayotgan (PENDING_REVIEW) so'rovnoma bo'lsa, qayta yuborishni bloklash!
+    const pendingSurvey = await this.surveyRepository.findOne({
+      where: {
+        citizenPinfl: dto.pinfl.trim(),
+        status: SurveyStatus.PENDING_REVIEW,
+      },
+    });
+
+    if (pendingSurvey) {
+      throw new BadRequestException(
+        `Ushbu JSHSHIR (${dto.pinfl.trim()}) boʻyicha yuborilgan soʻrovnoma ayni paytda masʼul xodimlar tomonidan koʻrib chiqilmoqda. Qayta ariza yuborish shart emas, iltimos javobni kuting.`,
+      );
+    }
+
     const existingCitizen = await this.citizenRepository.findOne({
       where: { pinfl: dto.pinfl.trim() },
       relations: { mahalla: true, district: true },

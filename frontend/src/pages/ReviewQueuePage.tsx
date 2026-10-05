@@ -225,10 +225,10 @@ export const ReviewQueuePage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">
-                    Ziddiyatli So'rovnomani Tekshirish
+                    Soʻrovnomani Tekshirish & Rasmiy Roʻyxatga Olish
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Mavjud fuqaro ma'lumotlari va yangi so'rovnoma o'rtasidagi taqqoslash
+                    Fuqaro yuborgan maʼlumotlar toʻgʻriligini tekshirib, bandlik monitoringi reestriga kiritish
                   </p>
                 </div>
               </div>
@@ -351,10 +351,10 @@ export const ReviewQueuePage: React.FC = () => {
                     type="button"
                     disabled={submitting}
                     onClick={() => handleResolve('APPROVE_UPDATE')}
-                    className="flex items-center space-x-1.5 px-6 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition disabled:opacity-50"
+                    className="flex items-center space-x-1.5 px-6 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Tasdiqlash & Fuqaroni yangilash</span>
+                    <span>Tasdiqlash & Roʻyxatga olish</span>
                   </button>
                 </div>
               </div>
