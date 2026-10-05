@@ -586,6 +586,10 @@ export const DashboardPage: React.FC = () => {
     const item = barChartData[payload.index];
     if (!item) return null;
 
+    // Uzun mahalla nomlarini qisqartirish (masalan: "Uchqo'rg'on" -> "Uchqo'rg'...")
+    const rawName = item.name || '';
+    const displayName = rawName.length > 9 ? `${rawName.slice(0, 8)}…` : rawName;
+
     return (
       <g transform={`translate(${x},${y})`}>
         <text
@@ -594,19 +598,19 @@ export const DashboardPage: React.FC = () => {
           dy={10}
           textAnchor="middle"
           fill="#1E293B"
-          fontSize={11}
+          fontSize={10.5}
           fontWeight={700}
         >
-          {item.name}
+          {displayName}
         </text>
         {item.eventDateLabel && (
           <text
             x={0}
             y={0}
-            dy={24}
+            dy={23}
             textAnchor="middle"
             fill="#64748B"
-            fontSize={10}
+            fontSize={9.5}
             fontWeight={500}
           >
             {item.eventDateLabel}
@@ -1139,7 +1143,7 @@ export const DashboardPage: React.FC = () => {
       {/* 5. Grafika Bloklari (Qalin borderli 2 ta zamonaviy container) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Chap grafik (2 ustun): Mahallalar kesimida rangli taqsimot yoki Kunlik Eventlar */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border-2 border-slate-200 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-6 border-2 border-slate-200 shadow-2xs flex flex-col justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
@@ -1314,88 +1318,99 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
 
-            <span className="text-[11px] font-medium text-slate-400 flex items-center">
-              Tarixni koʻrish uchun ustunga bosing 👆
-            </span>
+            <div className="flex items-center space-x-2 text-[11px] font-medium text-slate-400">
+              <span className="hidden sm:inline">Tarixni koʻrish uchun ustunga bosing 👆</span>
+              <span className="sm:hidden text-sky-700 font-semibold flex items-center gap-1 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-md text-[10px]">
+                ↔️ Chapga/oʻngga suring
+              </span>
+            </div>
           </div>
 
-          <div className="h-64 w-full">
-            {barChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={barChartData}
-                  onClick={handleChartClick}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 25 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={<CustomXAxisTick />}
-                    interval={0}
-                    height={38}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#64748B', fontSize: 11 }}
-                  />
-                  <Tooltip
-                    content={<CustomMainChartTooltip />}
-                    cursor={{ fill: '#F8FAFC' }}
-                  />
-                  {/* Yashil: Rasmiy band */}
-                  <Bar
-                    dataKey="official"
-                    name="Rasmiy band"
-                    fill="#10B981"
-                    radius={[6, 6, 0, 0]}
-                    barSize={isMahallaOperator ? 24 : 14}
-                    minPointSize={3}
-                    cursor="pointer"
-                    onClick={(data) => openEventModal(data)}
-                  />
-                  {/* Sariq: Norasmiy band */}
-                  <Bar
-                    dataKey="unofficial"
-                    name="Norasmiy band"
-                    fill="#F59E0B"
-                    radius={[6, 6, 0, 0]}
-                    barSize={isMahallaOperator ? 24 : 14}
-                    minPointSize={3}
-                    cursor="pointer"
-                    onClick={(data) => openEventModal(data)}
-                  />
-                  {/* Qizil: Ishsiz yoshlar */}
-                  <Bar
-                    dataKey="unemployed"
-                    name="Ishsiz yoshlar"
-                    fill="#EF4444"
-                    radius={[6, 6, 0, 0]}
-                    barSize={isMahallaOperator ? 24 : 14}
-                    minPointSize={3}
-                    cursor="pointer"
-                    onClick={(data) => openEventModal(data)}
-                  />
-                  {/* Kulrang: Ishlash istagi yo'q */}
-                  <Bar
-                    dataKey="noWish"
-                    name="Ishlash istagi yoʻq"
-                    fill="#94A3B8"
-                    radius={[6, 6, 0, 0]}
-                    barSize={isMahallaOperator ? 24 : 14}
-                    minPointSize={3}
-                    cursor="pointer"
-                    onClick={(data) => openEventModal(data)}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
-                Hozircha mahalla maʻlumotlari mavjud emas
-              </div>
-            )}
+          <div className="w-full overflow-x-auto pb-2 -mx-1 px-1">
+            <div
+              className="h-64"
+              style={{
+                minWidth: `${Math.max(barChartData.length * 76, 480)}px`,
+                width: '100%',
+              }}
+            >
+              {barChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={barChartData}
+                    onClick={handleChartClick}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 28 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={<CustomXAxisTick />}
+                      interval={0}
+                      height={40}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748B', fontSize: 11 }}
+                    />
+                    <Tooltip
+                      content={<CustomMainChartTooltip />}
+                      cursor={{ fill: '#F8FAFC' }}
+                    />
+                    {/* Yashil: Rasmiy band */}
+                    <Bar
+                      dataKey="official"
+                      name="Rasmiy band"
+                      fill="#10B981"
+                      radius={[6, 6, 0, 0]}
+                      barSize={isMahallaOperator ? 24 : 14}
+                      minPointSize={3}
+                      cursor="pointer"
+                      onClick={(data) => openEventModal(data)}
+                    />
+                    {/* Sariq: Norasmiy band */}
+                    <Bar
+                      dataKey="unofficial"
+                      name="Norasmiy band"
+                      fill="#F59E0B"
+                      radius={[6, 6, 0, 0]}
+                      barSize={isMahallaOperator ? 24 : 14}
+                      minPointSize={3}
+                      cursor="pointer"
+                      onClick={(data) => openEventModal(data)}
+                    />
+                    {/* Qizil: Ishsiz yoshlar */}
+                    <Bar
+                      dataKey="unemployed"
+                      name="Ishsiz yoshlar"
+                      fill="#EF4444"
+                      radius={[6, 6, 0, 0]}
+                      barSize={isMahallaOperator ? 24 : 14}
+                      minPointSize={3}
+                      cursor="pointer"
+                      onClick={(data) => openEventModal(data)}
+                    />
+                    {/* Kulrang: Ishlash istagi yo'q */}
+                    <Bar
+                      dataKey="noWish"
+                      name="Ishlash istagi yoʻq"
+                      fill="#94A3B8"
+                      radius={[6, 6, 0, 0]}
+                      barSize={isMahallaOperator ? 24 : 14}
+                      minPointSize={3}
+                      cursor="pointer"
+                      onClick={(data) => openEventModal(data)}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
+                  Hozircha mahalla maʻlumotlari mavjud emas
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
