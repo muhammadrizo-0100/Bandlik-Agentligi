@@ -196,22 +196,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="w-full h-full bg-white text-slate-700 flex flex-col justify-between border-r border-slate-200/80 flex-shrink-0 select-none overflow-y-auto overflow-x-hidden relative transition-all duration-300">
-      {/* ======================================================== */}
-      {/* TOGGLE BUTTON (< va >): KATTALASHTIRISH VA KICHIKLASHTIRISH */}
-      {/* ======================================================== */}
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        title={isCollapsed ? "Sidebarni kattalashtirish (>)" : "Sidebarni kichiklashtirish (<)"}
-        className="absolute -right-3.5 top-5 z-50 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-600 hover:text-[#163D5C] hover:border-[#163D5C] hover:bg-slate-50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
-      >
-        {isCollapsed ? (
-          <ChevronRight className="w-4 h-4 stroke-[2.5]" />
-        ) : (
-          <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
-        )}
-      </button>
-
       {/* Yuqori qism: Logo, Hudud tanlagich va Menyu */}
       <div>
         {/* 1. Brand Logo */}

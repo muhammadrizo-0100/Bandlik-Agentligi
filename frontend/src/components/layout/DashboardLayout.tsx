@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, ChevronRight, ShieldCheck, X, Clock, CheckCircle2 } from 'lucide-react';
+import { Search, Bell, ChevronRight, ChevronLeft, ShieldCheck, X, Clock, CheckCircle2 } from 'lucide-react';
 import { formatMahallaName } from '../../utils/formatters';
 import { monitoringApi } from '../../api/monitoring.api';
 import { useSidebar } from '../../context/SidebarContext';
@@ -31,7 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   searchPlaceholder = 'Istalgan narsani qidiring (F.I.Sh., JSHSHIR, telefon)...',
 }) => {
   const { user } = useAuth();
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const navigate = useNavigate();
   const [internalSearch, setInternalSearch] = useState(searchValue || '');
   const [pendingCount, setPendingCount] = useState<number>(0);
@@ -103,6 +103,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           selectedDistrictId={selectedDistrictId}
           onDistrictChange={onDistrictChange}
         />
+
+        {/* Toggle Collapse/Expand Button (< va >): Sidebarni markazida (centerida) to'liq ko'rinadigan tugma */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          title={isCollapsed ? "Sidebarni kattalashtirish (>)" : "Sidebarni kichiklashtirish (<)"}
+          className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 rounded-full bg-white border-2 border-slate-200 text-slate-600 hover:text-[#163D5C] hover:border-[#163D5C] hover:bg-slate-50 shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+          )}
+        </button>
       </aside>
 
       {/* Mustaqil scroll bo'luvchi asosiy qism */}
