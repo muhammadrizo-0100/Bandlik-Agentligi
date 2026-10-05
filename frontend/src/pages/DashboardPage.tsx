@@ -1591,6 +1591,7 @@ export const DashboardPage: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b-2 border-slate-100 bg-slate-50/80 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
+                <th className="py-3.5 px-4 w-12 text-center">#</th>
                 <th className="py-3.5 px-5">Fuqaro F.I.Sh.</th>
                 <th className="py-3.5 px-4">Sana</th>
                 <th className="py-3.5 px-4">Mahalla</th>
@@ -1602,14 +1603,15 @@ export const DashboardPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredSurveys.length > 0 ? (
                 (() => {
+                  const displaySurveys = filteredSurveys.slice(0, 10);
                   const seenCitizenMap = new Map<string, number>();
-                  filteredSurveys.forEach((s: Survey) => {
+                  displaySurveys.forEach((s: Survey) => {
                     const key = s.citizenPinfl || s.citizenId || s.citizenFullName;
                     seenCitizenMap.set(key, (seenCitizenMap.get(key) || 0) + 1);
                   });
                   const renderedCitizens = new Set<string>();
 
-                  return filteredSurveys.map((survey: Survey) => {
+                  return displaySurveys.map((survey: Survey, idx: number) => {
                     const key = survey.citizenPinfl || survey.citizenId || survey.citizenFullName;
                     const isMulti = (seenCitizenMap.get(key) || 0) > 1;
                     const isLatest = !renderedCitizens.has(key);
@@ -1617,6 +1619,9 @@ export const DashboardPage: React.FC = () => {
 
                     return (
                       <tr key={survey.id} className="hover:bg-slate-50/80 transition">
+                        <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                          {idx + 1}
+                        </td>
                         <td className="py-3.5 px-5 font-bold text-slate-900">
                           <div className="flex items-center space-x-2.5">
                             <div className="w-7 h-7 rounded-xl bg-[#163D5C]/10 text-[#163D5C] flex items-center justify-center font-bold text-xs shrink-0">

@@ -426,7 +426,13 @@ export class SurveysService {
     }
 
     if (filterDto.status) {
-      queryBuilder.andWhere('s.status = :status', { status: filterDto.status });
+      if ((filterDto.status as string) === 'APPROVED') {
+        queryBuilder.andWhere('s.status IN (:...appStatuses)', {
+          appStatuses: [SurveyStatus.APPROVED, SurveyStatus.RESOLVED],
+        });
+      } else {
+        queryBuilder.andWhere('s.status = :status', { status: filterDto.status });
+      }
     }
 
     if (filterDto.category) {

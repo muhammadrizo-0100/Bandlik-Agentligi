@@ -17,11 +17,13 @@ import {
 } from 'lucide-react';
 
 import { useAreaFilter } from '../context/AreaFilterContext';
+import { Pagination } from '../components/ui/Pagination';
 
 export const SurveysPage: React.FC = () => {
   const { selectedDistrictId, selectedMahallaId } = useAreaFilter();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [total, setTotal] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -33,7 +35,9 @@ export const SurveysPage: React.FC = () => {
         search: search.trim() || undefined,
         districtId: selectedDistrictId || undefined,
         mahallaId: selectedMahallaId || undefined,
-        limit: 50,
+        status: statusFilter === 'ALL' ? undefined : (statusFilter as any),
+        page,
+        limit: 10,
       });
       setSurveys(res.items);
       setTotal(res.total);
@@ -49,13 +53,17 @@ export const SurveysPage: React.FC = () => {
       fetchSurveys();
     }, 250);
     return () => clearTimeout(timer);
-  }, [search, selectedDistrictId, selectedMahallaId]);
+  }, [search, selectedDistrictId, selectedMahallaId, statusFilter, page]);
 
-  const filteredSurveys = surveys.filter((s) => {
-    if (statusFilter === 'ALL') return true;
-    if (statusFilter === 'APPROVED') return s.status === 'APPROVED' || s.status === 'RESOLVED';
-    return s.status === statusFilter;
-  });
+  const handleSearch = (q: string) => {
+    setSearch(q);
+    setPage(1);
+  };
+
+  const handleStatusChange = (status: string) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
 
   const getStatusBadge = (status: SurveyStatus) => {
     switch (status) {
@@ -130,7 +138,7 @@ export const SurveysPage: React.FC = () => {
       title="Soʻrovnomalar Reyestri"
       breadcrumbs={['Sahifalar', 'Soʻrovnomalar', 'Barcha anketalar']}
       searchValue={search}
-      onSearch={(q) => setSearch(q)}
+      onSearch={handleSearch}
       searchPlaceholder="Fuqaro F.I.Sh., JSHSHIR yoki telefon boʻyicha qidirish..."
     >
       <div className="space-y-6">
@@ -142,13 +150,13 @@ export const SurveysPage: React.FC = () => {
               type="text"
               placeholder="Fuqaro F.I.Sh., JSHSHIR yoki telefon boʻyicha qidirish..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-10 pr-9 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#163D5C]/20 focus:border-[#163D5C] bg-slate-50/50"
             />
             {search && (
               <button
                 type="button"
-                onClick={() => setSearch('')}
+                onClick={() => handleSearch('')}
                 className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer"
                 title="Tozalash"
               >
@@ -160,7 +168,7 @@ export const SurveysPage: React.FC = () => {
           {/* Status Tabs */}
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-medium text-slate-600 w-full md:w-auto overflow-x-auto">
             <button
-              onClick={() => setStatusFilter('ALL')}
+              onClick={() => handleStatusChange('ALL')}
               className={`px-3 py-1.5 rounded-lg transition ${
                 statusFilter === 'ALL'
                   ? 'bg-white text-indigo-600 shadow-sm font-semibold'
@@ -170,7 +178,7 @@ export const SurveysPage: React.FC = () => {
               Barchasi ({total})
             </button>
             <button
-              onClick={() => setStatusFilter('APPROVED')}
+              onClick={() => handleStatusChange('APPROVED')}
               className={`px-3 py-1.5 rounded-lg transition ${
                 statusFilter === 'APPROVED'
                   ? 'bg-white text-emerald-600 shadow-sm font-semibold'
@@ -180,7 +188,7 @@ export const SurveysPage: React.FC = () => {
               Tasdiqlangan
             </button>
             <button
-              onClick={() => setStatusFilter('PENDING_REVIEW')}
+              onClick={() => handleStatusChange('PENDING_REVIEW')}
               className={`px-3 py-1.5 rounded-lg transition ${
                 statusFilter === 'PENDING_REVIEW'
                   ? 'bg-white text-amber-600 shadow-sm font-semibold'
@@ -204,7 +212,7 @@ export const SurveysPage: React.FC = () => {
                   Oʻtkazilgan Soʻrovnomalar Jurnali
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Reyestrda jami {filteredSurveys.length} ta yozuv koʻrsatilmoqda
+                  Reyestrda jami {total} ta yozuv mavjud
                 </p>
               </div>
             </div>
@@ -214,7 +222,7 @@ export const SurveysPage: React.FC = () => {
             <div className="p-16 text-center text-xs text-slate-400">
               Yuklanmoqda...
             </div>
-          ) : filteredSurveys.length === 0 ? (
+          ) : surveys.length === 0 ? (
             <div className="p-16 text-center text-xs text-slate-400 flex flex-col items-center">
               <FileText className="w-10 h-10 text-slate-300 mb-2" />
               <span>Mos keluvchi soʻrovnomalar topilmadi</span>
@@ -224,6 +232,7 @@ export const SurveysPage: React.FC = () => {
               <table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                   <tr>
+                    <th className="py-3.5 px-4 w-12 text-center">#</th>
                     <th className="py-3.5 px-5">Fuqaro F.I.Sh.</th>
                     <th className="py-3.5 px-4">JSHSHIR</th>
                     <th className="py-3.5 px-4">Mahalla</th>
@@ -235,11 +244,14 @@ export const SurveysPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredSurveys.map((s) => (
+                  {surveys.map((s, idx) => (
                     <tr
                       key={s.id}
                       className="hover:bg-indigo-50/30 transition group"
                     >
+                      <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                        {(page - 1) * 10 + idx + 1}
+                      </td>
                       <td className="py-3.5 px-5">
                         <div className="font-bold text-slate-800 group-hover:text-indigo-600 transition">
                           {s.citizenFullName}
@@ -283,6 +295,16 @@ export const SurveysPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Sahifalash (Pagination) */}
+          {!loading && surveys.length > 0 && (
+            <Pagination
+              currentPage={page}
+              totalItems={total}
+              pageSize={10}
+              onPageChange={(p) => setPage(p)}
+            />
           )}
         </div>
       </div>

@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { formatMahallaName } from '../utils/formatters';
 import { isValidYouthAge } from '../utils/validators';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { Pagination } from '../components/ui/Pagination';
 import {
   Users,
   Search,
@@ -105,7 +106,7 @@ export const CitizensPage: React.FC = () => {
         mahallaId: selectedMahalla || undefined,
         category: (selectedCategory as EmploymentCategory) || undefined,
         page,
-        limit: 15,
+        limit: 10,
       });
       setCitizens(res.items);
       setTotal(res.total);
@@ -415,6 +416,7 @@ export const CitizensPage: React.FC = () => {
               <table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                   <tr>
+                    <th className="py-3.5 px-4 w-12 text-center">#</th>
                     <th className="py-3.5 px-5">F.I.Sh.</th>
                     <th className="py-3.5 px-4">JSHSHIR</th>
                     <th className="py-3.5 px-4">Mahalla</th>
@@ -425,8 +427,11 @@ export const CitizensPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {citizens.map((c) => (
+                  {citizens.map((c, idx) => (
                     <tr key={c.id} className="hover:bg-indigo-50/30 transition group">
+                      <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                        {(page - 1) * 10 + idx + 1}
+                      </td>
                       <td className="py-3.5 px-5 font-bold text-slate-900 group-hover:text-indigo-600 transition">
                         {c.fullName}
                       </td>
@@ -484,6 +489,16 @@ export const CitizensPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Sahifalash (Pagination) */}
+          {!loading && citizens.length > 0 && (
+            <Pagination
+              currentPage={page}
+              totalItems={total}
+              pageSize={10}
+              onPageChange={(p) => setPage(p)}
+            />
           )}
         </div>
       </div>

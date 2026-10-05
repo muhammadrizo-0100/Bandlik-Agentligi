@@ -5,6 +5,7 @@ import { Mahalla, District } from '../types/monitoring.types';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { Pagination } from '../components/ui/Pagination';
 import { useAuth } from '../context/AuthContext';
 import {
   Building2,
@@ -30,6 +31,8 @@ export const MahallasManagementPage: React.FC = () => {
   const [districts, setDistricts] = useState<District[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mahallaPage, setMahallaPage] = useState<number>(1);
+  const [districtPage, setDistrictPage] = useState<number>(1);
 
   // Mahalla qo'shish modal
   const [showAddMahallaModal, setShowAddMahallaModal] = useState(false);
@@ -67,7 +70,14 @@ export const MahallasManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    setMahallaPage(1);
+    setDistrictPage(1);
   }, [isSuperAdmin, globalDistrictId]);
+
+  useEffect(() => {
+    setMahallaPage(1);
+    setDistrictPage(1);
+  }, [searchQuery, activeTab]);
 
   const handleCreateMahalla = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,6 +294,7 @@ export const MahallasManagementPage: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                    <th className="py-3.5 px-4 w-12 text-center">#</th>
                     <th className="py-3.5 px-5">Mahalla Nomi</th>
                     <th className="py-3.5 px-4">Tuman</th>
                     <th className="py-3.5 px-4">Kodi</th>
@@ -293,46 +304,51 @@ export const MahallasManagementPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filteredMahallas.length > 0 ? (
-                    filteredMahallas.map((m: any) => (
-                      <tr key={m.id} className="hover:bg-slate-50/80 transition">
-                        <td className="py-3.5 px-5 font-bold text-slate-900 flex items-center space-x-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                            <Building2 className="w-3.5 h-3.5" />
-                          </div>
-                          <span>{formatMahallaName(m.name)}</span>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-600 font-medium">
-                          {m.district?.name || m.district || 'Davlatobod tumani'}
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
-                          {m.code || '—'}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {m.operators && m.operators.length > 0 ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-[11px]">
-                              {m.operators.map((o: any) => o.fullName).join(', ')}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 text-[11px]">Biriktirilmagan</span>
-                          )}
-                        </td>
-                        {isSuperAdmin && (
-                          <td className="py-3.5 px-5 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteMahalla(m.id, m.name)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
-                              title="Oʻchirish"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                    filteredMahallas
+                      .slice((mahallaPage - 1) * 10, mahallaPage * 10)
+                      .map((m: any, idx: number) => (
+                        <tr key={m.id} className="hover:bg-slate-50/80 transition">
+                          <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                            {(mahallaPage - 1) * 10 + idx + 1}
                           </td>
-                        )}
-                      </tr>
-                    ))
+                          <td className="py-3.5 px-5 font-bold text-slate-900 flex items-center space-x-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                              <Building2 className="w-3.5 h-3.5" />
+                            </div>
+                            <span>{formatMahallaName(m.name)}</span>
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600 font-medium">
+                            {m.district?.name || m.district || 'Davlatobod tumani'}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                            {m.code || '—'}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {m.operators && m.operators.length > 0 ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-[11px]">
+                                {m.operators.map((o: any) => o.fullName).join(', ')}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-[11px]">Biriktirilmagan</span>
+                            )}
+                          </td>
+                          {isSuperAdmin && (
+                            <td className="py-3.5 px-5 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMahalla(m.id, m.name)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                                title="Oʻchirish"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-slate-400 font-medium text-xs">
+                      <td colSpan={6} className="py-10 text-center text-slate-400 font-medium text-xs">
                         {loading ? 'Yuklanmoqda...' : 'Mahallalar topilmadi'}
                       </td>
                     </tr>
@@ -340,6 +356,16 @@ export const MahallasManagementPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Sahifalash (Pagination) */}
+            {!loading && filteredMahallas.length > 0 && (
+              <Pagination
+                currentPage={mahallaPage}
+                totalItems={filteredMahallas.length}
+                pageSize={10}
+                onPageChange={(p) => setMahallaPage(p)}
+              />
+            )}
           </div>
         )}
 
@@ -354,7 +380,7 @@ export const MahallasManagementPage: React.FC = () => {
                   Tizimdagi Tumanlar & Shaharlar
                 </h4>
                 <p className="text-xs text-slate-400">
-                  Har bir tuman mustaqil koordinator va mahallalar zanjiriga ega
+                  Har bir tuman mustaqil koordinator va mahallalar zanjiriga ega ({filteredDistricts.length} ta)
                 </p>
               </div>
             </div>
@@ -363,6 +389,7 @@ export const MahallasManagementPage: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                    <th className="py-3.5 px-4 w-12 text-center">#</th>
                     <th className="py-3.5 px-5">Tuman Nomi</th>
                     <th className="py-3.5 px-4">Viloyat</th>
                     <th className="py-3.5 px-4">Qisqa Kodi</th>
@@ -372,31 +399,36 @@ export const MahallasManagementPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filteredDistricts.length > 0 ? (
-                    filteredDistricts.map((d: any) => (
-                      <tr key={d.id} className="hover:bg-slate-50/80 transition">
-                        <td className="py-3.5 px-5 font-bold text-slate-900 flex items-center space-x-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                            <Building className="w-3.5 h-3.5" />
-                          </div>
-                          <span>{d.name}</span>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-600 font-medium">{d.region}</td>
-                        <td className="py-3.5 px-4 font-mono font-semibold text-slate-500">
-                          {d.code || '—'}
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-indigo-600">
-                          {d.mahallas?.length || 0} ta mahalla
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            Faol
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                    filteredDistricts
+                      .slice((districtPage - 1) * 10, districtPage * 10)
+                      .map((d: any, idx: number) => (
+                        <tr key={d.id} className="hover:bg-slate-50/80 transition">
+                          <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                            {(districtPage - 1) * 10 + idx + 1}
+                          </td>
+                          <td className="py-3.5 px-5 font-bold text-slate-900 flex items-center space-x-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                              <Building className="w-3.5 h-3.5" />
+                            </div>
+                            <span>{d.name}</span>
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600 font-medium">{d.region}</td>
+                          <td className="py-3.5 px-4 font-mono font-semibold text-slate-500">
+                            {d.code || '—'}
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-indigo-600">
+                            {d.mahallas?.length || 0} ta mahalla
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                              Faol
+                            </span>
+                          </td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-slate-400 font-medium text-xs">
+                      <td colSpan={6} className="py-10 text-center text-slate-400 font-medium text-xs">
                         {loading ? 'Yuklanmoqda...' : 'Tumanlar topilmadi'}
                       </td>
                     </tr>
@@ -404,6 +436,16 @@ export const MahallasManagementPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Sahifalash (Pagination) */}
+            {!loading && filteredDistricts.length > 0 && (
+              <Pagination
+                currentPage={districtPage}
+                totalItems={filteredDistricts.length}
+                pageSize={10}
+                onPageChange={(p) => setDistrictPage(p)}
+              />
+            )}
           </div>
         )}
 

@@ -4,6 +4,7 @@ import { monitoringApi } from '../api/monitoring.api';
 import { User, UserRole } from '../types/auth.types';
 import { Mahalla, District } from '../types/monitoring.types';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { Pagination } from '../components/ui/Pagination';
 import { useAuth } from '../context/AuthContext';
 import { formatUzPhone, isValidUzPhone } from '../utils/validators';
 import { formatMahallaName } from '../utils/formatters';
@@ -34,6 +35,7 @@ export const UsersManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabRoleFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState<number>(1);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -80,6 +82,10 @@ export const UsersManagementPage: React.FC = () => {
     fetchUsers();
     fetchDropdowns();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, searchQuery]);
 
   const openAddModal = (roleToCreate: UserRole) => {
     setModalRole(roleToCreate);
@@ -419,10 +425,12 @@ export const UsersManagementPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredUsers.map((u, idx) => (
+                {filteredUsers
+                  .slice((page - 1) * 10, page * 10)
+                  .map((u, idx) => (
                   <tr key={u.id} className="hover:bg-slate-50/80 transition">
                     <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
-                      {idx + 1}
+                      {(page - 1) * 10 + idx + 1}
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center space-x-3">
@@ -497,6 +505,16 @@ export const UsersManagementPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Sahifalash (Pagination) */}
+        {!loading && filteredUsers.length > 0 && (
+          <Pagination
+            currentPage={page}
+            totalItems={filteredUsers.length}
+            pageSize={10}
+            onPageChange={(p) => setPage(p)}
+          />
         )}
       </div>
 

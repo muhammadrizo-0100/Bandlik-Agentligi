@@ -16,10 +16,12 @@ import {
   Search,
 } from 'lucide-react';
 import { formatMahallaName } from '../utils/formatters';
+import { Pagination } from '../components/ui/Pagination';
 
 export const ReviewQueuePage: React.FC = () => {
   const [queue, setQueue] = useState<Survey[]>([]);
   const [total, setTotal] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
 
@@ -34,11 +36,12 @@ export const ReviewQueuePage: React.FC = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  const fetchQueue = async (query?: string) => {
+  const fetchQueue = async (query?: string, pageNum?: number) => {
     try {
       setLoading(true);
       const res = await monitoringApi.getReviewQueue({
-        limit: 50,
+        limit: 10,
+        page: pageNum || page,
         search: (query !== undefined ? query : search).trim() || undefined,
       });
       setQueue(res.items);
@@ -52,11 +55,11 @@ export const ReviewQueuePage: React.FC = () => {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchQueue(search);
+      fetchQueue(search, page);
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [search]);
+  }, [search, page]);
 
   const handleOpenReview = async (id: string) => {
     setSelectedId(id);
@@ -134,13 +137,19 @@ export const ReviewQueuePage: React.FC = () => {
                 type="text"
                 placeholder="Qidirish (F.I.Sh., JSHSHIR, telefon)..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full pl-9 pr-9 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 transition"
               />
               {search && (
                 <button
                   type="button"
-                  onClick={() => setSearch('')}
+                  onClick={() => {
+                    setSearch('');
+                    setPage(1);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 transition"
                   title="Tozalash"
                 >
@@ -165,6 +174,7 @@ export const ReviewQueuePage: React.FC = () => {
               <table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                   <tr>
+                    <th className="py-3.5 px-4 w-12 text-center">#</th>
                     <th className="py-3.5 px-5">Fuqaro F.I.Sh.</th>
                     <th className="py-3.5 px-4">JSHSHIR</th>
                     <th className="py-3.5 px-4">Mahalla</th>
@@ -175,8 +185,11 @@ export const ReviewQueuePage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {queue.map((item) => (
+                  {queue.map((item, idx) => (
                     <tr key={item.id} className="hover:bg-amber-50/40 transition">
+                      <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                        {(page - 1) * 10 + idx + 1}
+                      </td>
                       <td className="py-3.5 px-5 font-bold text-slate-900">
                         {item.citizenFullName}
                       </td>
@@ -209,6 +222,16 @@ export const ReviewQueuePage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Sahifalash (Pagination) */}
+          {!loading && queue.length > 0 && (
+            <Pagination
+              currentPage={page}
+              totalItems={total}
+              pageSize={10}
+              onPageChange={(p) => setPage(p)}
+            />
           )}
         </div>
       </div>
