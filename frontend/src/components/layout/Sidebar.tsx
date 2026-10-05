@@ -16,10 +16,13 @@ import {
   Check,
   X,
   Search,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useAreaFilter } from '../../context/AreaFilterContext';
+import { useSidebar } from '../../context/SidebarContext';
 import { monitoringApi } from '../../api/monitoring.api';
 
 interface SidebarProps {
@@ -32,6 +35,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDistrictChange: propOnDistrictChange,
 }) => {
   const areaFilter = useAreaFilter();
+  const { isCollapsed, toggleSidebar } = useSidebar();
+
   const selectedDistrictId = propDistrictId !== undefined ? propDistrictId : areaFilter.selectedDistrictId;
   const onDistrictChange = (id: string) => {
     areaFilter.setSelectedDistrictId(id);
@@ -121,78 +126,274 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return 'Bandlik Agentligi';
   };
 
-  // Screenshot uslubi: Oq fon, active holatda #163D5C rangidagi nozik glassmorfizm kapsulasi
-  const getNavLinkClass = (isActive: boolean) =>
-    `flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition duration-150 text-[13px] ${
+  // NavLink stil formati
+  const getNavLinkClass = (isActive: boolean) => {
+    if (isCollapsed) {
+      return `flex items-center justify-center w-11 h-11 mx-auto rounded-2xl transition duration-150 relative group ${
+        isActive
+          ? 'bg-[#163D5C]/10 border border-[#163D5C]/20 text-[#163D5C] font-bold shadow-xs'
+          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
+      }`;
+    }
+    return `flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition duration-150 text-[13px] ${
       isActive
         ? 'bg-[#163D5C]/10 backdrop-blur-md border border-[#163D5C]/20 text-[#163D5C] font-bold shadow-xs'
         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
     }`;
+  };
+
+  const renderSectionHeader = (title: string) => {
+    if (isCollapsed) {
+      return <div className="my-2 mx-3 border-t border-slate-100" />;
+    }
+    return (
+      <div className="pt-3 pb-1 px-3">
+        <span className="text-xs font-semibold text-slate-700">{title}</span>
+      </div>
+    );
+  };
+
+  const renderNavItem = (
+    to: string,
+    label: string,
+    Icon: React.ElementType,
+    badgeCount?: number,
+    customIconColor?: string,
+  ) => (
+    <NavLink
+      key={to}
+      to={to}
+      className={({ isActive }) => getNavLinkClass(isActive)}
+      title={isCollapsed ? (badgeCount && badgeCount > 0 ? `${label} (${badgeCount})` : label) : undefined}
+    >
+      {({ isActive }) => (
+        <>
+          <Icon
+            className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${
+              customIconColor && !isActive
+                ? customIconColor
+                : isActive
+                ? 'text-[#163D5C]'
+                : 'text-slate-500'
+            }`}
+          />
+          {!isCollapsed && <span className="truncate">{label}</span>}
+          {badgeCount !== undefined && badgeCount > 0 && (
+            !isCollapsed ? (
+              <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto shadow-xs flex-shrink-0">
+                {badgeCount}
+              </span>
+            ) : (
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white shadow-xs">
+                {badgeCount > 99 ? '99+' : badgeCount}
+              </span>
+            )
+          )}
+        </>
+      )}
+    </NavLink>
+  );
 
   return (
-    <aside className="w-64 h-full bg-white text-slate-700 flex flex-col justify-between border-r border-slate-200/80 flex-shrink-0 select-none overflow-y-auto">
+    <aside className="w-full h-full bg-white text-slate-700 flex flex-col justify-between border-r border-slate-200/80 flex-shrink-0 select-none overflow-y-auto overflow-x-hidden relative transition-all duration-300">
+      {/* ======================================================== */}
+      {/* TOGGLE BUTTON (< va >): KATTALASHTIRISH VA KICHIKLASHTIRISH */}
+      {/* ======================================================== */}
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        title={isCollapsed ? "Sidebarni kattalashtirish (>)" : "Sidebarni kichiklashtirish (<)"}
+        className="absolute -right-3.5 top-5 z-50 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-600 hover:text-[#163D5C] hover:border-[#163D5C] hover:bg-slate-50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+      >
+        {isCollapsed ? (
+          <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+        ) : (
+          <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+        )}
+      </button>
+
       {/* Yuqori qism: Logo, Hudud tanlagich va Menyu */}
       <div>
-        {/* 1. Brand Logo (Screenshot uslubida) */}
-        <div className="p-5 border-b border-slate-100 flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#163D5C] flex items-center justify-center shadow-md shadow-[#163D5C]/20 text-white flex-shrink-0">
-            <Layers className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <h1 className="text-base font-bold text-[#163D5C] tracking-tight">
-                Bandlik
-              </h1>
-              <span className="text-[10px] font-bold bg-[#163D5C]/10 text-[#163D5C] px-1.5 py-0.5 rounded-md">
-                v1.0
-              </span>
+        {/* 1. Brand Logo */}
+        {!isCollapsed ? (
+          <div className="p-5 border-b border-slate-100 flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#163D5C] flex items-center justify-center shadow-md shadow-[#163D5C]/20 text-white flex-shrink-0">
+              <Layers className="w-5 h-5 text-white" />
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">Monitoring & Tahlil</p>
+            <div className="truncate">
+              <div className="flex items-center space-x-1.5">
+                <h1 className="text-base font-bold text-[#163D5C] tracking-tight">
+                  Bandlik
+                </h1>
+                <span className="text-[10px] font-bold bg-[#163D5C]/10 text-[#163D5C] px-1.5 py-0.5 rounded-md">
+                  v1.0
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium truncate">Monitoring & Tahlil</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-4 border-b border-slate-100 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="w-10 h-10 rounded-2xl bg-[#163D5C] flex items-center justify-center shadow-md shadow-[#163D5C]/20 text-white flex-shrink-0 hover:opacity-90 transition cursor-pointer"
+              title="Bandlik v1.0 - Kattalashtirish (>)"
+            >
+              <Layers className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        )}
 
-        {/* 2. Faoliyat Hududi (Toza oq karkas kartasi) */}
-        <div className="px-4 pt-4 pb-2">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-            Faoliyat Hududi
-          </p>
-          <div className="relative">
+        {/* 2. Faoliyat Hududi */}
+        {!isCollapsed ? (
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Faoliyat Hududi
+            </p>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => isSuperAdmin && setIsDropdownOpen(!isDropdownOpen)}
+                className={`w-full flex items-center justify-between p-2.5 rounded-2xl border transition ${
+                  isSuperAdmin
+                    ? 'bg-slate-50 border-slate-200 hover:bg-slate-100/80 text-slate-800 cursor-pointer'
+                    : 'bg-slate-50/80 border-slate-200/70 text-slate-800 cursor-default'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5 truncate">
+                  <div className="w-7 h-7 rounded-xl bg-[#163D5C]/10 border border-[#163D5C]/20 text-[#163D5C] flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="text-left truncate">
+                    <span className="block text-xs font-bold text-slate-900 truncate">
+                      {currentDistrictName()}
+                    </span>
+                    <span className="block text-[10px] text-slate-400 font-medium truncate">
+                      {isMahallaOperator
+                        ? user?.districtName || 'Davlatobod tumani'
+                        : 'Namangan viloyati'}
+                    </span>
+                  </div>
+                </div>
+                {isSuperAdmin && (
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-400 transition-transform ${
+                      isDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                )}
+              </button>
+
+              {/* Super Admin Tuman Tanlash Dropdowni */}
+              {isSuperAdmin && isDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                  <div className="relative mb-2">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Tumanni qidirish..."
+                      value={districtSearch}
+                      onChange={(e) => setDistrictSearch(e.target.value)}
+                      className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163D5C] text-slate-800 placeholder-slate-400 font-medium"
+                    />
+                    {districtSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setDistrictSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDistrictChange && onDistrictChange('');
+                        setIsDropdownOpen(false);
+                        setDistrictSearch('');
+                      }}
+                      className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center gap-2 rounded-xl transition ${
+                        !selectedDistrictId
+                          ? 'font-bold text-[#163D5C] bg-[#163D5C]/10 border border-[#163D5C]/20'
+                          : 'text-slate-600 hover:bg-slate-50 font-medium'
+                      }`}
+                    >
+                      <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                        {!selectedDistrictId && (
+                          <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
+                        )}
+                      </div>
+                      <span>Barcha tumanlar</span>
+                    </button>
+
+                    {districts
+                      .filter((d) =>
+                        d.name.toLowerCase().includes(districtSearch.toLowerCase().trim()),
+                      )
+                      .map((d) => {
+                        const isSelected = selectedDistrictId === d.id;
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            onClick={() => {
+                              onDistrictChange && onDistrictChange(d.id);
+                              setIsDropdownOpen(false);
+                              setDistrictSearch('');
+                            }}
+                            className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center gap-2 rounded-xl transition ${
+                              isSelected
+                                ? 'font-bold text-[#163D5C] bg-[#163D5C]/10 border border-[#163D5C]/20'
+                                : 'text-slate-600 hover:bg-slate-50 font-medium'
+                            }`}
+                          >
+                            <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
+                              )}
+                            </div>
+                            <span className="truncate">{d.name}</span>
+                          </button>
+                        );
+                      })}
+
+                    {districts.filter((d) =>
+                      d.name.toLowerCase().includes(districtSearch.toLowerCase().trim()),
+                    ).length === 0 && (
+                      <div className="px-3 py-3 text-center text-xs text-slate-400">
+                        Tuman topilmadi
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="px-2 pt-3 pb-2 flex flex-col items-center">
             <button
               type="button"
               onClick={() => isSuperAdmin && setIsDropdownOpen(!isDropdownOpen)}
-              className={`w-full flex items-center justify-between p-2.5 rounded-2xl border transition ${
+              title={`Faoliyat Hududi: ${currentDistrictName()}`}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition relative ${
                 isSuperAdmin
-                  ? 'bg-slate-50 border-slate-200 hover:bg-slate-100/80 text-slate-800 cursor-pointer'
+                  ? 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800 cursor-pointer'
                   : 'bg-slate-50/80 border-slate-200/70 text-slate-800 cursor-default'
               }`}
             >
-              <div className="flex items-center space-x-2.5 truncate">
-                <div className="w-7 h-7 rounded-xl bg-[#163D5C]/10 border border-[#163D5C]/20 text-[#163D5C] flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left truncate">
-                  <span className="block text-xs font-bold text-slate-900 truncate">
-                    {currentDistrictName()}
-                  </span>
-                  <span className="block text-[10px] text-slate-400 font-medium truncate">
-                    {isMahallaOperator
-                      ? user?.districtName || 'Davlatobod tumani'
-                      : 'Namangan viloyati'}
-                  </span>
-                </div>
+              <div className="w-7 h-7 rounded-xl bg-[#163D5C]/10 border border-[#163D5C]/20 text-[#163D5C] flex items-center justify-center">
+                <MapPin className="w-3.5 h-3.5" />
               </div>
-              {isSuperAdmin && (
-                <ChevronDown
-                  className={`w-4 h-4 text-slate-400 transition-transform ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              )}
             </button>
 
-            {/* Super Admin Tuman Tanlash Dropdowni */}
+            {/* Super Admin Tuman Tanlash Floating Dropdown (Collapsed holatda) */}
             {isSuperAdmin && isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+              <div className="fixed left-20 ml-2 top-20 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2.5 w-64 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
                 <div className="relative mb-2">
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -266,134 +467,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </button>
                       );
                     })}
-
-                  {districts.filter((d) =>
-                    d.name.toLowerCase().includes(districtSearch.toLowerCase().trim()),
-                  ).length === 0 && (
-                    <div className="px-3 py-3 text-center text-xs text-slate-400">
-                      Tuman topilmadi
-                    </div>
-                  )}
                 </div>
               </div>
             )}
           </div>
-        </div>
+        )}
 
-        {/* 3. Menyu Bo'limlari (Screenshot uslubida) */}
+        {/* 3. Menyu Bo'limlari */}
         <nav className="p-3 space-y-1">
           {/* ======================================================== */}
           {/* A. SUPER ADMIN KABINETI */}
           {/* ======================================================== */}
           {isSuperAdmin && (
             <>
-              <div className="pt-2 pb-1 px-3">
-                <span className="text-xs font-semibold text-slate-700">
-                  Kunlik ish
-                </span>
-              </div>
+              {renderSectionHeader('Kunlik ish')}
+              {renderNavItem('/dashboard', 'Boshqaruv paneli', LayoutDashboard)}
+              {renderNavItem('/new-survey', 'Yangi soʻrovnoma', FilePlus)}
+              {renderNavItem('/citizens', 'Fuqarolar reyestri', Users)}
+              {renderNavItem('/surveys', 'Soʻrovnomalar jurnali', FileSpreadsheet)}
+              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, pendingCount, 'text-amber-500')}
 
-              <NavLink to="/dashboard" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <LayoutDashboard
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Boshqaruv paneli</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/new-survey" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FilePlus
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Yangi soʻrovnoma</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/citizens" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <Users
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Fuqarolar reyestri</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/surveys" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FileSpreadsheet
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Soʻrovnomalar jurnali</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/review-queue" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <AlertTriangle
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-amber-500'
-                      }`}
-                    />
-                    <span>Tekshiruv navbati</span>
-                    {pendingCount > 0 && (
-                      <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto shadow-xs">
-                        {pendingCount}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-
-              <div className="pt-4 pb-1 px-3">
-                <span className="text-xs font-semibold text-slate-700">
-                  Tizim boshqaruvi
-                </span>
-              </div>
-
-              <NavLink to="/mahallas" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <Building2
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Tuman & Mahallalar</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/users" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <UserCog
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Xodimlar & Rollar</span>
-                  </>
-                )}
-              </NavLink>
+              {renderSectionHeader('Tizim boshqaruvi')}
+              {renderNavItem('/mahallas', 'Tuman & Mahallalar', Building2)}
+              {renderNavItem('/users', 'Xodimlar & Rollar', UserCog)}
             </>
           )}
 
@@ -402,183 +498,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* ======================================================== */}
           {isDistrictAdmin && (
             <>
-              <div className="pt-2 pb-1 px-3">
-                <span className="text-xs font-semibold text-slate-700">
-                  Kunlik ish
-                </span>
-              </div>
+              {renderSectionHeader('Kunlik ish')}
+              {renderNavItem('/dashboard', 'Boshqaruv paneli', LayoutDashboard)}
+              {renderNavItem('/new-survey', 'Yangi soʻrovnoma', FilePlus)}
+              {renderNavItem('/citizens', 'Tuman yoshlari', Users)}
+              {renderNavItem('/surveys', 'Tuman soʻrovnomalari', FileSpreadsheet)}
+              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, pendingCount, 'text-amber-500')}
 
-              <NavLink to="/dashboard" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <LayoutDashboard
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Boshqaruv paneli</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/new-survey" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FilePlus
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Yangi soʻrovnoma</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/citizens" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <Users
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Tuman yoshlari</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/surveys" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FileSpreadsheet
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Tuman soʻrovnomalari</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/review-queue" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <AlertTriangle
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-amber-500'
-                      }`}
-                    />
-                    <span>Tekshiruv navbati</span>
-                    {pendingCount > 0 && (
-                      <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto shadow-xs">
-                        {pendingCount}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-
-              <div className="pt-4 pb-1 px-3">
-                <span className="text-xs font-semibold text-slate-700">
-                  Tuman boshqaruvi
-                </span>
-              </div>
-
-              <NavLink to="/mahallas" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <Building2
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Mahallalar</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/users" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <UserCheck
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Mahalla yetakchilari</span>
-                  </>
-                )}
-              </NavLink>
+              {renderSectionHeader('Tuman boshqaruvi')}
+              {renderNavItem('/mahallas', 'Mahallalar', Building2)}
+              {renderNavItem('/users', 'Mahalla yetakchilari', UserCheck)}
             </>
           )}
 
           {/* ======================================================== */}
           {/* C. MAHALLA OPERATORI (YETAKCHI) KABINETI */}
-          {/* TALAB: 1-o'rinda Boshqaruv paneli tursin (Mahalla tahlili) */}
           {/* ======================================================== */}
           {isMahallaOperator && (
             <>
-              <div className="pt-2 pb-1 px-3">
-                <span className="text-xs font-semibold text-slate-700">
-                  Kunlik ish
-                </span>
-              </div>
-
-              {/* 1. BIRINCHI O'RINDA: Boshqaruv paneli (Mahalla tahlili) */}
-              <NavLink to="/dashboard" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <LayoutDashboard
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Boshqaruv paneli</span>
-                  </>
-                )}
-              </NavLink>
-
-              {/* 2. Yangi so'rovnoma kiritish */}
-              <NavLink to="/new-survey" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FilePlus
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Yangi soʻrovnoma</span>
-                  </>
-                )}
-              </NavLink>
-
-              {/* 3. So'rovnomalar jurnali */}
-              <NavLink to="/surveys" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FileSpreadsheet
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Soʻrovnomalar jurnali</span>
-                  </>
-                )}
-              </NavLink>
-
-              {/* 4. Mahalla yoshlari reyestri */}
-              <NavLink to="/citizens" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <Users
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Mahalla yoshlari</span>
-                  </>
-                )}
-              </NavLink>
+              {renderSectionHeader('Kunlik ish')}
+              {renderNavItem('/dashboard', 'Boshqaruv paneli', LayoutDashboard)}
+              {renderNavItem('/new-survey', 'Yangi soʻrovnoma', FilePlus)}
+              {renderNavItem('/surveys', 'Soʻrovnomalar jurnali', FileSpreadsheet)}
+              {renderNavItem('/citizens', 'Mahalla yoshlari', Users)}
             </>
           )}
 
@@ -587,100 +529,65 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* ======================================================== */}
           {isDataReviewer && (
             <>
-              <div className="pt-2 pb-1 px-3">
-                <span className="text-xs font-semibold text-slate-700">
-                  Kunlik ish
-                </span>
-              </div>
-
-              <NavLink to="/review-queue" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <AlertTriangle
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-amber-500'
-                      }`}
-                    />
-                    <span>Tekshiruv navbati</span>
-                    {pendingCount > 0 && (
-                      <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto shadow-xs">
-                        {pendingCount}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/dashboard" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <LayoutDashboard
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Boshqaruv paneli</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/citizens" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <Users
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Fuqarolar reyestri</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink to="/surveys" className={({ isActive }) => getNavLinkClass(isActive)}>
-                {({ isActive }) => (
-                  <>
-                    <FileSpreadsheet
-                      className={`w-[18px] h-[18px] flex-shrink-0 ${
-                        isActive ? 'text-[#163D5C]' : 'text-slate-500'
-                      }`}
-                    />
-                    <span>Soʻrovnomalar jurnali</span>
-                  </>
-                )}
-              </NavLink>
+              {renderSectionHeader('Kunlik ish')}
+              {renderNavItem('/review-queue', 'Tekshiruv navbati', AlertTriangle, pendingCount, 'text-amber-500')}
+              {renderNavItem('/dashboard', 'Boshqaruv paneli', LayoutDashboard)}
+              {renderNavItem('/citizens', 'Fuqarolar reyestri', Users)}
+              {renderNavItem('/surveys', 'Soʻrovnomalar jurnali', FileSpreadsheet)}
             </>
           )}
         </nav>
       </div>
 
-      {/* 4. Pastki qism: Xodim ma'lumoti va Chiqish (Screenshot uslubi) */}
-      <div className="p-4 border-t border-slate-100 space-y-2">
-        {/* User Card */}
-        <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-          <div className="w-9 h-9 rounded-xl bg-[#163D5C] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+      {/* 4. Pastki qism: Xodim ma'lumoti va Chiqish */}
+      {!isCollapsed ? (
+        <div className="p-4 border-t border-slate-100 space-y-2">
+          {/* User Card */}
+          <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+            <div className="w-9 h-9 rounded-xl bg-[#163D5C] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+              {user?.fullName?.charAt(0) || 'U'}
+            </div>
+            <div className="truncate flex-1">
+              <span className="block text-xs font-bold text-slate-800 truncate">
+                {user?.fullName}
+              </span>
+              <span className="block text-[10px] text-slate-400 font-semibold truncate">
+                {getRoleDisplayName()}
+              </span>
+            </div>
+          </div>
+
+          {/* Chiqish Tugmasi */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer text-[13px] font-medium"
+          >
+            <LogOut className="w-[18px] h-[18px] text-slate-500" />
+            <span>Chiqish</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 border-t border-slate-100 flex flex-col items-center gap-2">
+          {/* User Card (compact) */}
+          <div
+            title={`${user?.fullName} (${getRoleDisplayName()})`}
+            className="w-10 h-10 rounded-2xl bg-[#163D5C] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs cursor-pointer"
+          >
             {user?.fullName?.charAt(0) || 'U'}
           </div>
-          <div className="truncate flex-1">
-            <span className="block text-xs font-bold text-slate-800 truncate">
-              {user?.fullName}
-            </span>
-            <span className="block text-[10px] text-slate-400 font-semibold truncate">
-              {getRoleDisplayName()}
-            </span>
-          </div>
-        </div>
 
-        {/* Chiqish Tugmasi (Screenshot uslubida) */}
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer text-[13px] font-medium"
-        >
-          <LogOut className="w-[18px] h-[18px] text-slate-500" />
-          <span>Chiqish</span>
-        </button>
-      </div>
+          {/* Chiqish Tugmasi (compact) */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Tizimdan chiqish"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+          >
+            <LogOut className="w-5 h-5 text-slate-500" />
+          </button>
+        </div>
+      )}
 
       {/* Chiqishni tasdiqlash modali */}
       {isLogoutModalOpen && (

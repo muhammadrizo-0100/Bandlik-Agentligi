@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Search, Bell, ChevronRight, ShieldCheck, X, Clock, CheckCircle2 } from 'lucide-react';
 import { formatMahallaName } from '../../utils/formatters';
 import { monitoringApi } from '../../api/monitoring.api';
+import { useSidebar } from '../../context/SidebarContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   searchPlaceholder = 'Istalgan narsani qidiring (F.I.Sh., JSHSHIR, telefon)...',
 }) => {
   const { user } = useAuth();
+  const { isCollapsed } = useSidebar();
   const navigate = useNavigate();
   const [internalSearch, setInternalSearch] = useState(searchValue || '');
   const [pendingCount, setPendingCount] = useState<number>(0);
@@ -96,7 +98,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC] font-sans text-slate-800 antialiased select-none">
       {/* Sidebar with district switcher - 100% Fixed */}
-      <aside className="w-64 h-screen flex-shrink-0 z-30">
+      <aside className={`relative ${isCollapsed ? 'w-20' : 'w-64'} h-screen flex-shrink-0 z-30 transition-[width] duration-300 ease-in-out`}>
         <Sidebar
           selectedDistrictId={selectedDistrictId}
           onDistrictChange={onDistrictChange}

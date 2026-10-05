@@ -13,6 +13,7 @@ import { UsersManagementPage } from './pages/UsersManagementPage';
 import { PublicSurveyPage } from './pages/PublicSurveyPage';
 
 import { AreaFilterProvider } from './context/AreaFilterContext';
+import { SidebarProvider } from './context/SidebarContext';
 
 // Himoyalangan marshrut (Protected Route)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,7 +40,8 @@ export const App: React.FC = () => {
       <ToastProvider>
         <AuthProvider>
           <AreaFilterProvider>
-            <Routes>
+            <SidebarProvider>
+              <Routes>
               {/* Ochiq marshrutlar (Aholi va Xodimlar uchun) */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/anketa" element={<PublicSurveyPage />} />
@@ -106,6 +108,7 @@ export const App: React.FC = () => {
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+            </SidebarProvider>
           </AreaFilterProvider>
         </AuthProvider>
       </ToastProvider>
