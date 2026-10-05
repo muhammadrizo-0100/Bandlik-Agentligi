@@ -5,6 +5,8 @@ export interface SelectOption {
   value: string;
   label: string;
   sublabel?: string;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export interface CustomSelectProps {
@@ -182,34 +184,52 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 filteredOptions.map((option) => {
                   const isSelected = option.value === value;
                   const isCustomOption = option.value === '_CUSTOM_';
+                  const isOptionDisabled = option.disabled;
                   return (
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => handleSelect(option.value)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-150 text-left ${
-                        isCustomOption
-                          ? 'mt-1 border-t border-slate-100 text-blue-600 hover:bg-blue-50 font-bold'
+                      disabled={isOptionDisabled}
+                      onClick={() => !isOptionDisabled && handleSelect(option.value)}
+                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs transition duration-150 text-left ${
+                        isOptionDisabled
+                          ? 'opacity-60 bg-slate-50/70 text-slate-400 cursor-not-allowed select-none'
+                          : isCustomOption
+                          ? 'mt-1 border-t border-slate-100 text-blue-600 hover:bg-blue-50 font-bold cursor-pointer'
                           : isSelected
-                          ? 'bg-[#163D5C]/10 text-[#163D5C] font-bold'
-                          : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                          ? 'bg-[#163D5C]/10 text-[#163D5C] font-bold cursor-pointer'
+                          : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium cursor-pointer'
                       }`}
                     >
-                      {/* Checkmark icon for selected option */}
-                      <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                        {isSelected ? (
-                          <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
-                        ) : null}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Checkmark icon for selected option */}
+                        <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                          {isSelected ? (
+                            <Check className="w-4 h-4 text-[#163D5C] stroke-[2.5]" />
+                          ) : null}
+                        </div>
+
+                        <div className="flex-1 min-w-0 truncate">
+                          <span
+                            className={`block truncate ${
+                              isOptionDisabled ? 'line-through text-slate-400' : ''
+                            }`}
+                          >
+                            {option.label}
+                          </span>
+                          {option.sublabel && (
+                            <span className="block text-[10px] text-slate-400 font-normal truncate">
+                              {option.sublabel}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex-1 truncate">
-                        <span className="block truncate">{option.label}</span>
-                        {option.sublabel && (
-                          <span className="block text-[10px] text-slate-400 font-normal truncate">
-                            {option.sublabel}
-                          </span>
-                        )}
-                      </div>
+                      {isOptionDisabled && option.disabledReason && (
+                        <span className="ml-2 shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/80 max-w-[150px] truncate" title={option.disabledReason}>
+                          {option.disabledReason}
+                        </span>
+                      )}
                     </button>
                   );
                 })

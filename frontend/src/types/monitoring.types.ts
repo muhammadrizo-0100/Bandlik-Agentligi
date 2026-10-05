@@ -29,8 +29,9 @@ export interface District {
   name: string;
   region: string;
   code?: string;
-  isActive: boolean;
+  isActive?: boolean;
   mahallas?: Mahalla[];
+  assignedAdmin?: { id: string; fullName: string; username: string } | null;
 }
 
 export interface Mahalla {
@@ -43,6 +44,7 @@ export interface Mahalla {
   operatorsCount?: number;
   citizensCount?: number;
   surveysCount?: number;
+  assignedOperator?: { id: string; fullName: string; username: string } | null;
 }
 
 export interface Citizen {

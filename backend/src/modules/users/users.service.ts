@@ -65,6 +65,21 @@ export class UsersService {
       if (!foundDistrict) {
         throw new NotFoundException(`Tuman topilmadi: ${createUserDto.districtId}`);
       }
+
+      // Ushbu tumanga tuman boshlig'i allaqachon biriktirilganligini tekshirish
+      const existingAdmin = await this.userRepository.findOne({
+        where: {
+          districtId: createUserDto.districtId,
+          roleCode: UserRole.DISTRICT_ADMIN,
+          isActive: true,
+        },
+      });
+      if (existingAdmin) {
+        throw new ConflictException(
+          `"${foundDistrict.name}" uchun allaqachon tuman boshlig'i biriktirilgan (${existingAdmin.fullName} - @${existingAdmin.username})`,
+        );
+      }
+
       district = foundDistrict;
     } else if (roleCode === UserRole.MAHALLA_OPERATOR) {
       if (!createUserDto.mahallaId) {
@@ -81,6 +96,21 @@ export class UsersService {
           `Biriktirilayotgan mahalla topilmadi (ID: ${createUserDto.mahallaId})`,
         );
       }
+
+      // Ushbu mahallaga yetakchi allaqachon biriktirilganligini tekshirish
+      const existingOperator = await this.userRepository.findOne({
+        where: {
+          mahallaId: createUserDto.mahallaId,
+          roleCode: UserRole.MAHALLA_OPERATOR,
+          isActive: true,
+        },
+      });
+      if (existingOperator) {
+        throw new ConflictException(
+          `"${foundMahalla.name}" mahallasi uchun allaqachon yetakchi biriktirilgan (${existingOperator.fullName} - @${existingOperator.username})`,
+        );
+      }
+
       mahalla = foundMahalla;
       district = foundMahalla.district;
     } else {
@@ -242,6 +272,56 @@ export class UsersService {
         user.role = role;
         user.roleId = role.id;
         user.roleCode = role.code;
+      }
+    }
+
+    const finalRoleCode = user.roleCode;
+    const finalDistrictId = updateUserDto.districtId !== undefined ? updateUserDto.districtId : user.districtId;
+    const finalMahallaId = updateUserDto.mahallaId !== undefined ? updateUserDto.mahallaId : user.mahallaId;
+
+    if (finalRoleCode === UserRole.DISTRICT_ADMIN && finalDistrictId) {
+      const existingAdmin = await this.userRepository.findOne({
+        where: {
+          districtId: finalDistrictId,
+          roleCode: UserRole.DISTRICT_ADMIN,
+          isActive: true,
+        },
+      });
+      if (existingAdmin && existingAdmin.id !== id) {
+        throw new ConflictException(
+          `Ushbu tumanga allaqachon boshliq biriktirilgan (${existingAdmin.fullName} - @${existingAdmin.username})`,
+        );
+      }
+    }
+
+    if (finalRoleCode === UserRole.MAHALLA_OPERATOR && finalMahallaId) {
+      const existingOp = await this.userRepository.findOne({
+        where: {
+          mahallaId: finalMahallaId,
+          roleCode: UserRole.MAHALLA_OPERATOR,
+          isActive: true,
+        },
+      });
+      if (existingOp && existingOp.id !== id) {
+        throw new ConflictException(
+          `Ushbu mahallaga allaqachon yetakchi biriktirilgan (${existingOp.fullName} - @${existingOp.username})`,
+        );
+      }
+    }
+
+    // Tuman o'zgargan bo'lsa
+    if (updateUserDto.districtId !== undefined) {
+      if (updateUserDto.districtId) {
+        const district = await this.districtRepository.findOne({
+          where: { id: updateUserDto.districtId },
+        });
+        if (district) {
+          user.district = district;
+          user.districtId = district.id;
+        }
+      } else {
+        user.district = undefined;
+        user.districtId = undefined;
       }
     }
 

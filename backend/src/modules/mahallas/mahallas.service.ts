@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MahallaEntity } from '../../database/entities/mahalla.entity';
 import { DistrictEntity } from '../../database/entities/district.entity';
+import { UserEntity } from '../../database/entities/user.entity';
+import { UserRole } from '../../database/enums';
 import { NAMANGAN_MAHALLAS } from '../../database/namangan-data.js';
 import { CreateMahallaDto } from './dto/create-mahalla.dto';
 import { UpdateMahallaDto } from './dto/update-mahalla.dto';
@@ -123,7 +125,26 @@ export class MahallasService {
       });
     }
 
-    return items;
+    try {
+      const userRepo = this.mahallaRepository.manager.getRepository(UserEntity);
+      const operators = await userRepo.find({
+        where: { roleCode: UserRole.MAHALLA_OPERATOR, isActive: true },
+        select: { id: true, fullName: true, username: true, mahallaId: true },
+      });
+      const opMap = new Map<string, { id: string; fullName: string; username: string }>();
+      for (const op of operators) {
+        if (op.mahallaId) {
+          opMap.set(op.mahallaId, { id: op.id, fullName: op.fullName, username: op.username });
+        }
+      }
+
+      return items.map((m) => ({
+        ...m,
+        assignedOperator: opMap.get(m.id) || null,
+      }));
+    } catch {
+      return items.map((m) => ({ ...m, assignedOperator: null }));
+    }
   }
 
   private async ensureMahallasForDistrict(districtId: string) {

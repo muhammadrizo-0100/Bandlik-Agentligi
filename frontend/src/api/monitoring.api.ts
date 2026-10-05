@@ -21,7 +21,7 @@ export const monitoringApi = {
   },
 
   // --- TUMANLAR (DISTRICTS) ---
-  getDistrictsDropdown: async (): Promise<Array<{ id: string; name: string; code?: string; region: string }>> => {
+  getDistrictsDropdown: async (): Promise<Array<{ id: string; name: string; code?: string; region: string; assignedAdmin?: { id: string; fullName: string; username: string } | null }>> => {
     return apiClient.get('/districts/dropdown');
   },
 
@@ -108,7 +108,7 @@ export const monitoringApi = {
     return apiClient.get('/mahallas', { params });
   },
 
-  getMahallasDropdown: async (districtId?: string): Promise<Array<{ id: string; name: string; districtId?: string }>> => {
+  getMahallasDropdown: async (districtId?: string): Promise<Array<{ id: string; name: string; districtId?: string; assignedOperator?: { id: string; fullName: string; username: string } | null }>> => {
     return apiClient.get('/mahallas/dropdown', { params: { districtId } });
   },
 

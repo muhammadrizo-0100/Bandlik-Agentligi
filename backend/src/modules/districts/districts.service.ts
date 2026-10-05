@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DistrictEntity } from '../../database/entities/district.entity';
+import { UserEntity } from '../../database/entities/user.entity';
+import { UserRole } from '../../database/enums';
 import { CreateDistrictDto } from './dto/create-district.dto';
 import { UpdateDistrictDto } from './dto/update-district.dto';
 
@@ -37,7 +39,26 @@ export class DistrictsService {
       });
     }
 
-    return list;
+    try {
+      const userRepo = this.districtRepo.manager.getRepository(UserEntity);
+      const admins = await userRepo.find({
+        where: { roleCode: UserRole.DISTRICT_ADMIN, isActive: true },
+        select: { id: true, fullName: true, username: true, districtId: true },
+      });
+      const adminMap = new Map<string, { id: string; fullName: string; username: string }>();
+      for (const a of admins) {
+        if (a.districtId) {
+          adminMap.set(a.districtId, { id: a.id, fullName: a.fullName, username: a.username });
+        }
+      }
+
+      return list.map((d) => ({
+        ...d,
+        assignedAdmin: adminMap.get(d.id) || null,
+      }));
+    } catch {
+      return list.map((d) => ({ ...d, assignedAdmin: null }));
+    }
   }
 
   private async ensureAllDistricts() {

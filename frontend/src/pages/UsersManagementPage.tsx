@@ -42,7 +42,7 @@ export const UsersManagementPage: React.FC = () => {
 
   const [users, setUsers] = useState<User[]>([]);
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
-  const [districts, setDistricts] = useState<Array<{ id: string; name: string; region: string }>>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabRoleFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,12 +155,28 @@ export const UsersManagementPage: React.FC = () => {
     setModalDistrictId(defaultDistrictId);
     setModalMahallaId('');
 
+    fetchDropdowns();
     setShowAddModal(true);
   };
 
   const handleModalDistrictChange = (districtId: string) => {
     setModalDistrictId(districtId);
     setModalMahallaId(''); // Mahalla tanlovini tozalash
+
+    if (districtId) {
+      monitoringApi
+        .getMahallasDropdown(districtId)
+        .then((mRes) => {
+          if (mRes && mRes.length > 0) {
+            setMahallas((prev) => {
+              const prevIds = new Set(prev.map((p) => p.id));
+              const newItems = mRes.filter((item) => !prevIds.has(item.id));
+              return [...prev, ...(newItems as any)];
+            });
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -222,6 +238,7 @@ export const UsersManagementPage: React.FC = () => {
 
       setShowAddModal(false);
       fetchUsers();
+      fetchDropdowns();
     } catch (err: any) {
       setError(err.message || 'Xodimni yaratishda xatolik yuz berdi');
     } finally {
@@ -945,11 +962,19 @@ export const UsersManagementPage: React.FC = () => {
                     disabled={isDistrictAdmin}
                     value={modalDistrictId}
                     onChange={handleModalDistrictChange}
-                    options={districts.map((d) => ({
-                      value: d.id,
-                      label: d.name,
-                      sublabel: d.region,
-                    }))}
+                    options={districts.map((d: any) => {
+                      const isOccupied =
+                        modalRole === 'DISTRICT_ADMIN' && Boolean(d.assignedAdmin);
+                      return {
+                        value: d.id,
+                        label: d.name,
+                        sublabel: d.region,
+                        disabled: isOccupied,
+                        disabledReason: isOccupied
+                          ? `Band: ${d.assignedAdmin?.fullName || 'Boshliq biriktirilgan'}`
+                          : undefined,
+                      };
+                    })}
                   />
                 </div>
 
@@ -968,10 +993,17 @@ export const UsersManagementPage: React.FC = () => {
                       disabled={!modalDistrictId}
                       value={modalMahallaId}
                       onChange={(val) => setModalMahallaId(val)}
-                      options={modalAvailableMahallas.map((m) => ({
-                        value: m.id,
-                        label: formatMahallaName(m.name),
-                      }))}
+                      options={modalAvailableMahallas.map((m: any) => {
+                        const isOccupied = Boolean(m.assignedOperator);
+                        return {
+                          value: m.id,
+                          label: formatMahallaName(m.name),
+                          disabled: isOccupied,
+                          disabledReason: isOccupied
+                            ? `Band: ${m.assignedOperator?.fullName || 'Yetakchi biriktirilgan'}`
+                            : undefined,
+                        };
+                      })}
                     />
                     {modalDistrictId && modalAvailableMahallas.length === 0 && (
                       <p className="text-[11px] text-amber-600 mt-1">
