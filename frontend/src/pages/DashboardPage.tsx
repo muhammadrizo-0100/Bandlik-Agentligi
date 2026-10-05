@@ -42,6 +42,7 @@ import {
 } from 'recharts';
 
 import { useAreaFilter } from '../context/AreaFilterContext';
+import { Pagination } from '../components/ui/Pagination';
 
 export const DashboardPage: React.FC = () => {
   const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator } = useAuth();
@@ -58,6 +59,7 @@ export const DashboardPage: React.FC = () => {
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [loading, setLoading] = useState<boolean>(true);
+  const [recentSurveysPage, setRecentSurveysPage] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
 
   // Vaqt filteri holati (Time Filter state)
@@ -128,6 +130,11 @@ export const DashboardPage: React.FC = () => {
     if (startDate && endDate) return `${startDate} – ${endDate}`;
     return '01 Okt 2026 - 31 Okt 2026';
   }, [timePreset, startDate, endDate]);
+
+  // Tab yoki filtrlash o'zgarganda jadval sahifasini 1-ga qaytarish
+  useEffect(() => {
+    setRecentSurveysPage(1);
+  }, [activeTab, selectedMahallaId, timePreset, startDate, endDate]);
 
   // Mahalla qidiruv va ko'rsatish mantiqi
   const filteredMahallaOptions = useMemo(() => {
@@ -1633,24 +1640,27 @@ export const DashboardPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredSurveys.length > 0 ? (
                 (() => {
-                  const displaySurveys = filteredSurveys.slice(0, 10);
+                  const displaySurveys = filteredSurveys.slice(
+                    (recentSurveysPage - 1) * 10,
+                    recentSurveysPage * 10
+                  );
                   const seenCitizenMap = new Map<string, number>();
-                  displaySurveys.forEach((s: Survey) => {
+                  filteredSurveys.forEach((s: Survey) => {
                     const key = s.citizenPinfl || s.citizenId || s.citizenFullName;
                     seenCitizenMap.set(key, (seenCitizenMap.get(key) || 0) + 1);
                   });
-                  const renderedCitizens = new Set<string>();
 
                   return displaySurveys.map((survey: Survey, idx: number) => {
                     const key = survey.citizenPinfl || survey.citizenId || survey.citizenFullName;
                     const isMulti = (seenCitizenMap.get(key) || 0) > 1;
-                    const isLatest = !renderedCitizens.has(key);
-                    renderedCitizens.add(key);
+                    const isLatest = filteredSurveys.findIndex(
+                      (s) => (s.citizenPinfl || s.citizenId || s.citizenFullName) === key
+                    ) === ((recentSurveysPage - 1) * 10 + idx);
 
                     return (
                       <tr key={survey.id} className="hover:bg-slate-50/80 transition">
                         <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
-                          {idx + 1}
+                          {(recentSurveysPage - 1) * 10 + idx + 1}
                         </td>
                         <td className="py-3.5 px-5 font-bold text-slate-900">
                           <div className="flex items-center space-x-2.5">
@@ -1719,7 +1729,7 @@ export const DashboardPage: React.FC = () => {
                 })()
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 font-medium text-xs">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 font-medium text-xs">
                     Hozircha tanlangan toifada anketalar mavjud emas
                   </td>
                 </tr>
@@ -1727,6 +1737,16 @@ export const DashboardPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Sahifalash (Pagination) */}
+        {filteredSurveys.length > 0 && (
+          <Pagination
+            currentPage={recentSurveysPage}
+            totalItems={filteredSurveys.length}
+            pageSize={10}
+            onPageChange={(p) => setRecentSurveysPage(p)}
+          />
+        )}
       </div>
 
       {/* 7. Xatlov Eventlari Tarixi Modali (Ustun yoki sana bosilganda ochiladi) */}
