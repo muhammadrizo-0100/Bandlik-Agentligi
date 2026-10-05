@@ -23,3 +23,17 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* iOS Safari va mobil brauzerlarda inputlarga bosilganda avtomatik ekran yaqinlashib (zoom) ketishini to'xtatish */
+html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+

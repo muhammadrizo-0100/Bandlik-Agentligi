@@ -54,8 +54,8 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center px-4 py-12 select-none">
-      <div className="w-full max-w-[420px] space-y-6">
+    <div className="min-h-screen min-h-[100dvh] bg-[#F8FAFC] flex flex-col justify-center items-center px-4 py-8 sm:py-12 select-none">
+      <div className="w-full max-w-[420px] space-y-5 sm:space-y-6">
         {/* Brand Logo & Sarlavha */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-[#163D5C] text-white flex items-center justify-center mx-auto shadow-lg shadow-[#163D5C]/25">
@@ -70,8 +70,8 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Karta (Card) */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/70 p-7 sm:p-8">
-          <div className="mb-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/70 p-6 sm:p-8">
+          <div className="mb-5 sm:mb-6">
             <h2 className="text-base font-bold text-slate-900">Tizimga kirish</h2>
             <p className="text-xs text-slate-400">Xizmat faoliyatingiz kabinetiga ulaning</p>
           </div>
@@ -103,7 +103,7 @@ export const LoginPage: React.FC = () => {
                   placeholder="Loginingizni kiriting"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#163D5C] focus:ring-2 focus:ring-[#163D5C]/15 transition"
+                  className="w-full pl-10 pr-3.5 py-3 sm:py-2.5 bg-white border border-slate-200 rounded-xl text-base sm:text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#163D5C] focus:ring-2 focus:ring-[#163D5C]/15 transition"
                 />
               </div>
             </div>
@@ -127,13 +127,13 @@ export const LoginPage: React.FC = () => {
                   placeholder="Parolni kiriting..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#163D5C] focus:ring-2 focus:ring-[#163D5C]/15 transition"
+                  className="w-full pl-10 pr-10 py-3 sm:py-2.5 bg-white border border-slate-200 rounded-xl text-base sm:text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#163D5C] focus:ring-2 focus:ring-[#163D5C]/15 transition"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 text-slate-400 hover:text-slate-600 p-0.5 focus:outline-none transition cursor-pointer"
+                  className="absolute right-3.5 text-slate-400 hover:text-slate-600 p-1 focus:outline-none transition cursor-pointer"
                   title={showPassword ? 'Parolni yashirish' : 'Parolni koʻrsatish'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -145,7 +145,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-xl text-xs font-bold text-white bg-[#163D5C] hover:bg-[#11314a] active:scale-[0.99] focus:outline-none shadow-md shadow-[#163D5C]/20 transition disabled:opacity-60 cursor-pointer"
+                className="w-full flex items-center justify-center py-3.5 sm:py-3 px-4 rounded-xl text-sm sm:text-xs font-bold text-white bg-[#163D5C] hover:bg-[#11314a] active:scale-[0.99] focus:outline-none shadow-md shadow-[#163D5C]/20 transition disabled:opacity-60 cursor-pointer"
               >
                 {loading ? (
                   <>
