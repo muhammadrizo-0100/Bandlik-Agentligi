@@ -149,7 +149,7 @@ export class UsersService {
     }
 
     if (districtId) {
-      queryBuilder.andWhere('u.districtId = :districtId', { districtId });
+      queryBuilder.andWhere('(u.districtId = :districtId OR mahalla.districtId = :districtId)', { districtId });
     }
 
     if (mahallaId) {

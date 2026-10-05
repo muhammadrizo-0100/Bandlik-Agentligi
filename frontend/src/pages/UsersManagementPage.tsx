@@ -6,6 +6,7 @@ import { Mahalla, District } from '../types/monitoring.types';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { Pagination } from '../components/ui/Pagination';
 import { useAuth } from '../context/AuthContext';
+import { useAreaFilter } from '../context/AreaFilterContext';
 import { formatUzPhone, isValidUzPhone } from '../utils/validators';
 import { formatMahallaName } from '../utils/formatters';
 import {
@@ -28,6 +29,17 @@ type TabRoleFilter = 'ALL' | UserRole;
 
 export const UsersManagementPage: React.FC = () => {
   const { user: currentUser, isSuperAdmin, isDistrictAdmin } = useAuth();
+  const {
+    selectedDistrictId: globalDistrictId,
+    setSelectedDistrictId: setGlobalDistrictId,
+    selectedMahallaId: globalMahallaId,
+    setSelectedMahallaId: setGlobalMahallaId,
+  } = useAreaFilter();
+
+  const currentFilterDistrictId = isDistrictAdmin
+    ? currentUser?.districtId || ''
+    : globalDistrictId;
+  const currentFilterMahallaId = globalMahallaId;
 
   const [users, setUsers] = useState<User[]>([]);
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
@@ -37,7 +49,7 @@ export const UsersManagementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState<number>(1);
 
-  // Modal State
+  // Modal State (Yangi xodim qo'shish)
   const [showAddModal, setShowAddModal] = useState(false);
   const [modalRole, setModalRole] = useState<UserRole>('MAHALLA_OPERATOR');
 
@@ -50,15 +62,19 @@ export const UsersManagementPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginReadOnly, setLoginReadOnly] = useState(true);
   const [passwordReadOnly, setPasswordReadOnly] = useState(true);
-  const [selectedDistrictId, setSelectedDistrictId] = useState('');
-  const [mahallaId, setMahallaId] = useState('');
+  const [modalDistrictId, setModalDistrictId] = useState('');
+  const [modalMahallaId, setModalMahallaId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await monitoringApi.getUsers({ limit: 100 });
+      const res = await monitoringApi.getUsers({
+        limit: 200,
+        districtId: currentFilterDistrictId || undefined,
+        mahallaId: currentFilterMahallaId || undefined,
+      });
       setUsers(res.items);
     } catch (err: any) {
       console.error('Xodimlarni yuklashda xatolik:', err);
@@ -70,7 +86,7 @@ export const UsersManagementPage: React.FC = () => {
   const fetchDropdowns = async () => {
     try {
       const [mRes, dRes] = await Promise.all([
-        monitoringApi.getMahallasDropdown(),
+        monitoringApi.getMahallasDropdown(currentFilterDistrictId || undefined),
         monitoringApi.getDistrictsDropdown(),
       ]);
       setMahallas(mRes as any);
@@ -82,8 +98,28 @@ export const UsersManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
+    setPage(1);
+  }, [currentFilterDistrictId, currentFilterMahallaId]);
+
+  useEffect(() => {
     fetchDropdowns();
   }, []);
+
+  useEffect(() => {
+    if (currentFilterDistrictId) {
+      monitoringApi.getMahallasDropdown(currentFilterDistrictId)
+        .then((mRes) => {
+          if (mRes && mRes.length > 0) {
+            setMahallas((prev) => {
+              const prevIds = new Set(prev.map((p) => p.id));
+              const newItems = mRes.filter((item) => !prevIds.has(item.id));
+              return [...prev, ...(newItems as any)];
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentFilterDistrictId]);
 
   useEffect(() => {
     setPage(1);
@@ -117,15 +153,15 @@ export const UsersManagementPage: React.FC = () => {
 
     // Boshlang'ich tuman va mahalla tanlovi (har doim bo'sh tanlanmagan holatda turadi)
     const defaultDistrictId = isDistrictAdmin ? currentUser?.districtId || '' : '';
-    setSelectedDistrictId(defaultDistrictId);
-    setMahallaId('');
+    setModalDistrictId(defaultDistrictId);
+    setModalMahallaId('');
 
     setShowAddModal(true);
   };
 
-  const handleDistrictChange = (districtId: string) => {
-    setSelectedDistrictId(districtId);
-    setMahallaId(''); // Mahalla tanlovini tozalash
+  const handleModalDistrictChange = (districtId: string) => {
+    setModalDistrictId(districtId);
+    setModalMahallaId(''); // Mahalla tanlovini tozalash
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -152,18 +188,18 @@ export const UsersManagementPage: React.FC = () => {
     }
 
     // Tuman Admini uchun tuman majburiy
-    if (modalRole === 'DISTRICT_ADMIN' && !selectedDistrictId) {
+    if (modalRole === 'DISTRICT_ADMIN' && !modalDistrictId) {
       setError('Tuman boshlig\'i uchun tuman tanlanishi shart');
       return;
     }
 
     // Mahalla Operatori uchun tuman va mahalla majburiy
     if (modalRole === 'MAHALLA_OPERATOR') {
-      if (!selectedDistrictId) {
+      if (!modalDistrictId) {
         setError('Mahalla operatori uchun tuman tanlanishi shart');
         return;
       }
-      if (!mahallaId) {
+      if (!modalMahallaId) {
         setError('Mahalla operatori uchun mahalla tanlanishi shart');
         return;
       }
@@ -181,8 +217,8 @@ export const UsersManagementPage: React.FC = () => {
         fullName: fullFullName,
         phone: phone.trim(),
         role: modalRole,
-        districtId: selectedDistrictId || undefined,
-        mahallaId: modalRole === 'MAHALLA_OPERATOR' ? mahallaId : undefined,
+        districtId: modalDistrictId || undefined,
+        mahallaId: modalRole === 'MAHALLA_OPERATOR' ? modalMahallaId : undefined,
       });
 
       setShowAddModal(false);
@@ -204,9 +240,53 @@ export const UsersManagementPage: React.FC = () => {
     }
   };
 
+  // Tumanga mos mahallalar ro'yxati (sahifadagi mahalla filtri uchun)
+  const filterMahallaList = currentFilterDistrictId
+    ? mahallas.filter((m) => {
+        const mDistId =
+          m.districtId ||
+          (typeof m.district === 'object' ? (m.district as any)?.id : m.district);
+        return mDistId === currentFilterDistrictId;
+      })
+    : isDistrictAdmin
+    ? mahallas
+    : [];
+
+  // Tanlangan tumanga mos mahallalar ro'yxati (modalda yaratish uchun)
+  const modalAvailableMahallas = modalDistrictId
+    ? mahallas.filter((m) => {
+        const dId =
+          m.districtId ||
+          (typeof m.district === 'object' ? (m.district as any)?.id : m.district);
+        return dId === modalDistrictId;
+      })
+    : mahallas;
+
+  // Tumanga filtrlangan xodimlar (tablardagi raqamlar tanlangan tumanga mos bo'lishi uchun)
+  const baseDistrictUsers = users.filter((u) => {
+    if (!currentFilterDistrictId) return true;
+    const uAny = u as any;
+    const uDistId =
+      u.districtId ||
+      (typeof uAny.district === 'object' ? uAny.district?.id : undefined) ||
+      uAny.mahalla?.districtId;
+    const uDistName =
+      u.districtName ||
+      (typeof uAny.district === 'object' ? uAny.district?.name : undefined);
+    const targetDistrict = districts.find((d) => d.id === currentFilterDistrictId);
+    const targetDistName = targetDistrict?.name;
+
+    return (
+      (uDistId && uDistId === currentFilterDistrictId) ||
+      (uDistName &&
+        targetDistName &&
+        uDistName.toLowerCase().trim() === targetDistName.toLowerCase().trim())
+    );
+  });
+
   // 4 ta rol bo'yicha hisob-kitoblar (Tablar uchun)
   const countByRole = (r: UserRole) =>
-    users.filter((u) => {
+    baseDistrictUsers.filter((u) => {
       const code =
         typeof u.role === 'object' && u.role !== null
           ? (u.role as any).code
@@ -214,8 +294,8 @@ export const UsersManagementPage: React.FC = () => {
       return code === r;
     }).length;
 
-  // Filtrlash mantiqi
-  const filteredUsers = users.filter((u) => {
+  // Yakuniy filtrlash mantiqi (Tab + Mahalla + Qidiruv)
+  const filteredUsers = baseDistrictUsers.filter((u) => {
     const roleCode =
       typeof u.role === 'object' && u.role !== null
         ? (u.role as any).code
@@ -223,6 +303,17 @@ export const UsersManagementPage: React.FC = () => {
 
     if (activeTab !== 'ALL' && roleCode !== activeTab) {
       return false;
+    }
+
+    if (currentFilterMahallaId) {
+      const uAny = u as any;
+      const uMahallaId =
+        u.mahallaId ||
+        (typeof uAny.mahalla === 'object' ? uAny.mahalla?.id : undefined);
+
+      if (uMahallaId !== currentFilterMahallaId) {
+        return false;
+      }
     }
 
     if (searchQuery.trim()) {
@@ -300,14 +391,6 @@ export const UsersManagementPage: React.FC = () => {
     }
   };
 
-  // Tanlangan tumanga mos mahallalar ro'yxati
-  const availableMahallas = selectedDistrictId
-    ? mahallas.filter((m) => {
-        const dId = m.districtId || (typeof m.district === 'object' ? (m.district as any)?.id : m.district);
-        return dId === selectedDistrictId;
-      })
-    : mahallas;
-
   return (
     <DashboardLayout
       title="Xodimlar Boshqaruvi"
@@ -352,11 +435,11 @@ export const UsersManagementPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Kategoriya tablari va Qidiruv */}
-        <div className="mt-5 pt-4 border-t-2 border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* 2. Kategoriya tablari */}
+        <div className="mt-5 pt-4 border-t-2 border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="p-1 bg-slate-100 rounded-xl border border-slate-200/80 inline-flex flex-wrap gap-1 text-xs">
             {[
-              { id: 'ALL', label: 'Barcha xodimlar', count: users.length },
+              { id: 'ALL', label: 'Barcha xodimlar', count: baseDistrictUsers.length },
               { id: 'MAHALLA_OPERATOR', label: 'Mahalla yetakchilari', count: countByRole('MAHALLA_OPERATOR') },
               { id: 'DISTRICT_ADMIN', label: 'Tuman boshliqlari', count: countByRole('DISTRICT_ADMIN') },
               ...(isSuperAdmin
@@ -389,9 +472,13 @@ export const UsersManagementPage: React.FC = () => {
               );
             })}
           </div>
+        </div>
 
-          <div className="w-full md:w-72 relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+        {/* 3. Filtrlash paneli: Qidiruv, Tuman va Mahalla filtrlari */}
+        <div className="mt-3.5 pt-3.5 border-t border-slate-100 flex flex-col md:flex-row items-center gap-3">
+          {/* Qidiruv inputi */}
+          <div className="w-full md:flex-1 relative">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
               <Search className="w-3.5 h-3.5" />
             </div>
             <input
@@ -399,19 +486,90 @@ export const UsersManagementPage: React.FC = () => {
               placeholder="Qidirish (Ism, telefon, login...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-9 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 transition"
+              className="w-full pl-9 pr-9 py-2.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 transition"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 transition cursor-pointer"
                 title="Tozalash"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+
+          {/* Tuman filtri (Faqat Super Admin uchun tanlash mumkin) */}
+          {isSuperAdmin && (
+            <div className="w-full md:w-56">
+              <CustomSelect
+                placeholder="Barcha tumanlar"
+                searchable={true}
+                value={currentFilterDistrictId}
+                onChange={(val) => {
+                  setGlobalDistrictId(val);
+                  setGlobalMahallaId('');
+                  setPage(1);
+                }}
+                icon={<MapPin className="w-3.5 h-3.5 text-[#163D5C]" />}
+                options={[
+                  { value: '', label: 'Barcha tumanlar' },
+                  ...districts.map((d) => ({
+                    value: d.id,
+                    label: d.name,
+                    sublabel: d.region,
+                  })),
+                ]}
+              />
+            </div>
+          )}
+
+          {/* Mahalla filtri */}
+          <div className="w-full md:w-60">
+            <CustomSelect
+              placeholder={
+                currentFilterDistrictId
+                  ? 'Barcha mahallalar'
+                  : isSuperAdmin
+                  ? 'Barcha mahallalar (Avval tuman tanlang)'
+                  : 'Barcha mahallalar'
+              }
+              searchable={true}
+              disabled={isSuperAdmin && !currentFilterDistrictId}
+              value={currentFilterMahallaId}
+              onChange={(val) => {
+                setGlobalMahallaId(val);
+                setPage(1);
+              }}
+              icon={<Building2 className="w-3.5 h-3.5 text-[#163D5C]" />}
+              options={[
+                { value: '', label: 'Barcha mahallalar' },
+                ...filterMahallaList.map((m) => ({
+                  value: m.id,
+                  label: formatMahallaName(m.name),
+                })),
+              ]}
+            />
+          </div>
+
+          {/* Filtrlarni tozalash tugmasi */}
+          {(currentFilterDistrictId || currentFilterMahallaId || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isSuperAdmin) setGlobalDistrictId('');
+                setGlobalMahallaId('');
+                setSearchQuery('');
+                setPage(1);
+              }}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
+              title="Filtrlarni tozalash"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Tozalash</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -786,8 +944,8 @@ export const UsersManagementPage: React.FC = () => {
                     searchable={true}
                     placeholder="Tumanni tanlang..."
                     disabled={isDistrictAdmin}
-                    value={selectedDistrictId}
-                    onChange={handleDistrictChange}
+                    value={modalDistrictId}
+                    onChange={handleModalDistrictChange}
                     options={districts.map((d) => ({
                       value: d.id,
                       label: d.name,
@@ -804,19 +962,19 @@ export const UsersManagementPage: React.FC = () => {
                       required
                       searchable={true}
                       placeholder={
-                        selectedDistrictId
+                        modalDistrictId
                           ? 'Mahallani tanlang...'
                           : 'Avval tumanni tanlang'
                       }
-                      disabled={!selectedDistrictId}
-                      value={mahallaId}
-                      onChange={(val) => setMahallaId(val)}
-                      options={availableMahallas.map((m) => ({
+                      disabled={!modalDistrictId}
+                      value={modalMahallaId}
+                      onChange={(val) => setModalMahallaId(val)}
+                      options={modalAvailableMahallas.map((m) => ({
                         value: m.id,
                         label: formatMahallaName(m.name),
                       }))}
                     />
-                    {selectedDistrictId && availableMahallas.length === 0 && (
+                    {modalDistrictId && modalAvailableMahallas.length === 0 && (
                       <p className="text-[11px] text-amber-600 mt-1">
                         Ushbu tumanda hali mahallalar kiritilmagan.
                       </p>

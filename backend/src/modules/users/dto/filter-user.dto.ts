@@ -15,6 +15,11 @@ export class FilterUserDto extends PaginationDto {
   @IsEnum(UserRole)
   role?: UserRole;
 
+  @ApiPropertyOptional({ description: 'Tuman ID bo\'yicha filtr' })
+  @IsOptional()
+  @IsUUID('4')
+  districtId?: string;
+
   @ApiPropertyOptional({ description: 'Mahalla ID bo\'yicha filtr' })
   @IsOptional()
   @IsUUID('4')
