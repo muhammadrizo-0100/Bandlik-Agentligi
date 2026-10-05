@@ -869,8 +869,14 @@ export const DashboardPage: React.FC = () => {
 
               {/* Floating Date Picker Popover */}
               {isDateFilterOpen && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl p-4 shadow-xl border-2 border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
+                <>
+                  {/* Mobil xira fon (Backdrop) */}
+                  <div
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 sm:hidden"
+                    onClick={() => setIsDateFilterOpen(false)}
+                  />
+                  <div className="fixed inset-x-4 top-28 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-80 bg-white rounded-2xl p-4 shadow-2xl sm:shadow-xl border-2 border-slate-200 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
                     <span className="text-xs font-bold text-slate-800">
                       Vaqt oraligʻini tanlang
                     </span>
@@ -949,6 +955,7 @@ export const DashboardPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                </>
               )}
             </div>
 
@@ -1192,8 +1199,15 @@ export const DashboardPage: React.FC = () => {
 
                   {/* Chiroyli Floating Mahalla Popover (Emojilarsiz, rasmiy dizayn) */}
                   {isMahallaFilterOpen && (
-                    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl p-3 shadow-xl border-2 border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100">
-                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                    <>
+                      {/* Mobil xira fon (Backdrop) */}
+                      <div
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 sm:hidden"
+                        onClick={() => setIsMahallaFilterOpen(false)}
+                      />
+
+                      <div className="fixed inset-x-4 top-28 z-50 sm:absolute sm:inset-auto sm:left-0 sm:top-full sm:mt-2 w-auto sm:w-80 bg-white rounded-2xl p-3.5 shadow-2xl sm:shadow-xl border-2 border-slate-200 animate-in fade-in zoom-in-95 duration-100">
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
                         <span className="text-xs font-bold text-slate-800">
                           Mahallani tanlang
                         </span>
@@ -1276,6 +1290,7 @@ export const DashboardPage: React.FC = () => {
                         )}
                       </div>
                     </div>
+                    </>
                   )}
                 </div>
               )}

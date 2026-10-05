@@ -210,8 +210,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
               {/* Bildirishnomalar oynasi (Dropdown) */}
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border-2 border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <>
+                  {/* Mobil xira fon */}
+                  <div
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 sm:hidden"
+                    onClick={() => setIsNotifOpen(false)}
+                  />
+                  <div className="fixed inset-x-3 top-18 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 bg-white rounded-2xl shadow-2xl border-2 border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Bell className="w-4 h-4 text-[#163D5C]" />
                       <h4 className="text-xs font-bold text-slate-900">Bildirishnomalar</h4>
@@ -266,6 +272,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     )}
                   </div>
                 </div>
+                </>
               )}
             </div>
 
