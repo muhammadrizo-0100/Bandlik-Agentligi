@@ -160,23 +160,6 @@ export const LoginPage: React.FC = () => {
           </form>
         </div>
 
-        {/* Fuqarolar uchun onlayn anketa o'tish bloki */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 text-center space-y-2 shadow-xs">
-          <p className="text-xs font-bold text-slate-800">
-            Fuqaro sifatida soʻrovnomani toʻldirmoqchimisiz?
-          </p>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            Bandlik holatingizni kiritish uchun tizimga kirish talab etilmaydi.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/anketa')}
-            className="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.99] shadow-sm shadow-blue-500/20 transition cursor-pointer"
-          >
-            <span>Onlayn Anketa Toʻldirish →</span>
-          </button>
-        </div>
-
         <div className="text-center text-[11px] text-slate-400 font-medium">
           Davlat axborot xavfsizligi talablariga muvofiq himoyalangan
         </div>
