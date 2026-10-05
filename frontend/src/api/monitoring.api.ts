@@ -98,7 +98,7 @@ export const monitoringApi = {
 
   resolveReviewItem: async (
     id: string,
-    data: { action: 'APPROVE_UPDATE' | 'REJECT'; reviewerNote: string },
+    data: { action: 'APPROVE_UPDATE' | 'REJECT'; reviewerNote?: string },
   ): Promise<any> => {
     return apiClient.post(`/review-queue/${id}/resolve`, data);
   },

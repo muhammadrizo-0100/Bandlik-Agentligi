@@ -75,8 +75,7 @@ export const ReviewQueuePage: React.FC = () => {
   };
 
   const handleResolve = async (action: 'APPROVE_UPDATE' | 'REJECT') => {
-    if (!selectedId || !reviewerNote.trim()) {
-      alert('Iltimos, tekshiruv xulosasi / izohini yozing');
+    if (!selectedId) {
       return;
     }
 
@@ -84,7 +83,7 @@ export const ReviewQueuePage: React.FC = () => {
       setSubmitting(true);
       await monitoringApi.resolveReviewItem(selectedId, {
         action,
-        reviewerNote,
+        reviewerNote: reviewerNote.trim() || undefined,
       });
       setActionSuccess(
         action === 'APPROVE_UPDATE'
@@ -321,14 +320,14 @@ export const ReviewQueuePage: React.FC = () => {
                   {itemData.pendingSurvey.conflictReason}
                 </div>
 
-                {/* Reviewer Izohi */}
+                {/* Reviewer Izohi (Ixtiyoriy) */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Tekshiruv xulosasi va asoslovchi izoh <span className="text-red-500">*</span>
+                    Tekshiruv xulosasi yoki izoh (ixtiyoriy)
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="Masalan: Fuqaro bilan bog'lanildi, 2026-yilda yangi ish joyiga kirganligi tasdiqlandi..."
+                    placeholder="Qoʻshimcha izoh yoki xulosa yozishingiz mumkin (ixtiyoriy)..."
                     value={reviewerNote}
                     onChange={(e) => setReviewerNote(e.target.value)}
                     className="w-full p-3 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white"

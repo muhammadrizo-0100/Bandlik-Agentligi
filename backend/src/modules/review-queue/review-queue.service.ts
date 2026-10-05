@@ -217,6 +217,8 @@ export class ReviewQueueService {
         citizen.currentStatusDetail = this.formatStatusSummary(survey);
         await manager.save(CitizenEntity, citizen);
 
+        const noteText = dto.reviewerNote?.trim() || 'Tasdiqlandi va rasmiy roʻyxatga olindi';
+
         // Tarix (History) jadvaliga yozuv qo'shish
         const history = manager.create(EmploymentHistoryEntity, {
           citizenId: citizen.id,
@@ -226,7 +228,7 @@ export class ReviewQueueService {
           newCategory: survey.mainCategory,
           newDetails,
           changedById: reviewer.id,
-          changeReason: `Data Reviewer tomonidan tasdiqlandi: ${dto.reviewerNote}`,
+          changeReason: noteText,
           dataSource: DataSource.MANUAL_AUDIT,
         });
         await manager.save(EmploymentHistoryEntity, history);
@@ -235,7 +237,7 @@ export class ReviewQueueService {
         survey.status = SurveyStatus.RESOLVED;
         survey.reviewerId = reviewer.id;
         survey.reviewedAt = new Date();
-        survey.reviewerNote = dto.reviewerNote;
+        survey.reviewerNote = noteText;
         await manager.save(SurveyEntity, survey);
 
         return {
@@ -247,11 +249,13 @@ export class ReviewQueueService {
         };
       }
 
+      const rejectNoteText = dto.reviewerNote?.trim() || 'Rad etildi';
+
       // 2. Agar rad etilsa (REJECT)
       survey.status = SurveyStatus.REJECTED;
       survey.reviewerId = reviewer.id;
       survey.reviewedAt = new Date();
-      survey.reviewerNote = dto.reviewerNote;
+      survey.reviewerNote = rejectNoteText;
       await manager.save(SurveyEntity, survey);
 
       return {

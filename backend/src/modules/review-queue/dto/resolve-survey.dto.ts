@@ -16,11 +16,11 @@ export class ResolveSurveyDto {
   @IsNotEmpty({ message: 'Qaror tanlanishi shart' })
   action: ReviewAction;
 
-  @ApiProperty({
-    example: 'Hujjatlar va fuqaro bilan bog\'lanib holat tekshirildi, yangi ish joyi tasdiqlandi.',
-    description: 'Tekshiruvchi (Reviewer) xulosasi va izohi',
+  @ApiPropertyOptional({
+    example: 'Maʼlumotlar toʻgʻriligi tekshirildi va tasdiqlandi.',
+    description: 'Tekshiruvchi xulosasi va izohi (ixtiyoriy)',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Tekshiruv xulosasi / izohi kiritilishi shart' })
-  reviewerNote: string;
+  reviewerNote?: string;
 }
