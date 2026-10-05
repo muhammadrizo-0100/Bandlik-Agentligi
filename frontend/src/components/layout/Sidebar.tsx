@@ -28,14 +28,17 @@ import { monitoringApi } from '../../api/monitoring.api';
 interface SidebarProps {
   selectedDistrictId?: string;
   onDistrictChange?: (districtId: string) => void;
+  isMobileDrawer?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   selectedDistrictId: propDistrictId,
   onDistrictChange: propOnDistrictChange,
+  isMobileDrawer = false,
 }) => {
   const areaFilter = useAreaFilter();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed: contextCollapsed, toggleSidebar, closeMobileDrawer } = useSidebar();
+  const isCollapsed = isMobileDrawer ? false : contextCollapsed;
 
   const selectedDistrictId = propDistrictId !== undefined ? propDistrictId : areaFilter.selectedDistrictId;
   const onDistrictChange = (id: string) => {
@@ -163,6 +166,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <NavLink
       key={to}
       to={to}
+      onClick={() => {
+        if (isMobileDrawer) {
+          closeMobileDrawer();
+        }
+      }}
       className={({ isActive }) => getNavLinkClass(isActive)}
       title={isCollapsed ? (badgeCount && badgeCount > 0 ? `${label} (${badgeCount})` : label) : undefined}
     >
@@ -200,21 +208,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div>
         {/* 1. Brand Logo */}
         {!isCollapsed ? (
-          <div className="p-5 border-b border-slate-100 flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#163D5C] flex items-center justify-center shadow-md shadow-[#163D5C]/20 text-white flex-shrink-0">
-              <Layers className="w-5 h-5 text-white" />
-            </div>
-            <div className="truncate">
-              <div className="flex items-center space-x-1.5">
-                <h1 className="text-base font-bold text-[#163D5C] tracking-tight">
-                  Bandlik
-                </h1>
-                <span className="text-[10px] font-bold bg-[#163D5C]/10 text-[#163D5C] px-1.5 py-0.5 rounded-md">
-                  v1.0
-                </span>
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center space-x-3 overflow-hidden">
+              <div className="w-10 h-10 rounded-2xl bg-[#163D5C] flex items-center justify-center shadow-md shadow-[#163D5C]/20 text-white flex-shrink-0">
+                <Layers className="w-5 h-5 text-white" />
               </div>
-              <p className="text-[11px] text-slate-400 font-medium truncate">Monitoring & Tahlil</p>
+              <div className="truncate">
+                <div className="flex items-center space-x-1.5">
+                  <h1 className="text-base font-bold text-[#163D5C] tracking-tight">
+                    Bandlik
+                  </h1>
+                  <span className="text-[10px] font-bold bg-[#163D5C]/10 text-[#163D5C] px-1.5 py-0.5 rounded-md">
+                    v1.0
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium truncate">Monitoring & Tahlil</p>
+              </div>
             </div>
+
+            {/* Mobile Drawer yopish tugmasi (X) */}
+            {isMobileDrawer && (
+              <button
+                type="button"
+                onClick={closeMobileDrawer}
+                className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer flex-shrink-0 ml-2"
+                title="Menyuni yopish"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
         ) : (
           <div className="p-4 border-b border-slate-100 flex items-center justify-center">

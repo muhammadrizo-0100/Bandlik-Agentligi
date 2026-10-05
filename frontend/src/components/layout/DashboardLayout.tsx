@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, ChevronRight, ChevronLeft, ShieldCheck, X, Clock, CheckCircle2 } from 'lucide-react';
+import { Search, Bell, ChevronRight, ChevronLeft, ShieldCheck, X, Clock, CheckCircle2, Menu } from 'lucide-react';
 import { formatMahallaName } from '../../utils/formatters';
 import { monitoringApi } from '../../api/monitoring.api';
 import { useSidebar } from '../../context/SidebarContext';
@@ -31,7 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   searchPlaceholder = 'Istalgan narsani qidiring (F.I.Sh., JSHSHIR, telefon)...',
 }) => {
   const { user } = useAuth();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed, toggleSidebar, isMobileOpen, toggleMobileOpen, closeMobileDrawer } = useSidebar();
   const navigate = useNavigate();
   const [internalSearch, setInternalSearch] = useState(searchValue || '');
   const [pendingCount, setPendingCount] = useState<number>(0);
@@ -97,14 +97,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC] font-sans text-slate-800 antialiased select-none">
-      {/* Sidebar with district switcher - 100% Fixed */}
-      <aside className={`relative ${isCollapsed ? 'w-20' : 'w-64'} h-screen flex-shrink-0 z-30 transition-[width] duration-300 ease-in-out`}>
+      {/* 1. Desktop Sidebar (Faqat lg: va undan katta ekranlarda) */}
+      <aside className={`hidden lg:block relative ${isCollapsed ? 'w-20' : 'w-64'} h-screen flex-shrink-0 z-30 transition-[width] duration-300 ease-in-out`}>
         <Sidebar
           selectedDistrictId={selectedDistrictId}
           onDistrictChange={onDistrictChange}
         />
 
-        {/* Toggle Collapse/Expand Button (< va >): Sidebarni markazida (centerida) to'liq ko'rinadigan tugma */}
+        {/* Toggle Collapse/Expand Button (< va >): Desktopda sidebarni markazida */}
         <button
           type="button"
           onClick={toggleSidebar}
@@ -119,31 +119,65 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </button>
       </aside>
 
+      {/* 2. Mobil Qalqib Chiquvchi Drawer (Off-Canvas: Telefon va Planshetlar uchun) */}
+      {isMobileOpen && (
+        <div
+          onClick={closeMobileDrawer}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 lg:hidden transition-opacity duration-300 animate-in fade-in"
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        className={`fixed top-0 bottom-0 left-0 w-80 max-w-[85vw] bg-white z-50 shadow-2xl lg:hidden transform transition-transform duration-300 ease-in-out ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <Sidebar
+          selectedDistrictId={selectedDistrictId}
+          onDistrictChange={onDistrictChange}
+          isMobileDrawer={true}
+        />
+      </div>
+
       {/* Mustaqil scroll bo'luvchi asosiy qism */}
       <div className="flex-1 flex flex-col h-screen min-w-0 overflow-y-auto overflow-x-hidden select-text">
-        {/* Top Header (Screenshots 2 & 3 uslubi) */}
-        <header className="h-16 min-h-[64px] flex-shrink-0 bg-white border-b-2 border-slate-200/80 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
-          {/* Chap: Qidiruv inputi (Screenshot 2-3 uslubida) */}
-          <div className="relative w-64 sm:w-80 md:w-96 flex-shrink-0">
-            <input
-              type="text"
-              value={internalSearch}
-              placeholder={searchPlaceholder}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full bg-slate-50/80 hover:bg-slate-50 focus:bg-white text-xs pl-4 pr-10 py-2.5 rounded-xl border-2 border-slate-200 focus:border-[#163D5C] focus:outline-none transition font-medium"
-            />
-            {internalSearch ? (
-              <button
-                type="button"
-                onClick={() => handleInputChange('')}
-                className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <Search className="w-4 h-4 text-[#163D5C] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            )}
+        {/* Top Header */}
+        <header className="h-16 min-h-[64px] flex-shrink-0 bg-white border-b-2 border-slate-200/80 px-3 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs gap-3">
+          {/* Chap: Gamburger (Mobile) + Qidiruv inputi */}
+          <div className="flex items-center space-x-2.5 sm:space-x-3 flex-1 min-w-0">
+            {/* Mobil Gamburger tugmasi (☰) */}
+            <button
+              type="button"
+              onClick={toggleMobileOpen}
+              className="lg:hidden w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 text-slate-700 hover:text-[#163D5C] flex items-center justify-center transition cursor-pointer flex-shrink-0"
+              title="Menyuni ochish"
+            >
+              <Menu className="w-5 h-5 stroke-[2.2]" />
+            </button>
+
+            {/* Qidiruv inputi */}
+            <div className="relative flex-1 max-w-[220px] sm:max-w-xs md:max-w-sm lg:max-w-md">
+              <input
+                type="text"
+                value={internalSearch}
+                placeholder={searchPlaceholder}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full bg-slate-50/80 hover:bg-slate-50 focus:bg-white text-xs pl-3.5 pr-9 py-2 sm:pl-4 sm:pr-10 sm:py-2.5 rounded-xl border-2 border-slate-200 focus:border-[#163D5C] focus:outline-none transition font-medium"
+              />
+              {internalSearch ? (
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('')}
+                  className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <Search className="w-4 h-4 text-[#163D5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              )}
+            </div>
           </div>
 
           {/* O'ng: Hudud nishoni, Bildirishnomalar va Profil */}
@@ -259,7 +293,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Sahifa ichki qismi */}
-        <main className="p-6 sm:p-8 flex-1 max-w-[1400px] w-full mx-auto">
+        <main className="p-3.5 sm:p-6 md:p-8 flex-1 max-w-[1400px] w-full mx-auto">
           {children}
         </main>
       </div>
