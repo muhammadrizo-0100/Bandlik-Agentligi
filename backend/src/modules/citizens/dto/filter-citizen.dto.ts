@@ -14,6 +14,11 @@ export class FilterCitizenDto extends PaginationDto {
   @IsString()
   pinfl?: string;
 
+  @ApiPropertyOptional({ description: 'Tuman ID bo\'yicha filter' })
+  @IsOptional()
+  @IsUUID('4')
+  districtId?: string;
+
   @ApiPropertyOptional({ description: 'Mahalla ID bo\'yicha filter' })
   @IsOptional()
   @IsUUID('4')

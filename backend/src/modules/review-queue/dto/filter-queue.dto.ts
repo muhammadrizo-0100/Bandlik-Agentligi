@@ -8,6 +8,11 @@ export class FilterQueueDto extends PaginationDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({ description: 'Tuman ID bo\'yicha filtr' })
+  @IsOptional()
+  @IsUUID('4')
+  districtId?: string;
+
   @ApiPropertyOptional({ description: 'Mahalla ID bo\'yicha filtr' })
   @IsOptional()
   @IsUUID('4')
