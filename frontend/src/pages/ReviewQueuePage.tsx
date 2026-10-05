@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { formatMahallaName } from '../utils/formatters';
 import { Pagination } from '../components/ui/Pagination';
+import { TableSkeleton } from '../components/ui/TableSkeleton';
 import { realtimeService } from '../services/realtime.service';
 
 export const ReviewQueuePage: React.FC = () => {
@@ -171,7 +172,7 @@ export const ReviewQueuePage: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="p-16 text-center text-xs text-slate-400">Yuklanmoqda...</div>
+            <TableSkeleton rows={6} cols={6} />
           ) : queue.length === 0 ? (
             <div className="p-16 text-center text-xs text-slate-500 font-medium flex flex-col items-center">
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">

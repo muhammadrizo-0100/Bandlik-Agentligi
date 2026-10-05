@@ -18,6 +18,7 @@ import {
 
 import { useAreaFilter } from '../context/AreaFilterContext';
 import { Pagination } from '../components/ui/Pagination';
+import { TableSkeleton } from '../components/ui/TableSkeleton';
 
 export const SurveysPage: React.FC = () => {
   const { selectedDistrictId, selectedMahallaId } = useAreaFilter();
@@ -219,9 +220,7 @@ export const SurveysPage: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="p-16 text-center text-xs text-slate-400">
-              Yuklanmoqda...
-            </div>
+            <TableSkeleton rows={8} cols={7} />
           ) : surveys.length === 0 ? (
             <div className="p-16 text-center text-xs text-slate-400 flex flex-col items-center">
               <FileText className="w-10 h-10 text-slate-300 mb-2" />

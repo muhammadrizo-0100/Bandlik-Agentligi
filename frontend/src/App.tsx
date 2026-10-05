@@ -14,17 +14,14 @@ import { PublicSurveyPage } from './pages/PublicSurveyPage';
 
 import { AreaFilterProvider } from './context/AreaFilterContext';
 import { SidebarProvider } from './context/SidebarContext';
+import { DashboardSkeleton } from './components/ui/DashboardSkeleton';
 
 // Himoyalangan marshrut (Protected Route)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white text-xs">
-        Yuklanmoqda...
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!isAuthenticated) {
