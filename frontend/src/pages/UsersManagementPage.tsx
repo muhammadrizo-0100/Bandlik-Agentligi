@@ -634,7 +634,6 @@ export const UsersManagementPage: React.FC = () => {
                         </div>
                         <div>
                           <div className="font-bold text-slate-900 group-hover:text-[#163D5C] transition">{u.fullName}</div>
-                          <div className="text-[11px] text-slate-400">{u.email || '-'}</div>
                         </div>
                       </div>
                     </td>
@@ -677,9 +676,9 @@ export const UsersManagementPage: React.FC = () => {
                           Faol
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-50 text-slate-500 border border-slate-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                          Nofaol
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                          Muzlatilgan
                         </span>
                       )}
                     </td>

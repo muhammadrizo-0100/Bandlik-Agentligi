@@ -18,7 +18,6 @@ import {
   Building2,
   MapPin,
   Phone,
-  Mail,
   User as UserIcon,
   ShieldCheck,
   Calendar,
@@ -242,9 +241,9 @@ export const UserDetailPage: React.FC = () => {
                       Faol
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                      Nofaol
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      Muzlatilgan
                     </span>
                   )}
                 </div>
@@ -258,12 +257,6 @@ export const UserDetailPage: React.FC = () => {
                     <span className="inline-flex items-center gap-1 font-mono text-slate-600">
                       <Phone className="w-3.5 h-3.5 text-slate-400" />
                       {formatUzPhone(user.phone)}
-                    </span>
-                  )}
-                  {user.email && (
-                    <span className="inline-flex items-center gap-1 text-slate-600">
-                      <Mail className="w-3.5 h-3.5 text-slate-400" />
-                      {user.email}
                     </span>
                   )}
                 </div>
@@ -350,11 +343,6 @@ export const UserDetailPage: React.FC = () => {
               </div>
 
               <div className="py-2.5 flex items-center justify-between">
-                <span className="text-slate-400 font-medium">Elektron pochta</span>
-                <span className="font-medium text-slate-700">{user.email || '—'}</span>
-              </div>
-
-              <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400 font-medium">Lavozimi (Roli)</span>
                 <span className="font-bold text-slate-900">
                   {user.roleName || user.roleCode || user.role}
@@ -363,10 +351,17 @@ export const UserDetailPage: React.FC = () => {
 
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400 font-medium">Hisob holati</span>
-                <span className="font-semibold text-emerald-700 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  {user.isActive ? 'Faol faoliyatda' : 'Muzlatilgan (Nofaol)'}
-                </span>
+                {user.isActive ? (
+                  <span className="font-semibold text-emerald-700 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Faol</span>
+                  </span>
+                ) : (
+                  <span className="font-semibold text-rose-700 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span>Muzlatilgan (Nofaol)</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
