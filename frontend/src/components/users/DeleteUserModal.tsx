@@ -40,10 +40,10 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-in zoom-in-95 duration-150">
         {/* Qizil belgi */}
-        <div className="w-13 h-13 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200/60 flex items-center justify-center mx-auto shadow-xs">
-          <Trash2 className="w-6 h-6 stroke-[2.2]" />
+        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+          <Trash2 className="w-5 h-5" />
         </div>
 
         <div className="space-y-1.5">
