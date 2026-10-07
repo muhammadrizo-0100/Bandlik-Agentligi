@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource as TypeOrmDataSource } from 'typeorm';
+import { Repository, DataSource as TypeOrmDataSource, In } from 'typeorm';
 import { SurveyEntity } from '../../database/entities/survey.entity';
 import { CitizenEntity } from '../../database/entities/citizen.entity';
 import { EmploymentHistoryEntity } from '../../database/entities/employment-history.entity';
@@ -260,20 +260,37 @@ export class ReviewQueueService {
         };
       }
 
-      const rejectNoteText = dto.reviewerNote?.trim() || 'Rad etildi';
-
       // 2. Agar rad etilsa (REJECT)
-      survey.status = SurveyStatus.REJECTED;
-      survey.reviewerId = reviewer.id;
-      survey.reviewedAt = new Date();
-      survey.reviewerNote = rejectNoteText;
-      await manager.save(SurveyEntity, survey);
+      if (survey.citizenId) {
+        const otherSurveysCount = await manager.count(SurveyEntity, {
+          where: { citizenId: survey.citizenId },
+        });
 
+        // Agar fuqaroning tizimda boshqa birorta ham anketasi bo'lmasa (masalan, onlayn yuborilib rad etilgan bo'lsa),
+        // tasdiqlanmagan soxta fuqaro yozuvini ham butunlay tozalab tashlaymiz
+        if (otherSurveysCount <= 1) {
+          const citizen = await manager.findOne(CitizenEntity, {
+            where: { id: survey.citizenId },
+          });
+          await manager.remove(SurveyEntity, survey);
+          if (citizen) {
+            await manager.remove(CitizenEntity, citizen);
+          }
+          return {
+            success: true,
+            action: dto.action,
+            message: 'Soʻrovnoma rad etildi va roʻyxatdan butunlay bekor qilindi (oʻchirildi).',
+          };
+        }
+      }
+
+      // Agar fuqaroning oldingi tasdiqlangan ma'lumotlari mavjud bo'lsa,
+      // faqatgina ushbu yangi ziddiyatli/rad etilgan so'rovnomani o'chirib tashlaymiz
+      await manager.remove(SurveyEntity, survey);
       return {
         success: true,
         action: dto.action,
-        message: 'Ziddiyatli so\'rovnoma rad etildi. Fuqaro ma\'lumotlari o\'zgarishsiz qoldirildi.',
-        survey,
+        message: 'Ziddiyatli soʻrovnoma rad etildi va roʻyxatdan chiqarildi. Fuqaroning amaldagi bazadagi holati oʻzgarishsiz qoldi.',
       };
     });
   }

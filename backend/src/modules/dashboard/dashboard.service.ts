@@ -414,7 +414,10 @@ export class DashboardService {
     const qb = this.surveyRepository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.mahalla', 'm')
-      .leftJoinAndSelect('s.operator', 'o');
+      .leftJoinAndSelect('s.operator', 'o')
+      .where('s.status IN (:...approvedStatuses)', {
+        approvedStatuses: [SurveyStatus.APPROVED, SurveyStatus.RESOLVED],
+      });
 
     if (scope.districtId) {
       qb.andWhere('s.districtId = :districtId', { districtId: scope.districtId });
