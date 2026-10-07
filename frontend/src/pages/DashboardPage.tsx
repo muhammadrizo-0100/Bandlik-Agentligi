@@ -154,7 +154,7 @@ export const DashboardPage: React.FC = () => {
 
   const selectedMahallaDisplayName = selectedMahallaObj
     ? `${(selectedMahallaObj.name || '').replace(/\s*MFY\s*/gi, '')} MFY`
-    : 'Barcha mahallalar';
+    : 'Faol mahallalar';
 
   const setPeriod = (preset: string) => {
     const now = new Date();
@@ -671,8 +671,8 @@ export const DashboardPage: React.FC = () => {
           dy={12}
           textAnchor="middle"
           fill="#1E293B"
-          fontSize={11.5}
-          fontWeight={800}
+          fontSize={11}
+          fontWeight={700}
         >
           {displayName}
         </text>
@@ -680,10 +680,10 @@ export const DashboardPage: React.FC = () => {
           <text
             x={0}
             y={0}
-            dy={26}
+            dy={25}
             textAnchor="middle"
             fill="#64748B"
-            fontSize={10}
+            fontSize={9.5}
             fontWeight={600}
           >
             {item.eventDateLabel}
@@ -1304,7 +1304,9 @@ export const DashboardPage: React.FC = () => {
                 Taqsimot va Xatlov Dinamikasi
               </span>
               <h4 className="text-base font-bold text-slate-900 tracking-tight">
-                Mahallalar kesimida yoshlar bandligi holati
+                {selectedMahallaObj
+                  ? `${selectedMahallaDisplayName} bandlik koʻrsatkichlari`
+                  : 'Faol mahallalar kesimida yoshlar bandligi holati'}
               </h4>
             </div>
 
@@ -1355,57 +1357,62 @@ export const DashboardPage: React.FC = () => {
 
                       <div className="fixed inset-x-4 top-28 z-50 sm:absolute sm:inset-auto sm:left-0 sm:top-full sm:mt-2 w-auto sm:w-80 bg-white rounded-2xl p-3.5 shadow-2xl sm:shadow-xl border-2 border-slate-200 animate-in fade-in zoom-in-95 duration-100">
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-                        <span className="text-xs font-bold text-slate-800">
-                          Mahallani tanlang
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setIsMahallaFilterOpen(false)}
-                          className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      {/* Qidiruv */}
-                      <div className="relative mb-2">
-                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="text"
-                          placeholder="Mahalla nomini qidirish..."
-                          value={mahallaSearchQuery}
-                          onChange={(e) => setMahallaSearchQuery(e.target.value)}
-                          className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#163D5C]"
-                        />
-                        {mahallaSearchQuery && (
+                          <div>
+                            <span className="text-xs font-bold text-slate-800 block">
+                              Mahallani tanlang
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              Alohida mahalla koʻrsatkichlarini koʻrish uchun
+                            </span>
+                          </div>
                           <button
                             type="button"
-                            onClick={() => setMahallaSearchQuery('')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 transition"
-                            title="Tozalash"
+                            onClick={() => setIsMahallaFilterOpen(false)}
+                            className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
                           >
-                            <X className="w-3 h-3" />
+                            ✕
                           </button>
-                        )}
-                      </div>
+                        </div>
 
-                      {/* Mahalla variantlari */}
-                      <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleMahallaChange('');
-                            setIsMahallaFilterOpen(false);
-                          }}
-                          className={`w-full px-3 py-2 rounded-xl text-xs font-semibold transition text-left cursor-pointer flex items-center justify-between ${
-                            !selectedMahallaId
-                              ? 'bg-[#163D5C] text-white shadow-xs font-bold'
-                              : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span>Barcha mahallalar (Tuman boʻyicha)</span>
-                          {!selectedMahallaId && <Check className="w-3.5 h-3.5 shrink-0" />}
-                        </button>
+                        {/* Qidiruv */}
+                        <div className="relative mb-2">
+                          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Mahalla nomini qidirish..."
+                            value={mahallaSearchQuery}
+                            onChange={(e) => setMahallaSearchQuery(e.target.value)}
+                            className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#163D5C]"
+                          />
+                          {mahallaSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setMahallaSearchQuery('')}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 transition"
+                              title="Tozalash"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Mahalla variantlari */}
+                        <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleMahallaChange('');
+                              setIsMahallaFilterOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-xs font-semibold transition text-left cursor-pointer flex items-center justify-between ${
+                              !selectedMahallaId
+                                ? 'bg-[#163D5C] text-white shadow-xs font-bold'
+                                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span>Faol mahallalar (Standart koʻrinish)</span>
+                            {!selectedMahallaId && <Check className="w-3.5 h-3.5 shrink-0" />}
+                          </button>
 
                         {filteredMahallaOptions.map((m) => {
                           const isSelected = selectedMahallaId === m.id;
@@ -1490,21 +1497,32 @@ export const DashboardPage: React.FC = () => {
 
             <div className="flex items-center space-x-2 text-[11px] font-medium text-slate-400">
               <span className="hidden sm:inline">Tarixni koʻrish uchun ustunga bosing 👆</span>
-              <span className="sm:hidden text-sky-700 font-semibold flex items-center gap-1 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-md text-[10px]">
-                ↔️ Chapga/oʻngga suring
-              </span>
+              {barChartData.length > 2 && (
+                <span className="sm:hidden text-sky-700 font-semibold flex items-center gap-1 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-md text-[10px]">
+                  ↔️ Chapga/oʻngga suring
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="w-full pb-1">
-            <div className="h-72 w-full">
+          <div
+            className="w-full overflow-x-auto pb-1.5 -mx-1 px-1 scrollbar-thin"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div
+              className="h-72"
+              style={{
+                minWidth: barChartData.length > 2 ? `${Math.max(barChartData.length * 115, 560)}px` : '100%',
+                width: '100%',
+              }}
+            >
               {barChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={barChartData}
                     onClick={handleChartClick}
-                    margin={{ top: 12, right: 12, left: -20, bottom: 25 }}
-                    barGap={3}
+                    margin={{ top: 12, right: 12, left: -20, bottom: 28 }}
+                    barGap={2}
                     barCategoryGap={barChartData.length <= 2 ? "35%" : "18%"}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
@@ -1531,7 +1549,7 @@ export const DashboardPage: React.FC = () => {
                       name="Rasmiy band"
                       fill="#10B981"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1542,7 +1560,7 @@ export const DashboardPage: React.FC = () => {
                       name="Oʻzini band qilgan"
                       fill="#0284C7"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1553,7 +1571,7 @@ export const DashboardPage: React.FC = () => {
                       name="Norasmiy band"
                       fill="#F59E0B"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1564,7 +1582,7 @@ export const DashboardPage: React.FC = () => {
                       name="Migrant"
                       fill="#8B5CF6"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1575,7 +1593,7 @@ export const DashboardPage: React.FC = () => {
                       name="Ishsiz yoshlar"
                       fill="#EF4444"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1586,7 +1604,7 @@ export const DashboardPage: React.FC = () => {
                       name="Ishlash istagi yoʻq"
                       fill="#94A3B8"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
