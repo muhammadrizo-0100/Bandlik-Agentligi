@@ -34,6 +34,8 @@ import {
 import {
   BarChart,
   Bar,
+  Cell,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -154,7 +156,7 @@ export const DashboardPage: React.FC = () => {
 
   const selectedMahallaDisplayName = selectedMahallaObj
     ? `${(selectedMahallaObj.name || '').replace(/\s*MFY\s*/gi, '')} MFY`
-    : 'Faol mahallalar';
+    : 'Barcha mahallalar (Umumiy)';
 
   const setPeriod = (preset: string) => {
     const now = new Date();
@@ -418,48 +420,59 @@ export const DashboardPage: React.FC = () => {
     };
   };
 
-  // Bar chart uchun mahallalar ma'lumotlari (pastida rasmiy xatlov kuni bilan)
-  const barChartData = useMemo(() => {
-    if (!summary?.mahallaBreakdown || summary.mahallaBreakdown.length === 0) return [];
-
-    // Faoliyatiga ko'ra saralash (eng ko'p xatlov o'tkazilgan faol mahallalar oldinda)
-    const sorted = [...summary.mahallaBreakdown].sort(
-      (a: any, b: any) => (Number(b.total) || 0) - (Number(a.total) || 0)
-    );
-
-    // Agar yuqoridan aniq mahalla tanlangan bo'lsa faqat o'shani, aks holda eng faol 5 ta mahallani ko'rsatish
-    const displayList = selectedMahallaId ? sorted : sorted.slice(0, 5);
-
-    return displayList.map((m: any) => {
-      const rawName = m.mahallaName || m.name || '';
-      const cleanName = rawName.replace(/\s*MFY\s*/gi, '').trim() || rawName;
-
-      // Ushbu mahalla bo'yicha eng oxirgi xatlov sanasini topish
-      const matchingSurvey = (summary?.recentSurveys || []).find((s) => {
-        const sMName = (s.mahalla?.name || '').toLowerCase();
-        const mNameLower = cleanName.toLowerCase();
-        return sMName.includes(mNameLower) || mNameLower.includes(sMName);
-      });
-
-      const eventDateSource = matchingSurvey?.surveyDate || matchingSurvey?.createdAt || m.lastSurveyAt;
-      const parsedDate = formatSurveyDateLabel(eventDateSource);
-
-      return {
-        name: cleanName,
-        fullName: rawName.includes('MFY') ? rawName : `${rawName} MFY`,
-        total: Number(m.total) || 0,
-        official: Number(m.official ?? m.officiallyEmployed ?? 0),
-        selfEmployed: Number(m.selfEmployed ?? 0),
-        unofficial: Number(m.unofficial ?? m.unofficiallyEmployed ?? 0),
-        migrant: Number(m.migrant ?? 0),
-        unemployed: Number(m.unemployed ?? 0),
-        noWish: Number(m.noWish ?? 0),
-        other: Number(m.other ?? 0),
-        eventDateLabel: parsedDate?.shortLabel || '',
-        eventDateFull: parsedDate?.fullLabel || '',
-      };
-    });
-  }, [summary?.mahallaBreakdown, summary?.recentSurveys, selectedMahallaId]);
+  // Bar chart uchun 6 ta asosiy toifaning hududiy umumiy statistikasi
+  const categoryBarData = useMemo(() => {
+    return [
+      {
+        key: 'OFFICIALLY_EMPLOYED',
+        name: 'Rasmiy band',
+        shortName: 'Rasmiy',
+        count: kpi?.officiallyEmployed?.count || 0,
+        percentage: kpi?.officiallyEmployed?.percentage || 0,
+        color: '#10B981',
+      },
+      {
+        key: 'SELF_EMPLOYED',
+        name: 'Oʻzini band',
+        shortName: 'Oʻzini band',
+        count: kpi?.selfEmployed?.count || 0,
+        percentage: kpi?.selfEmployed?.percentage || 0,
+        color: '#0284C7',
+      },
+      {
+        key: 'UNOFFICIALLY_EMPLOYED',
+        name: 'Norasmiy',
+        shortName: 'Norasmiy',
+        count: kpi?.unofficiallyEmployed?.count || 0,
+        percentage: kpi?.unofficiallyEmployed?.percentage || 0,
+        color: '#F59E0B',
+      },
+      {
+        key: 'MIGRANT',
+        name: 'Migrant',
+        shortName: 'Migrant',
+        count: kpi?.migrant?.count || 0,
+        percentage: kpi?.migrant?.percentage || 0,
+        color: '#8B5CF6',
+      },
+      {
+        key: 'UNEMPLOYED',
+        name: 'Ishsizlar',
+        shortName: 'Ishsiz',
+        count: kpi?.unemployed?.count || 0,
+        percentage: kpi?.unemployed?.percentage || 0,
+        color: '#EF4444',
+      },
+      {
+        key: 'NO_WISH_TO_WORK',
+        name: 'Istagi yoʻq',
+        shortName: 'Istagi yoʻq',
+        count: kpi?.noWishToWork?.count || 0,
+        percentage: kpi?.noWishToWork?.percentage || 0,
+        color: '#94A3B8',
+      },
+    ];
+  }, [kpi]);
 
   // Haftalik mini trend ma'lumotlari: Du, Se, Cho, Pa, Ju, Sha, Ya
   const weeklyTrendData = useMemo(() => {
@@ -623,45 +636,39 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Sichqoncha borganda chiqadigan ixcham, yengil tooltip
-  const CustomMainChartTooltip = ({ active, payload }: any) => {
+  // Sichqoncha borganda chiqadigan toifalar tooltipi
+  const CustomCategoryChartTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length) return null;
-    const data = payload[0].payload;
+    const item = payload[0].payload;
 
     return (
-      <div className="bg-slate-900/95 backdrop-blur-md text-white rounded-xl px-3 py-2 text-xs shadow-xl border border-slate-700/60 pointer-events-none">
-        <div className="flex items-center justify-between gap-3 font-bold border-b border-slate-700/70 pb-1 mb-1.5">
-          <span className="text-white text-xs">{data.fullName || data.name}</span>
-          {data.eventDateFull && (
-            <span className="text-[10px] text-sky-300 font-medium">
-              {data.eventDateFull}
-            </span>
-          )}
+      <div className="bg-slate-900/95 backdrop-blur-md text-white rounded-2xl px-3.5 py-2.5 text-xs shadow-xl border border-slate-700/60 pointer-events-none min-w-[170px]">
+        <div className="flex items-center space-x-2 font-bold border-b border-slate-700/70 pb-1.5 mb-1.5">
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+          <span className="text-white text-xs font-black">{item.name}</span>
         </div>
-        <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
-          <span className="text-emerald-400 font-semibold" title="Rasmiy band">● {data.official || 0}</span>
-          <span className="text-sky-400 font-semibold" title="Oʻzini band qilgan">● {data.selfEmployed || 0}</span>
-          <span className="text-amber-400 font-semibold" title="Norasmiy band">● {data.unofficial || 0}</span>
-          <span className="text-violet-400 font-semibold" title="Migrant">● {data.migrant || 0}</span>
-          <span className="text-rose-400 font-semibold" title="Ishsiz">● {data.unemployed || 0}</span>
-          <span className="text-slate-300 font-semibold" title="Istagi yoʻq">● {data.noWish || 0}</span>
-          <span className="text-slate-400 font-bold ml-1 border-l border-slate-700 pl-2">
-            Jami: {data.total || 0}
-          </span>
+        <div className="space-y-1 text-[11px]">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-300">Soni:</span>
+            <b className="text-white font-black">{Number(item.count || 0).toLocaleString()} nafar</b>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-300">Ulushi:</span>
+            <b className="font-extrabold" style={{ color: item.color }}>{item.percentage}%</b>
+          </div>
+        </div>
+        <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400">
+          Roʻyxatni koʻrish uchun ustunga bosing 👆
         </div>
       </div>
     );
   };
 
-  // Grafik ustuni ostida mahalla nomi va kunini bir yo'la chiqarish
-  const CustomXAxisTick = (props: any) => {
+  // Grafik ustuni ostida toifa nomi va ulushini chiqarish
+  const CustomCategoryAxisTick = (props: any) => {
     const { x, y, payload } = props;
-    const item = barChartData[payload.index];
+    const item = categoryBarData[payload.index];
     if (!item) return null;
-
-    // Faol 4-5 ta mahallada nomlar qisqarmasdan, aniq va chiroyli chiqadi
-    const rawName = item.name || '';
-    const displayName = rawName.length > 13 ? `${rawName.slice(0, 12)}…` : rawName;
 
     return (
       <g transform={`translate(${x},${y})`}>
@@ -670,25 +677,23 @@ export const DashboardPage: React.FC = () => {
           y={0}
           dy={12}
           textAnchor="middle"
-          fill="#1E293B"
-          fontSize={11}
+          fill="#334155"
+          fontSize={11.5}
           fontWeight={700}
         >
-          {displayName}
+          {item.shortName || item.name}
         </text>
-        {item.eventDateLabel && (
-          <text
-            x={0}
-            y={0}
-            dy={25}
-            textAnchor="middle"
-            fill="#64748B"
-            fontSize={9.5}
-            fontWeight={600}
-          >
-            {item.eventDateLabel}
-          </text>
-        )}
+        <text
+          x={0}
+          y={0}
+          dy={26}
+          textAnchor="middle"
+          fill={item.color}
+          fontSize={10}
+          fontWeight={800}
+        >
+          {item.percentage}%
+        </text>
       </g>
     );
   };
@@ -1301,12 +1306,14 @@ export const DashboardPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                Taqsimot va Xatlov Dinamikasi
+                Taqsimot va Statistika
               </span>
               <h4 className="text-base font-bold text-slate-900 tracking-tight">
                 {selectedMahallaObj
-                  ? `${selectedMahallaDisplayName} bandlik koʻrsatkichlari`
-                  : 'Faol mahallalar kesimida yoshlar bandligi holati'}
+                  ? `${(selectedMahallaObj.name || '').replace(/\s*MFY\s*/gi, '')} MFY yoshlar bandligi taqsimoti`
+                  : selectedDistrictId && currentDistrictName
+                  ? `${currentDistrictName} boʻyicha yoshlar bandligi taqsimoti`
+                  : 'Umumiy (Viloyat) boʻyicha yoshlar bandligi taqsimoti'}
               </h4>
             </div>
 
@@ -1410,7 +1417,7 @@ export const DashboardPage: React.FC = () => {
                                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                             }`}
                           >
-                            <span>Faol mahallalar (Standart koʻrinish)</span>
+                            <span>Barcha mahallalar (Umumiy koʻrsatkich)</span>
                             {!selectedMahallaId && <Check className="w-3.5 h-3.5 shrink-0" />}
                           </button>
 
@@ -1496,41 +1503,25 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-2 text-[11px] font-medium text-slate-400">
-              <span className="hidden sm:inline">Tarixni koʻrish uchun ustunga bosing 👆</span>
-              {barChartData.length > 2 && (
-                <span className="sm:hidden text-sky-700 font-semibold flex items-center gap-1 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-md text-[10px]">
-                  ↔️ Chapga/oʻngga suring
-                </span>
-              )}
+              <span>Toifani tanlash uchun ustunga bosing 👆</span>
             </div>
           </div>
 
-          <div
-            className="w-full overflow-x-auto pb-1.5 -mx-1 px-1 scrollbar-thin"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            <div
-              className="h-72"
-              style={{
-                minWidth: barChartData.length > 2 ? `${Math.max(barChartData.length * 115, 560)}px` : '100%',
-                width: '100%',
-              }}
-            >
-              {barChartData.length > 0 ? (
+          <div className="w-full pb-1">
+            <div className="h-72 w-full">
+              {kpi && (kpi.totalCitizens > 0 || categoryBarData.some((c) => c.count > 0)) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={barChartData}
-                    onClick={handleChartClick}
-                    margin={{ top: 12, right: 12, left: -20, bottom: 28 }}
-                    barGap={2}
-                    barCategoryGap={barChartData.length <= 2 ? "35%" : "18%"}
+                    data={categoryBarData}
+                    margin={{ top: 25, right: 12, left: -15, bottom: 25 }}
+                    barCategoryGap="16%"
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                     <XAxis
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
-                      tick={<CustomXAxisTick />}
+                      tick={<CustomCategoryAxisTick />}
                       interval={0}
                       height={42}
                     />
@@ -1538,82 +1529,39 @@ export const DashboardPage: React.FC = () => {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: '#64748B', fontSize: 11 }}
+                      allowDecimals={false}
                     />
                     <Tooltip
-                      content={<CustomMainChartTooltip />}
+                      content={<CustomCategoryChartTooltip />}
                       cursor={{ fill: '#F8FAFC' }}
                     />
-                    {/* Yashil: Rasmiy band */}
                     <Bar
-                      dataKey="official"
-                      name="Rasmiy band"
-                      fill="#10B981"
-                      radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
-                      minPointSize={3}
+                      dataKey="count"
+                      radius={[8, 8, 0, 0]}
+                      barSize={38}
                       cursor="pointer"
-                      onClick={(data) => openEventModal(data)}
-                    />
-                    {/* Moviy: Oʻzini band qilgan */}
-                    <Bar
-                      dataKey="selfEmployed"
-                      name="Oʻzini band qilgan"
-                      fill="#0284C7"
-                      radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
-                      minPointSize={3}
-                      cursor="pointer"
-                      onClick={(data) => openEventModal(data)}
-                    />
-                    {/* Sariq: Norasmiy band */}
-                    <Bar
-                      dataKey="unofficial"
-                      name="Norasmiy band"
-                      fill="#F59E0B"
-                      radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
-                      minPointSize={3}
-                      cursor="pointer"
-                      onClick={(data) => openEventModal(data)}
-                    />
-                    {/* Binafsharang: Migrant */}
-                    <Bar
-                      dataKey="migrant"
-                      name="Migrant"
-                      fill="#8B5CF6"
-                      radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
-                      minPointSize={3}
-                      cursor="pointer"
-                      onClick={(data) => openEventModal(data)}
-                    />
-                    {/* Qizil: Ishsiz yoshlar */}
-                    <Bar
-                      dataKey="unemployed"
-                      name="Ishsiz yoshlar"
-                      fill="#EF4444"
-                      radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
-                      minPointSize={3}
-                      cursor="pointer"
-                      onClick={(data) => openEventModal(data)}
-                    />
-                    {/* Kulrang: Ishlash istagi yo'q */}
-                    <Bar
-                      dataKey="noWish"
-                      name="Ishlash istagi yoʻq"
-                      fill="#94A3B8"
-                      radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 16}
-                      minPointSize={3}
-                      cursor="pointer"
-                      onClick={(data) => openEventModal(data)}
-                    />
+                      onClick={(entry: any) => {
+                        if (entry && entry.key) {
+                          setActiveTab(entry.key);
+                          document.getElementById('recent-surveys-table')?.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
+                    >
+                      {categoryBarData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                      <LabelList
+                        dataKey="count"
+                        position="top"
+                        formatter={(val: number) => (val > 0 ? val.toLocaleString() : '0')}
+                        style={{ fill: '#1E293B', fontSize: 11.5, fontWeight: 800 }}
+                      />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
-                  Hozircha mahalla maʻlumotlari mavjud emas
+                  Hozircha tanlangan hudud boʻyicha xatlov maʻlumotlari mavjud emas
                 </div>
               )}
             </div>
