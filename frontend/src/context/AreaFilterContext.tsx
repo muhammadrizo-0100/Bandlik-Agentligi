@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from './AuthContext';
+import { monitoringApi } from '../api/monitoring.api';
+
+export interface DistrictOption {
+  id: string;
+  name: string;
+  code?: string;
+  region?: string;
+}
 
 interface AreaFilterContextType {
   selectedDistrictId: string;
@@ -7,12 +15,31 @@ interface AreaFilterContextType {
   selectedMahallaId: string;
   setSelectedMahallaId: (id: string) => void;
   clearFilters: () => void;
+  districts: DistrictOption[];
+  currentDistrictName: string;
 }
 
 const AreaFilterContext = createContext<AreaFilterContextType | undefined>(undefined);
 
 export const AreaFilterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator } = useAuth();
+  const { user, isSuperAdmin, isDistrictAdmin, isMahallaOperator, isDataReviewer } = useAuth();
+
+  const [districts, setDistricts] = useState<DistrictOption[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      monitoringApi
+        .getDistrictsDropdown()
+        .then((res) => {
+          if (Array.isArray(res)) {
+            setDistricts(res);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setDistricts([]);
+    }
+  }, [user]);
 
   const [selectedDistrictId, setSelectedDistrictIdState] = useState<string>(() => {
     return localStorage.getItem('global_selected_district_id') || '';
@@ -104,6 +131,26 @@ export const AreaFilterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     localStorage.removeItem('global_selected_mahalla_id');
   };
 
+  const currentDistrictName = useMemo(() => {
+    if (isMahallaOperator) {
+      return user?.mahallaName
+        ? (user.mahallaName.includes('MFY') ? user.mahallaName : `${user.mahallaName} MFY`)
+        : user?.districtName || 'Mahalla';
+    }
+    if (isDistrictAdmin) {
+      return user?.districtName || 'Tuman';
+    }
+    if (isDataReviewer) {
+      return user?.districtName || 'Tekshiruv Markazi';
+    }
+    if (isSuperAdmin) {
+      if (!selectedDistrictId) return 'Barcha tumanlar';
+      const found = districts.find((d) => d.id === selectedDistrictId);
+      return found ? found.name : 'Barcha tumanlar';
+    }
+    return user?.districtName || 'Barcha tumanlar';
+  }, [isMahallaOperator, isDistrictAdmin, isDataReviewer, isSuperAdmin, selectedDistrictId, districts, user]);
+
   return (
     <AreaFilterContext.Provider
       value={{
@@ -112,6 +159,8 @@ export const AreaFilterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         selectedMahallaId,
         setSelectedMahallaId,
         clearFilters,
+        districts,
+        currentDistrictName,
       }}
     >
       {children}

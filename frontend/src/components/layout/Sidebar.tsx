@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const [internalPendingCount, setInternalPendingCount] = useState<number>(0);
   const effectivePendingCount = propPendingCount !== undefined ? propPendingCount : internalPendingCount;
-  const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
+  const districts = areaFilter.districts;
   const [districtSearch, setDistrictSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -93,14 +93,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
 
     const interval = setInterval(fetchPending, 15000);
-
-    // Super Admin uchun tumanlar ro'yxati
-    if (isSuperAdmin) {
-      monitoringApi
-        .getDistrictsDropdown()
-        .then((res) => setDistricts(res))
-        .catch(() => {});
-    }
 
     return () => {
       unsubscribe();
@@ -143,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return found ? found.name : 'Barcha tumanlar';
     }
     if (isDistrictAdmin) {
-      return user?.districtName || 'Davlatobod tumani';
+      return user?.districtName || 'Tuman';
     }
     if (isMahallaOperator) {
       return user?.mahallaName
@@ -304,7 +296,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </span>
                     <span className="block text-[10px] text-slate-400 font-medium truncate">
                       {isMahallaOperator
-                        ? user?.districtName || 'Davlatobod tumani'
+                        ? user?.districtName || 'Namangan viloyati'
                         : 'Namangan viloyati'}
                     </span>
                   </div>

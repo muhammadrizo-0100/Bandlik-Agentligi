@@ -59,7 +59,7 @@ const getInitialOperatorDraft = () => {
 
 export const NewSurveyPage: React.FC = () => {
   const { user, isMahallaOperator, isDistrictAdmin, isSuperAdmin } = useAuth();
-  const { selectedDistrictId: globalDistrictId, selectedMahallaId: globalMahallaId } = useAreaFilter();
+  const { selectedDistrictId: globalDistrictId, selectedMahallaId: globalMahallaId, currentDistrictName } = useAreaFilter();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -670,7 +670,7 @@ export const NewSurveyPage: React.FC = () => {
                         <div className="h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
                             <MapPin className="w-4 h-4 text-[#163D5C]" />
-                            <span>{user?.districtName || 'Davlatobod tumani'}</span>
+                            <span>{user?.districtName || currentDistrictName || 'Tuman'}</span>
                           </div>
                           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-600">
                             {isDistrictAdmin ? 'Biriktirilgan tuman' : 'Avtomatik'}

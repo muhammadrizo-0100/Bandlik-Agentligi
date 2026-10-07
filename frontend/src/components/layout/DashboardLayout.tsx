@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { useAreaFilter } from '../../context/AreaFilterContext';
 import { Search, Bell, ChevronRight, ChevronLeft, ShieldCheck, X, Clock, CheckCircle2, Menu } from 'lucide-react';
 import { formatMahallaName } from '../../utils/formatters';
 import { monitoringApi } from '../../api/monitoring.api';
@@ -32,6 +33,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   searchPlaceholder = 'Istalgan narsani qidiring (F.I.Sh., JSHSHIR, telefon)...',
 }) => {
   const { user } = useAuth();
+  const areaFilter = useAreaFilter();
   const { isCollapsed, toggleSidebar, isMobileOpen, toggleMobileOpen, closeMobileDrawer } = useSidebar();
   const navigate = useNavigate();
   const [internalSearch, setInternalSearch] = useState(searchValue || '');
@@ -40,6 +42,24 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [latestRealtimeEvent, setLatestRealtimeEvent] = useState<RealtimeSurveyEvent['data'] | null>(null);
   const [isWiggling, setIsWiggling] = useState<boolean>(false);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const effectiveDistrictId = selectedDistrictId !== undefined ? selectedDistrictId : areaFilter.selectedDistrictId;
+
+  const navAreaBadgeText = useMemo(() => {
+    if (user?.mahallaName) {
+      return formatMahallaName(user.mahallaName);
+    }
+    const roleCode = user?.roleCode || user?.role;
+    if (roleCode === 'DISTRICT_ADMIN') {
+      return user?.districtName || 'Tuman';
+    }
+    if (roleCode === 'SUPER_ADMIN') {
+      if (!effectiveDistrictId) return 'Barcha tumanlar';
+      const found = areaFilter.districts.find((d) => d.id === effectiveDistrictId);
+      return found ? found.name : 'Barcha tumanlar';
+    }
+    return user?.districtName || areaFilter.currentDistrictName;
+  }, [user, effectiveDistrictId, areaFilter.districts, areaFilter.currentDistrictName]);
 
   // Web Audio API orqali yumshoq bildirishnoma qo'ng'irog'i
   const playNotificationSound = () => {
@@ -234,13 +254,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
           {/* O'ng: Hudud nishoni, Bildirishnomalar va Profil */}
           <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0">
-            {/* Hudud nishoni (Screenshotdagi '27-maktab' o'rnida) */}
+            {/* Hudud nishoni (Navbar tepasida) */}
             <div className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-xs font-semibold text-slate-700 flex-shrink-0 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
               <span className="truncate max-w-[160px]">
-                {user?.mahallaName
-                  ? formatMahallaName(user.mahallaName)
-                  : user?.districtName || 'Davlatobod tumani'}
+                {navAreaBadgeText}
               </span>
             </div>
 
@@ -377,7 +395,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 {latestRealtimeEvent.citizenFullName}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                {latestRealtimeEvent.mahallaName ? `${latestRealtimeEvent.mahallaName} MFY` : 'Davlatobod tumani'}
+                {latestRealtimeEvent.mahallaName ? `${latestRealtimeEvent.mahallaName} MFY` : ((latestRealtimeEvent as any).districtName || navAreaBadgeText)}
               </p>
               <div className="mt-2.5 flex items-center gap-2">
                 <button

@@ -318,7 +318,7 @@ export const MahallasManagementPage: React.FC = () => {
                             <span>{formatMahallaName(m.name)}</span>
                           </td>
                           <td className="py-3.5 px-4 text-slate-600 font-medium">
-                            {m.district?.name || m.district || 'Davlatobod tumani'}
+                            {m.district?.name || m.district || '—'}
                           </td>
                           <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
                             {m.code || '—'}

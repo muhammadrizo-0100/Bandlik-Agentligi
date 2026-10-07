@@ -53,6 +53,7 @@ export const DashboardPage: React.FC = () => {
     setSelectedDistrictId,
     selectedMahallaId,
     setSelectedMahallaId,
+    currentDistrictName,
   } = useAreaFilter();
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -250,10 +251,40 @@ export const DashboardPage: React.FC = () => {
     navigate(`/citizens?${query.toString()}`);
   };
 
+  const welcomeAreaText = useMemo(() => {
+    if (user?.mahallaName) {
+      return user.mahallaName.includes('MFY') ? user.mahallaName : `${user.mahallaName} MFY`;
+    }
+    const roleCode = user?.roleCode || user?.role;
+    if (roleCode === 'DISTRICT_ADMIN') {
+      return user?.districtName || 'Tuman';
+    }
+    if (roleCode === 'SUPER_ADMIN') {
+      if (!selectedDistrictId) return 'Namangan viloyati (barcha tumanlar)';
+      return currentDistrictName;
+    }
+    return currentDistrictName || 'Namangan viloyati';
+  }, [user, selectedDistrictId, currentDistrictName]);
+
+  const programAreaText = useMemo(() => {
+    if (user?.mahallaName) {
+      return user.mahallaName;
+    }
+    const roleCode = user?.roleCode || user?.role;
+    if (roleCode === 'DISTRICT_ADMIN') {
+      return user?.districtName || 'tuman';
+    }
+    if (roleCode === 'SUPER_ADMIN') {
+      if (!selectedDistrictId) return 'Namangan viloyati tumanlari';
+      return currentDistrictName;
+    }
+    return currentDistrictName || 'hududlar';
+  }, [user, selectedDistrictId, currentDistrictName]);
+
   // Hisobot ma'lumotlarini Excel/CSV formatida yuklab olish (Export)
   const handleExportData = () => {
     try {
-      const areaName = user?.mahallaName ? (user.mahallaName.includes('MFY') ? user.mahallaName : `${user.mahallaName} MFY`) : user?.districtName || 'Davlatobod tumani';
+      const areaName = welcomeAreaText;
       let csv = `"O'ZBEKISTON RESPUBLIKASI YOSHLAR BANDLIGI MONITORINGI VA TAHLILI"\n`;
       csv += `"Hudud:","${areaName}"\n`;
       csv += `"Hisobot davri:","${timeFilterLabel}"\n`;
@@ -475,7 +506,7 @@ export const DashboardPage: React.FC = () => {
 
     return {
       dateText: parsedDate.fullLabel,
-      mahallaName: latest.mahalla?.name ? (latest.mahalla.name.includes('MFY') ? latest.mahalla.name : `${latest.mahalla.name} MFY`) : 'Davlatobod',
+      mahallaName: latest.mahalla?.name ? (latest.mahalla.name.includes('MFY') ? latest.mahalla.name : `${latest.mahalla.name} MFY`) : (user?.districtName || currentDistrictName || 'Hudud'),
       citizenName: latest.citizenFullName,
       category: latest.mainCategory,
     };
@@ -703,7 +734,7 @@ export const DashboardPage: React.FC = () => {
             Xush kelibsiz, {user?.fullName?.split(' ')[0] || 'Foydalanuvchi'}.
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-            {user?.mahallaName ? (user.mahallaName.includes('MFY') ? user.mahallaName : `${user.mahallaName} MFY`) : user?.districtName || 'Davlatobod tumani'} boʻyicha yoshlar bandligi koʻrsatkichlarini kuzatib boring.
+            {welcomeAreaText} boʻyicha yoshlar bandligi koʻrsatkichlarini kuzatib boring.
           </p>
         </div>
 
@@ -746,7 +777,7 @@ export const DashboardPage: React.FC = () => {
               Yoshlar bandligi davlat monitoringi dasturi (2026)
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {user?.districtName || 'Davlatobod tumani'}da uyma-uy soʻrovnomalar orqali haqiqiy bandlik holati shakllantirilmoqda.
+              {programAreaText}da uyma-uy soʻrovnomalar orqali haqiqiy bandlik holati shakllantirilmoqda.
             </p>
           </div>
         </div>
@@ -1702,7 +1733,7 @@ export const DashboardPage: React.FC = () => {
                           {new Date(survey.surveyDate).toLocaleDateString('uz-UZ')}
                         </td>
                         <td className="py-3.5 px-4 font-semibold text-slate-800">
-                          {survey.mahalla?.name || 'Davlatobod'}
+                          {survey.mahalla?.name || 'MFY'}
                         </td>
                         <td className="py-3.5 px-4 text-slate-500 font-medium">
                           {survey.surveyMethod === 'HOME_VISIT'
@@ -1848,7 +1879,7 @@ export const DashboardPage: React.FC = () => {
                           <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
                             <span className="font-bold text-[#163D5C]">{dateStr}</span>
                             <span>•</span>
-                            <span>{ev.mahalla?.name || 'Davlatobod'}</span>
+                            <span>{ev.mahalla?.name || 'MFY'}</span>
                             <span>•</span>
                             <span>{ev.surveyMethod === 'HOME_VISIT' ? 'Uyma-uy' : ev.surveyMethod === 'PHONE' ? 'Telefon' : 'Qabulda'}</span>
                           </div>
