@@ -2,25 +2,101 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { monitoringApi } from '../api/monitoring.api';
 import { Survey, Citizen } from '../types/monitoring.types';
+import { useToast } from '../context/ToastContext';
+import { formatMahallaName } from '../utils/formatters';
+import { formatUzPhone } from '../utils/validators';
+import { Pagination } from '../components/ui/Pagination';
+import { TableSkeleton } from '../components/ui/TableSkeleton';
+import { realtimeService } from '../services/realtime.service';
 import {
   AlertTriangle,
+  AlertCircle,
   CheckCircle2,
   XCircle,
   Eye,
   X,
-  Send,
-  User,
-  MapPin,
-  Clock,
+  Phone,
+  Building2,
+  Loader2,
   ArrowRight,
   Search,
 } from 'lucide-react';
-import { formatMahallaName } from '../utils/formatters';
-import { Pagination } from '../components/ui/Pagination';
-import { TableSkeleton } from '../components/ui/TableSkeleton';
-import { realtimeService } from '../services/realtime.service';
+
+const getCategoryLabel = (category?: string) => {
+  switch (category) {
+    case 'OFFICIALLY_EMPLOYED':
+      return '2.1. Rasmiy band';
+    case 'UNOFFICIALLY_EMPLOYED':
+      return '2.2. Norasmiy band';
+    case 'NO_WISH_TO_WORK':
+      return '2.3. Ishlash istagi yoʻq';
+    case 'UNEMPLOYED':
+      return '2.4. Ishsiz yosh';
+    case 'OTHER':
+      return '2.5. Boshqa';
+    default:
+      return category || '—';
+  }
+};
+
+const getNoWishReasonLabel = (reason?: string) => {
+  switch (reason) {
+    case 'HOUSEWIFE':
+      return 'Uy bekasi';
+    case 'CHILD_CARE':
+      return 'Bola parvarishida';
+    case 'STUDENT':
+      return 'Talaba / Oʻquvchi';
+    case 'HEALTH_REASONS':
+      return 'Salomatligi sababli';
+    case 'RETIRED':
+      return 'Pensiyada';
+    case 'WEALTHY':
+      return 'Oʻziga toʻq (ehtiyoji yoʻq)';
+    case 'APPLICANT':
+      return 'Abituriyent / Oʻqishga tayyorlanmoqda';
+    case 'OTHER':
+      return 'Boshqa sabab';
+    default:
+      return reason || '';
+  }
+};
+
+const getDistrictName = (dist: any): string => {
+  if (!dist) return '';
+  if (typeof dist === 'string') return dist;
+  return dist.name || '';
+};
+
+const getMahallaName = (mah: any): string => {
+  if (!mah) return '';
+  if (typeof mah === 'string') return mah;
+  return mah.name || '';
+};
+
+const formatDetailSummary = (survey: Survey) => {
+  if (survey.mainCategory === 'OFFICIALLY_EMPLOYED') {
+    return survey.officialWorkplace ? `Ish joyi: ${survey.officialWorkplace}` : 'Rasmiy ish joyiga ega';
+  }
+  if (survey.mainCategory === 'UNOFFICIALLY_EMPLOYED') {
+    return survey.unofficialActivityType ? `Faoliyat turi: ${survey.unofficialActivityType}` : 'Norasmiy bandlik';
+  }
+  if (survey.mainCategory === 'NO_WISH_TO_WORK') {
+    const reasonText = getNoWishReasonLabel(survey.noWishReason);
+    return reasonText ? `Sababi: ${reasonText}` : 'Ishlash istagi mavjud emas';
+  }
+  if (survey.mainCategory === 'UNEMPLOYED') {
+    const dirs = (survey.unemployedDirections || []).join(', ');
+    return dirs ? `Talab: ${dirs}` : 'Ish qidirmoqda';
+  }
+  if (survey.mainCategory === 'OTHER') {
+    return survey.otherReasonNote || 'Boshqa holat';
+  }
+  return '—';
+};
 
 export const ReviewQueuePage: React.FC = () => {
+  const toast = useToast();
   const [queue, setQueue] = useState<Survey[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
@@ -36,7 +112,6 @@ export const ReviewQueuePage: React.FC = () => {
   const [modalLoading, setModalLoading] = useState<boolean>(false);
   const [reviewerNote, setReviewerNote] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const fetchQueue = async (query?: string, pageNum?: number) => {
     try {
@@ -77,22 +152,20 @@ export const ReviewQueuePage: React.FC = () => {
     setSelectedId(id);
     setItemData(null);
     setReviewerNote('');
-    setActionSuccess(null);
     setModalLoading(true);
     try {
       const data = await monitoringApi.getReviewQueueItem(id);
       setItemData(data);
     } catch {
-      // error
+      toast.error('Soʻrovnoma maʼlumotlarini yuklashda xatolik yuz berdi');
+      setSelectedId(null);
     } finally {
       setModalLoading(false);
     }
   };
 
   const handleResolve = async (action: 'APPROVE_UPDATE' | 'REJECT') => {
-    if (!selectedId) {
-      return;
-    }
+    if (!selectedId) return;
 
     try {
       setSubmitting(true);
@@ -100,18 +173,18 @@ export const ReviewQueuePage: React.FC = () => {
         action,
         reviewerNote: reviewerNote.trim() || undefined,
       });
-      setActionSuccess(
-        action === 'APPROVE_UPDATE'
-          ? 'Anketa tasdiqlandi va fuqaro kartasiga qabul qilindi'
-          : 'Ziddiyatli anketa rad etildi',
-      );
-      setTimeout(() => {
-        setItemData(null);
-        setSelectedId(null);
-        fetchQueue();
-      }, 1500);
+
+      if (action === 'APPROVE_UPDATE') {
+        toast.success('Soʻrovnoma tasdiqlandi va rasmiy roʻyxatga olindi');
+      } else {
+        toast.error('Soʻrovnoma rad etildi');
+      }
+
+      setItemData(null);
+      setSelectedId(null);
+      fetchQueue();
     } catch (err: any) {
-      alert(err.message || 'Xatolik yuz berdi');
+      toast.error(err.message || 'Xatolik yuz berdi');
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +207,7 @@ export const ReviewQueuePage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-800">
-                  Ziddiyatli va Dublikat Anketalar
+                  Ziddiyatli va Onlayn Yuborilgan Anketalar
                 </h3>
                 <p className="text-xs text-slate-400">
                   Tekshiruv va qaror qabul qilishni kutayotgan holatlar: {total} ta
@@ -179,7 +252,7 @@ export const ReviewQueuePage: React.FC = () => {
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <span className="text-sm font-semibold text-slate-800">Barcha holatlar koʻrib chiqilgan</span>
-              <span className="text-xs text-slate-400 mt-1">Hozirda tekshiruv kutayotgan ziddiyatli anketalar mavjud emas.</span>
+              <span className="text-xs text-slate-400 mt-1">Hozirda tekshiruv kutayotgan anketalar mavjud emas.</span>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -191,21 +264,21 @@ export const ReviewQueuePage: React.FC = () => {
                     <th className="py-3.5 px-4">JSHSHIR</th>
                     <th className="py-3.5 px-4">Mahalla</th>
                     <th className="py-3.5 px-4">Kiritilgan sana</th>
-                    <th className="py-3.5 px-4">Ziddiyat sababi</th>
-                    <th className="py-3.5 px-4">Yetakchi</th>
+                    <th className="py-3.5 px-4">Tekshiruv sababi</th>
+                    <th className="py-3.5 px-4">Yuboruvchi</th>
                     <th className="py-3.5 px-5 text-right">Amal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {queue.map((item, idx) => (
-                    <tr key={item.id} className="hover:bg-amber-50/40 transition">
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
                         {(page - 1) * 10 + idx + 1}
                       </td>
                       <td className="py-3.5 px-5 font-bold text-slate-900">
                         {item.citizenFullName}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-medium text-slate-700">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800 tracking-wider">
                         {item.citizenPinfl}
                       </td>
                       <td className="py-3.5 px-4 text-slate-700">
@@ -218,12 +291,15 @@ export const ReviewQueuePage: React.FC = () => {
                         {item.conflictReason}
                       </td>
                       <td className="py-3.5 px-4 text-slate-600">
-                        {item.operator?.fullName || 'Yetakchi'}
+                        {(item as any).dataSource === 'CITIZEN_PUBLIC' || (item.surveyMethod as any) === 'ONLINE'
+                          ? 'Onlayn portal'
+                          : item.operator?.fullName || 'Yetakchi'}
                       </td>
                       <td className="py-3.5 px-5 text-right">
                         <button
+                          type="button"
                           onClick={() => handleOpenReview(item.id)}
-                          className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-xs transition inline-flex items-center gap-1.5 shadow-sm"
+                          className="px-3.5 py-1.5 bg-[#163D5C] hover:bg-[#11314a] text-white rounded-xl font-semibold text-xs transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Koʻrish & Hal qilish</span>
@@ -248,151 +324,221 @@ export const ReviewQueuePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Review & Diff Comparison Modal */}
+      {/* Review & Decision Modal */}
       {selectedId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
-              <div className="flex items-center space-x-2.5">
-                <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-gray-900">
-                    Soʻrovnomani Tekshirish & Rasmiy Roʻyxatga Olish
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Fuqaro yuborgan maʼlumotlar toʻgʻriligini tekshirib, bandlik monitoringi reestriga kiritish
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto relative animate-in zoom-in-95 duration-150">
+            {/* Modal Sarlavhasi (2-rasm uslubida toza) */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 leading-tight">
+                  Soʻrovnomani tekshirish va rasmiy roʻyxatga olish
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Fuqaro yuborgan maʼlumotlarni tekshirib, bandlik monitoringi reestriga tasdiqlash
+                </p>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedId(null)}
-                className="p-2 text-gray-400 hover:text-gray-700 rounded-lg"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {actionSuccess ? (
-              <div className="p-8 text-center bg-emerald-50 rounded-2xl border border-emerald-200">
-                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-2" />
-                <h4 className="text-base font-bold text-emerald-900 mb-1">
-                  Qaror muvaffaqiyatli saqlandi!
-                </h4>
-                <p className="text-xs text-emerald-700">{actionSuccess}</p>
+            {modalLoading || !itemData ? (
+              <div className="p-12 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-[#163D5C]" />
+                <span>Maʼlumotlar yuklanmoqda...</span>
               </div>
-            ) : modalLoading || !itemData ? (
-              <div className="p-12 text-center text-xs text-gray-400">Yuklanmoqda...</div>
-            ) : (
-              <div className="space-y-6">
-                {/* Taqqoslash Jadvali (Side by Side Comparison) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Chap: Bazadagi amaldagi fuqaro */}
-                  <div className="bg-slate-50 p-4 rounded-xl border border-gray-200 text-xs space-y-2.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block pb-1 border-b border-gray-200">
-                      Amaldagi Bazadagi Holat:
-                    </span>
-                    <div>
-                      <span className="text-gray-400 block">F.I.Sh:</span>
-                      <span className="font-bold text-gray-900">{itemData.existingCitizen?.fullName}</span>
+            ) : (() => {
+              const survey = itemData.pendingSurvey;
+              const citizen = itemData.existingCitizen;
+              const hasCategoryDiff =
+                citizen &&
+                citizen.currentCategory &&
+                citizen.currentCategory !== survey.mainCategory;
+
+              return (
+                <div className="space-y-4">
+                  {/* Agar toifada real farq bo'lsa (Oldingi toifa vs Yangi toifa) */}
+                  {hasCategoryDiff && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 text-xs flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-amber-700 block tracking-wider">
+                          Bazadagi oldingi toifa
+                        </span>
+                        <span className="font-semibold text-amber-900">
+                          {getCategoryLabel(citizen.currentCategory)}
+                        </span>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-amber-600 shrink-0 mx-2" />
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase font-bold text-amber-700 block tracking-wider">
+                          Yangi soʻrovnoma toifasi
+                        </span>
+                        <span className="font-bold text-amber-900">
+                          {getCategoryLabel(survey.mainCategory)}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-400 block">JSHSHIR:</span>
-                      <span className="font-mono font-semibold text-gray-800">{itemData.existingCitizen?.pinfl}</span>
+                  )}
+
+                  {/* Tekshiruv / Ziddiyat sababi */}
+                  {survey.conflictReason && (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-slate-800">Tekshiruv sababi: </span>
+                        <span>{survey.conflictReason}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-400 block">Mahalla:</span>
-                      <span className="font-semibold text-gray-800">{formatMahallaName(itemData.existingCitizen?.mahalla?.name)}</span>
+                  )}
+
+                  {/* Fuqaro va So'rovnoma ma'lumotlari (Yagona toza va to'liq karta) */}
+                  <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-5 space-y-4">
+                    {/* 1-qator: F.I.Sh. va JSHSHIR */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3.5 border-b border-slate-200/70">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Fuqaro F.I.Sh.
+                        </span>
+                        <span className="text-base font-bold text-slate-900 block">
+                          {survey.citizenFullName}
+                        </span>
+                        {citizen?.birthDate && (
+                          <span className="text-[11px] text-slate-500 mt-0.5 block">
+                            Tugʻilgan sana: {new Date(citizen.birthDate).toLocaleDateString('uz-UZ')}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          JSHSHIR (14 ta raqam)
+                        </span>
+                        <span className="inline-block px-3.5 py-1.5 bg-white border border-slate-300 rounded-xl font-mono text-sm sm:text-base font-bold text-slate-900 tracking-wider shadow-2xs">
+                          {survey.citizenPinfl}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-400 block">Joriy toifa:</span>
-                      <span className="font-bold text-blue-700">{itemData.existingCitizen?.currentCategory}</span>
+
+                    {/* 2-qator: Telefon raqamlari (Nomerlar) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3.5 border-b border-slate-200/70">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Telefon raqami
+                        </span>
+                        <span className="font-mono text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          {citizen?.phone ? formatUzPhone(citizen.phone) : 'Kiritilmagan'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Qoʻshimcha / Ota-onasi telefoni
+                        </span>
+                        <span className="font-mono text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          {citizen?.parentPhone ? formatUzPhone(citizen.parentPhone) : '—'}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-400 block">Tavsif:</span>
-                      <span className="text-gray-700">{itemData.existingCitizen?.currentStatusDetail || '-'}</span>
+
+                    {/* 3-qator: Hudud va Manzil */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3.5 border-b border-slate-200/70">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Biriktirilgan hudud
+                        </span>
+                        <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{formatMahallaName(getMahallaName(survey.mahalla) || getMahallaName(citizen?.mahalla))}</span>
+                          {(getDistrictName(survey.district) || getDistrictName(citizen?.district)) && (
+                            <span className="text-slate-400 text-[11px]">
+                              ({getDistrictName(survey.district) || getDistrictName(citizen?.district)})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Yashash manzili
+                        </span>
+                        <span className="text-xs font-medium text-slate-700">
+                          {citizen?.address || '—'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 4-qator: Bandlik toifasi va Batafsil maʼlumot */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Bandlik toifasi
+                        </span>
+                        <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold bg-[#163D5C] text-white shadow-2xs">
+                          {getCategoryLabel(survey.mainCategory)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
+                          Batafsil holat / Izoh
+                        </span>
+                        <span className="text-xs font-bold text-slate-800 block">
+                          {formatDetailSummary(survey)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* O'ng: Yangi yuborilgan anketa */}
-                  <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-200 text-xs space-y-2.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 block pb-1 border-b border-amber-200">
-                      Yangi Yuborilgan So'rovnoma:
-                    </span>
-                    <div>
-                      <span className="text-gray-400 block">F.I.Sh:</span>
-                      <span className="font-bold text-gray-900">{itemData.pendingSurvey.citizenFullName}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400 block">JSHSHIR:</span>
-                      <span className="font-mono font-semibold text-gray-800">{itemData.pendingSurvey.citizenPinfl}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400 block">Mahalla:</span>
-                      <span className="font-semibold text-gray-800">{formatMahallaName(itemData.pendingSurvey.mahalla?.name)}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400 block">Yangi toifa:</span>
-                      <span className="font-bold text-amber-800">{itemData.pendingSurvey.mainCategory}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400 block">Yangi ma'lumotlar:</span>
-                      <span className="text-gray-700">
-                        {itemData.pendingSurvey.officialWorkplace ||
-                          itemData.pendingSurvey.unofficialActivityType ||
-                          itemData.pendingSurvey.noWishReason ||
-                          (itemData.pendingSurvey.unemployedDirections || []).join(', ') ||
-                          itemData.pendingSurvey.otherReasonNote}
-                      </span>
-                    </div>
+                  {/* Reviewer Izohi (Ixtiyoriy) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Tekshiruv xulosasi yoki izoh (ixtiyoriy)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Qoʻshimcha izoh yoki xulosa yozishingiz mumkin..."
+                      value={reviewerNote}
+                      onChange={(e) => setReviewerNote(e.target.value)}
+                      className="w-full p-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#163D5C] focus:ring-1 focus:ring-[#163D5C]/20 bg-white"
+                    />
+                  </div>
+
+                  {/* Qaror tugmalari */}
+                  <div className="flex items-center justify-end space-x-2.5 pt-4 border-t border-slate-100">
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => handleResolve('REJECT')}
+                      className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border border-rose-200 text-rose-600 hover:bg-rose-50 transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {submitting ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <XCircle className="w-3.5 h-3.5" />
+                      )}
+                      <span>Rad etish</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => handleResolve('APPROVE_UPDATE')}
+                      className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {submitting ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      )}
+                      <span>Tasdiqlash & Roʻyxatga olish</span>
+                    </button>
                   </div>
                 </div>
-
-                {/* Ziddiyat sababi */}
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800">
-                  <span className="font-bold">Ziddiyat sababi: </span>
-                  {itemData.pendingSurvey.conflictReason}
-                </div>
-
-                {/* Reviewer Izohi (Ixtiyoriy) */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Tekshiruv xulosasi yoki izoh (ixtiyoriy)
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Qoʻshimcha izoh yoki xulosa yozishingiz mumkin (ixtiyoriy)..."
-                    value={reviewerNote}
-                    onChange={(e) => setReviewerNote(e.target.value)}
-                    className="w-full p-3 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white"
-                  />
-                </div>
-
-                {/* Qaror tugmalari */}
-                <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100">
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => handleResolve('REJECT')}
-                    className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl text-xs font-semibold border border-red-300 text-red-700 hover:bg-red-50 transition disabled:opacity-50"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Rad etish (Amaldagini saqlash)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => handleResolve('APPROVE_UPDATE')}
-                    className="flex items-center space-x-1.5 px-6 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition disabled:opacity-50 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Tasdiqlash & Roʻyxatga olish</span>
-                  </button>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

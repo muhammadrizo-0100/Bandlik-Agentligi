@@ -128,13 +128,19 @@ export class ReviewQueueService {
       where: { id },
       relations: {
         citizen: {
-          mahalla: true,
+          mahalla: {
+            district: true,
+          },
+          district: true,
           employmentHistory: {
             changedBy: true,
           },
         },
         operator: true,
-        mahalla: true,
+        mahalla: {
+          district: true,
+        },
+        district: true,
       },
     });
 
