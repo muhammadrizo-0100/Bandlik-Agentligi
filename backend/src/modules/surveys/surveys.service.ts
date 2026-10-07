@@ -568,7 +568,7 @@ export class SurveysService {
       case EmploymentCategory.OFFICIALLY_EMPLOYED:
         return dto.officialWorkplace || 'Rasmiy band';
       case EmploymentCategory.SELF_EMPLOYED:
-        return dto.selfEmployedActivity ? `Oʻzini oʻzi band: ${dto.selfEmployedActivity}` : 'Oʻzini oʻzi band';
+        return dto.selfEmployedActivity ? `Oʻzini band qilgan: ${dto.selfEmployedActivity}` : 'Oʻzini band qilgan';
       case EmploymentCategory.UNOFFICIALLY_EMPLOYED:
         return dto.unofficialActivityType || 'Norasmiy band';
       case EmploymentCategory.MIGRANT:

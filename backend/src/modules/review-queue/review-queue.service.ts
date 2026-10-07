@@ -304,7 +304,7 @@ export class ReviewQueueService {
       case EmploymentCategory.OFFICIALLY_EMPLOYED:
         return `Rasmiy band: ${survey.officialWorkplace || ''}`;
       case EmploymentCategory.SELF_EMPLOYED:
-        return `Oʻzini oʻzi band: ${survey.selfEmployedActivity || ''}`;
+        return `Oʻzini band qilgan: ${survey.selfEmployedActivity || ''}`;
       case EmploymentCategory.UNOFFICIALLY_EMPLOYED:
         return `Norasmiy band: ${survey.unofficialActivityType || ''}`;
       case EmploymentCategory.MIGRANT:

@@ -421,7 +421,16 @@ export const DashboardPage: React.FC = () => {
   // Bar chart uchun mahallalar ma'lumotlari (pastida rasmiy xatlov kuni bilan)
   const barChartData = useMemo(() => {
     if (!summary?.mahallaBreakdown || summary.mahallaBreakdown.length === 0) return [];
-    return summary.mahallaBreakdown.slice(0, 8).map((m: any) => {
+
+    // Faoliyatiga ko'ra saralash (eng ko'p xatlov o'tkazilgan faol mahallalar oldinda)
+    const sorted = [...summary.mahallaBreakdown].sort(
+      (a: any, b: any) => (Number(b.total) || 0) - (Number(a.total) || 0)
+    );
+
+    // Agar yuqoridan aniq mahalla tanlangan bo'lsa faqat o'shani, aks holda eng faol 5 ta mahallani ko'rsatish
+    const displayList = selectedMahallaId ? sorted : sorted.slice(0, 5);
+
+    return displayList.map((m: any) => {
       const rawName = m.mahallaName || m.name || '';
       const cleanName = rawName.replace(/\s*MFY\s*/gi, '').trim() || rawName;
 
@@ -450,7 +459,7 @@ export const DashboardPage: React.FC = () => {
         eventDateFull: parsedDate?.fullLabel || '',
       };
     });
-  }, [summary?.mahallaBreakdown, summary?.recentSurveys]);
+  }, [summary?.mahallaBreakdown, summary?.recentSurveys, selectedMahallaId]);
 
   // Haftalik mini trend ma'lumotlari: Du, Se, Cho, Pa, Ju, Sha, Ya
   const weeklyTrendData = useMemo(() => {
@@ -573,7 +582,7 @@ export const DashboardPage: React.FC = () => {
         return (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
             <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5"></span>
-            Oʻzini oʻzi band
+            Oʻzini band qilgan
           </span>
         );
       case 'UNOFFICIALLY_EMPLOYED':
@@ -631,7 +640,7 @@ export const DashboardPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
           <span className="text-emerald-400 font-semibold" title="Rasmiy band">● {data.official || 0}</span>
-          <span className="text-sky-400 font-semibold" title="Oʻzini oʻzi band">● {data.selfEmployed || 0}</span>
+          <span className="text-sky-400 font-semibold" title="Oʻzini band qilgan">● {data.selfEmployed || 0}</span>
           <span className="text-amber-400 font-semibold" title="Norasmiy band">● {data.unofficial || 0}</span>
           <span className="text-violet-400 font-semibold" title="Migrant">● {data.migrant || 0}</span>
           <span className="text-rose-400 font-semibold" title="Ishsiz">● {data.unemployed || 0}</span>
@@ -650,20 +659,20 @@ export const DashboardPage: React.FC = () => {
     const item = barChartData[payload.index];
     if (!item) return null;
 
-    // Uzun mahalla nomlarini qisqartirish (masalan: "Uchqo'rg'on" -> "Uchqo'rg'...")
+    // Faol 4-5 ta mahallada nomlar qisqarmasdan, aniq va chiroyli chiqadi
     const rawName = item.name || '';
-    const displayName = rawName.length > 9 ? `${rawName.slice(0, 8)}…` : rawName;
+    const displayName = rawName.length > 13 ? `${rawName.slice(0, 12)}…` : rawName;
 
     return (
       <g transform={`translate(${x},${y})`}>
         <text
           x={0}
           y={0}
-          dy={10}
+          dy={12}
           textAnchor="middle"
           fill="#1E293B"
-          fontSize={10.5}
-          fontWeight={700}
+          fontSize={11.5}
+          fontWeight={800}
         >
           {displayName}
         </text>
@@ -671,11 +680,11 @@ export const DashboardPage: React.FC = () => {
           <text
             x={0}
             y={0}
-            dy={23}
+            dy={26}
             textAnchor="middle"
             fill="#64748B"
-            fontSize={9.5}
-            fontWeight={500}
+            fontSize={10}
+            fontWeight={600}
           >
             {item.eventDateLabel}
           </text>
@@ -701,7 +710,7 @@ export const DashboardPage: React.FC = () => {
         {item.count > 0 && (
           <div className="grid grid-cols-2 gap-1 text-[10px] pt-1 border-t border-slate-100">
             <span className="text-emerald-700">Rasmiy: <b>{item.official}</b></span>
-            <span className="text-sky-700">Oʻzini oʻzi: <b>{item.selfEmployed}</b></span>
+            <span className="text-sky-700">Oʻzini band: <b>{item.selfEmployed}</b></span>
             <span className="text-amber-700">Norasmiy: <b>{item.unofficial}</b></span>
             <span className="text-violet-700">Migrant: <b>{item.migrant}</b></span>
             <span className="text-rose-700">Ishsiz: <b>{item.unemployed}</b></span>
@@ -1048,7 +1057,7 @@ export const DashboardPage: React.FC = () => {
                   activeTab === 'OFFICIALLY_EMPLOYED'
                     ? 'Rasmiy band yoshlar'
                     : activeTab === 'SELF_EMPLOYED'
-                    ? 'Oʻzini oʻzi band qilganlar'
+                    ? 'Oʻzini band qilganlar'
                     : activeTab === 'UNOFFICIALLY_EMPLOYED'
                     ? 'Norasmiy band yoshlar'
                     : activeTab === 'MIGRANT'
@@ -1148,7 +1157,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Karta 3: Oʻzini oʻzi band */}
+        {/* Karta 3: Oʻzini band qilgan */}
         <div
           onClick={() => setActiveTab('SELF_EMPLOYED')}
           className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
@@ -1159,7 +1168,7 @@ export const DashboardPage: React.FC = () => {
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Oʻzini oʻzi band
+              Oʻzini band qilgan
             </span>
             <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
@@ -1459,7 +1468,7 @@ export const DashboardPage: React.FC = () => {
               </span>
               <span className="flex items-center space-x-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-                <span className="text-slate-700 font-semibold">Oʻzini oʻzi</span>
+                <span className="text-slate-700 font-semibold">Oʻzini band</span>
               </span>
               <span className="flex items-center space-x-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -1487,20 +1496,16 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full overflow-x-auto pb-2 -mx-1 px-1">
-            <div
-              className="h-64"
-              style={{
-                minWidth: `${Math.max(barChartData.length * 100, 520)}px`,
-                width: '100%',
-              }}
-            >
+          <div className="w-full pb-1">
+            <div className="h-72 w-full">
               {barChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={barChartData}
                     onClick={handleChartClick}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 28 }}
+                    margin={{ top: 12, right: 12, left: -20, bottom: 25 }}
+                    barGap={3}
+                    barCategoryGap={barChartData.length <= 2 ? "35%" : "18%"}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                     <XAxis
@@ -1509,7 +1514,7 @@ export const DashboardPage: React.FC = () => {
                       tickLine={false}
                       tick={<CustomXAxisTick />}
                       interval={0}
-                      height={40}
+                      height={42}
                     />
                     <YAxis
                       axisLine={false}
@@ -1526,18 +1531,18 @@ export const DashboardPage: React.FC = () => {
                       name="Rasmiy band"
                       fill="#10B981"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 20 : 10}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
                     />
-                    {/* Moviy: Oʻzini oʻzi band */}
+                    {/* Moviy: Oʻzini band qilgan */}
                     <Bar
                       dataKey="selfEmployed"
-                      name="Oʻzini oʻzi band"
+                      name="Oʻzini band qilgan"
                       fill="#0284C7"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 20 : 10}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1548,7 +1553,7 @@ export const DashboardPage: React.FC = () => {
                       name="Norasmiy band"
                       fill="#F59E0B"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 20 : 10}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1559,7 +1564,7 @@ export const DashboardPage: React.FC = () => {
                       name="Migrant"
                       fill="#8B5CF6"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 20 : 10}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1570,7 +1575,7 @@ export const DashboardPage: React.FC = () => {
                       name="Ishsiz yoshlar"
                       fill="#EF4444"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 20 : 10}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1581,7 +1586,7 @@ export const DashboardPage: React.FC = () => {
                       name="Ishlash istagi yoʻq"
                       fill="#94A3B8"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 20 : 10}
+                      barSize={isMahallaOperator ? 28 : barChartData.length <= 2 ? 28 : 18}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1635,12 +1640,12 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 2. Moviy: Oʻzini oʻzi band */}
+              {/* 2. Moviy: Oʻzini band qilgan */}
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center space-x-2 font-semibold text-slate-700">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-                    <span>Oʻzini oʻzi band</span>
+                    <span>Oʻzini band qilgan</span>
                   </div>
                   <span className="font-bold text-sky-600">
                     {kpi?.selfEmployed?.percentage || 0}% ({kpi?.selfEmployed?.count || 0})
@@ -2004,7 +2009,7 @@ export const DashboardPage: React.FC = () => {
                   <span className="text-base font-black text-emerald-700">{selectedEventData.official}</span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-center">
-                  <span className="text-[10px] font-bold text-sky-700 uppercase block">Oʻzini oʻzi</span>
+                  <span className="text-[10px] font-bold text-sky-700 uppercase block">Oʻzini band</span>
                   <span className="text-base font-black text-sky-700">{selectedEventData.selfEmployed || 0}</span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-center">

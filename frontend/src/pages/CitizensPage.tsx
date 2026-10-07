@@ -279,7 +279,7 @@ export const CitizensPage: React.FC = () => {
       case 'OFFICIALLY_EMPLOYED':
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700">Rasmiy band</span>;
       case 'SELF_EMPLOYED':
-        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-700">Oʻzini oʻzi band</span>;
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-700">Oʻzini band qilgan</span>;
       case 'UNOFFICIALLY_EMPLOYED':
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700">Norasmiy band</span>;
       case 'MIGRANT':
@@ -381,7 +381,7 @@ export const CitizensPage: React.FC = () => {
               options={[
                 { value: '', label: 'Barcha toifalar' },
                 { value: 'OFFICIALLY_EMPLOYED', label: '2.1. Rasmiy band' },
-                { value: 'SELF_EMPLOYED', label: '2.2. Oʻzini oʻzi band qilgan' },
+                { value: 'SELF_EMPLOYED', label: '2.2. Oʻzini band qilgan' },
                 { value: 'UNOFFICIALLY_EMPLOYED', label: '2.3. Norasmiy band' },
                 { value: 'UNEMPLOYED', label: '2.4. Ishsiz yoshlar' },
                 { value: 'MIGRANT', label: '2.5. Migrant' },
@@ -847,7 +847,7 @@ export const CitizensPage: React.FC = () => {
                   onChange={(val) => setEditForm({ ...editForm, currentCategory: val as EmploymentCategory })}
                   options={[
                     { value: 'OFFICIALLY_EMPLOYED', label: '2.1. Rasmiy band' },
-                    { value: 'SELF_EMPLOYED', label: '2.2. Oʻzini oʻzi band qilgan' },
+                    { value: 'SELF_EMPLOYED', label: '2.2. Oʻzini band qilgan' },
                     { value: 'UNOFFICIALLY_EMPLOYED', label: '2.3. Norasmiy band' },
                     { value: 'UNEMPLOYED', label: '2.4. Ishsiz yoshlar' },
                     { value: 'MIGRANT', label: '2.5. Migrant' },

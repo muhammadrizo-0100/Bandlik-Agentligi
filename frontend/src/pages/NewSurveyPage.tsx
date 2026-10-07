@@ -410,7 +410,7 @@ export const NewSurveyPage: React.FC = () => {
     }
     if (mainCategory === 'SELF_EMPLOYED') {
       if (!selfEmployedActivity.trim() || !hasLetters(selfEmployedActivity)) {
-        setError('2.2. Oʻzini oʻzi band qilgan toifasida faoliyat turi to\'liq kiritilishi shart');
+        setError('2.2. Oʻzini band qilgan toifasida faoliyat turi to\'liq kiritilishi shart');
         return;
       }
     }
@@ -1132,7 +1132,7 @@ export const NewSurveyPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs font-bold text-slate-900">
-                            2.2. Oʻzini oʻzi band qilgan
+                            2.2. Oʻzini band qilgan
                           </span>
                           <span className="text-[11px] text-slate-500 block">
                             Yakka tartibdagi mustaqil faoliyat (hunarmand, taksi, repetitor, usta, frilanser va h.k.)
@@ -1165,7 +1165,7 @@ export const NewSurveyPage: React.FC = () => {
                               className="w-4 h-4 rounded border-slate-300 text-[#0284C7] focus:ring-[#0284C7]"
                             />
                             <span className="text-xs text-slate-700 font-medium">
-                              Soliq organlarida (soliq.uz / my.soliq) oʻzini oʻzi band qilgan sifatida roʻyxatdan oʻtgan
+                              Soliq organlarida (soliq.uz / my.soliq) oʻzini band qilgan sifatida roʻyxatdan oʻtgan
                             </span>
                           </div>
                         </div>

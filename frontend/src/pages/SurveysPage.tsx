@@ -109,7 +109,7 @@ export const SurveysPage: React.FC = () => {
       case 'OFFICIALLY_EMPLOYED':
         return '2.1. Rasmiy band';
       case 'SELF_EMPLOYED':
-        return '2.2. Oʻzini oʻzi band qilgan';
+        return '2.2. Oʻzini band qilgan';
       case 'UNOFFICIALLY_EMPLOYED':
         return '2.3. Norasmiy band';
       case 'UNEMPLOYED':

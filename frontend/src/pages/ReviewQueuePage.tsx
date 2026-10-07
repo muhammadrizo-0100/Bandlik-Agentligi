@@ -28,7 +28,7 @@ const getCategoryLabel = (category?: string) => {
     case 'OFFICIALLY_EMPLOYED':
       return '2.1. Rasmiy band';
     case 'SELF_EMPLOYED':
-      return '2.2. Oʻzini oʻzi band qilgan';
+      return '2.2. Oʻzini band qilgan';
     case 'UNOFFICIALLY_EMPLOYED':
       return '2.3. Norasmiy band';
     case 'UNEMPLOYED':
@@ -85,7 +85,7 @@ const formatDetailSummary = (survey: Survey) => {
   }
   if (survey.mainCategory === 'SELF_EMPLOYED') {
     const reg = survey.selfEmployedRegistered ? ' (Roʻyxatdan oʻtgan)' : '';
-    return survey.selfEmployedActivity ? `Faoliyat: ${survey.selfEmployedActivity}${reg}` : 'Oʻzini oʻzi band qilgan';
+    return survey.selfEmployedActivity ? `Faoliyat: ${survey.selfEmployedActivity}${reg}` : 'Oʻzini band qilgan';
   }
   if (survey.mainCategory === 'UNOFFICIALLY_EMPLOYED') {
     return survey.unofficialActivityType ? `Faoliyat turi: ${survey.unofficialActivityType}` : 'Norasmiy bandlik';

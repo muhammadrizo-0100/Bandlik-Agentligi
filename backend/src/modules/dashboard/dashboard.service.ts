@@ -189,7 +189,7 @@ export class DashboardService {
 
     const labelMap: Record<string, string> = {
       [EmploymentCategory.OFFICIALLY_EMPLOYED]: 'Rasmiy band',
-      [EmploymentCategory.SELF_EMPLOYED]: 'Oʻzini oʻzi band qilgan',
+      [EmploymentCategory.SELF_EMPLOYED]: 'Oʻzini band qilgan',
       [EmploymentCategory.UNOFFICIALLY_EMPLOYED]: 'Norasmiy band',
       [EmploymentCategory.MIGRANT]: 'Migrant',
       [EmploymentCategory.UNEMPLOYED]: 'Ishsiz yosh',

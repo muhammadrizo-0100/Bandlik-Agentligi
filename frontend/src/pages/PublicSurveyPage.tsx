@@ -409,7 +409,7 @@ export const PublicSurveyPage: React.FC = () => {
       return;
     }
     if (mainCategory === 'SELF_EMPLOYED' && (!selfEmployedActivity.trim() || !hasLetters(selfEmployedActivity))) {
-      setError('Oʻzini oʻzi band qilgan faoliyat yoʻnalishingizni kiriting');
+      setError('Oʻzini band qilgan faoliyat yoʻnalishingizni kiriting');
       return;
     }
     if (mainCategory === 'UNOFFICIALLY_EMPLOYED' && (!unofficialActivityType.trim() || !hasLetters(unofficialActivityType))) {
@@ -1027,7 +1027,7 @@ export const PublicSurveyPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-black text-sky-700 uppercase tracking-wider">
-                          2.2. Oʻzini oʻzi band qilganman
+                          2.2. Oʻzini band qilganman
                         </span>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'SELF_EMPLOYED' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}`}>
                           {mainCategory === 'SELF_EMPLOYED' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -1199,7 +1199,7 @@ export const PublicSurveyPage: React.FC = () => {
                           className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                         <span className="text-xs text-slate-700 font-medium">
-                          Soliq organlarida (soliq.uz / my.soliq) oʻzini oʻzi band qilgan sifatida roʻyxatdan oʻtganman
+                          Soliq organlarida (soliq.uz / my.soliq) oʻzini band qilgan sifatida roʻyxatdan oʻtganman
                         </span>
                       </div>
                     </div>
