@@ -36,7 +36,14 @@ yarn-error.log*
 *.sln
 *.sw?
 
-# Docker
+# Docker & DB Backups
 postgres_data/
 *.tsbuildinfo
 pgadmin_data/
+*.sql
+bandlik_baza_backup.sql
+*.dump
+backup/
+backups/
+backend/scripts/
+

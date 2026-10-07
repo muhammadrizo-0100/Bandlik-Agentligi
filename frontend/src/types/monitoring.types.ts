@@ -4,7 +4,9 @@ export type SurveyMethod = 'HOME_VISIT' | 'PHONE' | 'IN_PERSON';
 
 export type EmploymentCategory =
   | 'OFFICIALLY_EMPLOYED'
+  | 'SELF_EMPLOYED'
   | 'UNOFFICIALLY_EMPLOYED'
+  | 'MIGRANT'
   | 'NO_WISH_TO_WORK'
   | 'UNEMPLOYED'
   | 'OTHER';
@@ -83,7 +85,11 @@ export interface Survey {
   surveyMethod: SurveyMethod;
   mainCategory: EmploymentCategory;
   officialWorkplace?: string;
+  selfEmployedActivity?: string;
+  selfEmployedRegistered?: boolean;
   unofficialActivityType?: string;
+  migrantCountry?: string;
+  migrantDuration?: string;
   noWishReason?: NoWishReason;
   unemployedDirections?: UnemployedDirection[];
   unemployedAdditionalNote?: string;
@@ -130,7 +136,11 @@ export interface CreateSurveyInput {
   specialty?: string;
   mainCategory: EmploymentCategory;
   officialWorkplace?: string;
+  selfEmployedActivity?: string;
+  selfEmployedRegistered?: boolean;
   unofficialActivityType?: string;
+  migrantCountry?: string;
+  migrantDuration?: string;
   noWishReason?: NoWishReason;
   unemployedDirections?: UnemployedDirection[];
   unemployedAdditionalNote?: string;
@@ -147,7 +157,9 @@ export interface KpiCardStat {
 export interface KpiData {
   totalCitizens: number;
   officiallyEmployed: KpiCardStat;
-  unofficialEmployed: KpiCardStat;
+  selfEmployed?: KpiCardStat;
+  unofficiallyEmployed: KpiCardStat;
+  migrant?: KpiCardStat;
   unemployed: KpiCardStat;
   noWishToWork: KpiCardStat;
   other: KpiCardStat;
@@ -166,12 +178,17 @@ export interface MahallaStatItem {
   name: string;
   district: string;
   total: number;
-  officiallyEmployed: number;
-  unofficiallyEmployed: number;
+  official?: number;
+  officiallyEmployed?: number;
+  selfEmployed?: number;
+  unofficial?: number;
+  unofficiallyEmployed?: number;
+  migrant?: number;
   unemployed: number;
-  noWishToWork: number;
+  noWish?: number;
+  noWishToWork?: number;
   other: number;
-  employmentRate: number;
+  employmentRate?: number;
 }
 
 export interface DirectionStatItem {
@@ -192,7 +209,9 @@ export interface DashboardSummary {
   kpi: {
     totalCitizens: number;
     officiallyEmployed: KpiCardStat;
+    selfEmployed?: KpiCardStat;
     unofficiallyEmployed: KpiCardStat;
+    migrant?: KpiCardStat;
     unemployed: KpiCardStat;
     noWishToWork: KpiCardStat;
     other: KpiCardStat;

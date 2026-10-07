@@ -19,14 +19,16 @@ export enum SurveyMethod {
 }
 
 /**
- * Bandlik holatining 5 ta asosiy kategoriyasi (2.1 - 2.5)
+ * Bandlik holatining asosiy kategoriyalari
  */
 export enum EmploymentCategory {
   OFFICIALLY_EMPLOYED = 'OFFICIALLY_EMPLOYED',     // 2.1. Rasmiy band
-  UNOFFICIALLY_EMPLOYED = 'UNOFFICIALLY_EMPLOYED', // 2.2. Norasmiy band
-  NO_WISH_TO_WORK = 'NO_WISH_TO_WORK',             // 2.3. Ishlash istagi yo'q
-  UNEMPLOYED = 'UNEMPLOYED',                       // 2.4. Ishsiz yosh
-  OTHER = 'OTHER',                                 // 2.5. Boshqa
+  SELF_EMPLOYED = 'SELF_EMPLOYED',                 // 2.2. O'zini o'zi band qilgan
+  UNOFFICIALLY_EMPLOYED = 'UNOFFICIALLY_EMPLOYED', // 2.3. Norasmiy band
+  MIGRANT = 'MIGRANT',                             // 2.4. Migrant
+  UNEMPLOYED = 'UNEMPLOYED',                       // 2.5. Ishsiz yosh
+  NO_WISH_TO_WORK = 'NO_WISH_TO_WORK',             // 2.6. Ishlash istagi yo'q
+  OTHER = 'OTHER',                                 // 2.7. Boshqa
 }
 
 /**

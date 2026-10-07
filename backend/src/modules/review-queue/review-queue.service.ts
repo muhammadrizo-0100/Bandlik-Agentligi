@@ -216,7 +216,11 @@ export class ReviewQueueService {
         const newDetails = {
           category: survey.mainCategory,
           officialWorkplace: survey.officialWorkplace,
+          selfEmployedActivity: survey.selfEmployedActivity,
+          selfEmployedRegistered: survey.selfEmployedRegistered,
           unofficialActivityType: survey.unofficialActivityType,
+          migrantCountry: survey.migrantCountry,
+          migrantDuration: survey.migrantDuration,
           noWishReason: survey.noWishReason,
           unemployedDirections: survey.unemployedDirections,
           unemployedAdditionalNote: survey.unemployedAdditionalNote,
@@ -299,8 +303,12 @@ export class ReviewQueueService {
     switch (survey.mainCategory) {
       case EmploymentCategory.OFFICIALLY_EMPLOYED:
         return `Rasmiy band: ${survey.officialWorkplace || ''}`;
+      case EmploymentCategory.SELF_EMPLOYED:
+        return `Oʻzini oʻzi band: ${survey.selfEmployedActivity || ''}`;
       case EmploymentCategory.UNOFFICIALLY_EMPLOYED:
         return `Norasmiy band: ${survey.unofficialActivityType || ''}`;
+      case EmploymentCategory.MIGRANT:
+        return `Migrant: ${survey.migrantCountry || ''}`;
       case EmploymentCategory.NO_WISH_TO_WORK:
         return `Ishlash istagi yo'q: ${survey.noWishReason || ''}`;
       case EmploymentCategory.UNEMPLOYED:

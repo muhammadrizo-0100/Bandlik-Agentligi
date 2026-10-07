@@ -192,7 +192,11 @@ export class SurveysService {
           : 'Fuqaro tomonidan onlayn portal orqali mustaqil to\'ldirildi. Mas\'ul xodim tekshiruvi talab etiladi.',
         mainCategory: dto.mainCategory,
         officialWorkplace: dto.officialWorkplace,
+        selfEmployedActivity: dto.selfEmployedActivity,
+        selfEmployedRegistered: dto.selfEmployedRegistered,
         unofficialActivityType: dto.unofficialActivityType,
+        migrantCountry: dto.migrantCountry,
+        migrantDuration: dto.migrantDuration,
         noWishReason: dto.noWishReason,
         unemployedDirections: dto.unemployedDirections,
         unemployedAdditionalNote: dto.unemployedAdditionalNote,
@@ -361,7 +365,11 @@ export class SurveysService {
         surveyMethod: dto.surveyMethod,
         mainCategory: dto.mainCategory,
         officialWorkplace: dto.officialWorkplace,
+        selfEmployedActivity: dto.selfEmployedActivity,
+        selfEmployedRegistered: dto.selfEmployedRegistered,
         unofficialActivityType: dto.unofficialActivityType,
+        migrantCountry: dto.migrantCountry,
+        migrantDuration: dto.migrantDuration,
         noWishReason: dto.noWishReason,
         unemployedDirections: dto.unemployedDirections,
         unemployedAdditionalNote: dto.unemployedAdditionalNote,
@@ -559,8 +567,12 @@ export class SurveysService {
     switch (dto.mainCategory) {
       case EmploymentCategory.OFFICIALLY_EMPLOYED:
         return dto.officialWorkplace || 'Rasmiy band';
+      case EmploymentCategory.SELF_EMPLOYED:
+        return dto.selfEmployedActivity ? `Oʻzini oʻzi band: ${dto.selfEmployedActivity}` : 'Oʻzini oʻzi band';
       case EmploymentCategory.UNOFFICIALLY_EMPLOYED:
         return dto.unofficialActivityType || 'Norasmiy band';
+      case EmploymentCategory.MIGRANT:
+        return dto.migrantCountry ? `Migrant: ${dto.migrantCountry}` : 'Migrant';
       case EmploymentCategory.NO_WISH_TO_WORK:
         return `Istagi yo'q: ${this.translateNoWish(dto.noWishReason)}`;
       case EmploymentCategory.UNEMPLOYED:

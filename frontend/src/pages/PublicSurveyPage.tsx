@@ -87,7 +87,11 @@ export const PublicSurveyPage: React.FC = () => {
   // 3-bosqich: Bandlik holati
   const [mainCategory, setMainCategory] = useState<EmploymentCategory>(initialDraft?.mainCategory || 'UNEMPLOYED');
   const [officialWorkplace, setOfficialWorkplace] = useState<string>(initialDraft?.officialWorkplace || '');
+  const [selfEmployedActivity, setSelfEmployedActivity] = useState<string>(initialDraft?.selfEmployedActivity || '');
+  const [selfEmployedRegistered, setSelfEmployedRegistered] = useState<boolean>(initialDraft?.selfEmployedRegistered || false);
   const [unofficialActivityType, setUnofficialActivityType] = useState<string>(initialDraft?.unofficialActivityType || '');
+  const [migrantCountry, setMigrantCountry] = useState<string>(initialDraft?.migrantCountry || '');
+  const [migrantDuration, setMigrantDuration] = useState<string>(initialDraft?.migrantDuration || '');
   const [noWishReason, setNoWishReason] = useState<NoWishReason>(initialDraft?.noWishReason || 'CHILD_CARE');
   const [unemployedDirections, setUnemployedDirections] = useState<UnemployedDirection[]>(
     initialDraft?.unemployedDirections || ['PERMANENT_JOB'],
@@ -115,7 +119,11 @@ export const PublicSurveyPage: React.FC = () => {
     setSpecialty('');
     setMainCategory('UNEMPLOYED');
     setOfficialWorkplace('');
+    setSelfEmployedActivity('');
+    setSelfEmployedRegistered(false);
     setUnofficialActivityType('');
+    setMigrantCountry('');
+    setMigrantDuration('');
     setNoWishReason('CHILD_CARE');
     setUnemployedDirections(['PERMANENT_JOB']);
     setUnemployedAdditionalNote('');
@@ -154,7 +162,11 @@ export const PublicSurveyPage: React.FC = () => {
         specialty,
         mainCategory,
         officialWorkplace,
+        selfEmployedActivity,
+        selfEmployedRegistered,
         unofficialActivityType,
+        migrantCountry,
+        migrantDuration,
         noWishReason,
         unemployedDirections,
         unemployedAdditionalNote,
@@ -181,7 +193,11 @@ export const PublicSurveyPage: React.FC = () => {
     specialty,
     mainCategory,
     officialWorkplace,
+    selfEmployedActivity,
+    selfEmployedRegistered,
     unofficialActivityType,
+    migrantCountry,
+    migrantDuration,
     noWishReason,
     unemployedDirections,
     unemployedAdditionalNote,
@@ -392,8 +408,16 @@ export const PublicSurveyPage: React.FC = () => {
       setError('Rasmiy ish joyingiz va tashkilot nomini kiriting');
       return;
     }
+    if (mainCategory === 'SELF_EMPLOYED' && (!selfEmployedActivity.trim() || !hasLetters(selfEmployedActivity))) {
+      setError('Oʻzini oʻzi band qilgan faoliyat yoʻnalishingizni kiriting');
+      return;
+    }
     if (mainCategory === 'UNOFFICIALLY_EMPLOYED' && (!unofficialActivityType.trim() || !hasLetters(unofficialActivityType))) {
       setError('Norasmiy faoliyat yoki kasbingiz turini kiriting');
+      return;
+    }
+    if (mainCategory === 'MIGRANT' && (!migrantCountry.trim() || !hasLetters(migrantCountry))) {
+      setError('Qaysi xorijiy davlatda ekanligingizni tanlang yoki yozing');
       return;
     }
     if (mainCategory === 'UNEMPLOYED' && unemployedDirections.length === 0) {
@@ -421,7 +445,11 @@ export const PublicSurveyPage: React.FC = () => {
         specialty: specialty.trim() || undefined,
         mainCategory,
         officialWorkplace: mainCategory === 'OFFICIALLY_EMPLOYED' ? officialWorkplace.trim() : undefined,
+        selfEmployedActivity: mainCategory === 'SELF_EMPLOYED' ? selfEmployedActivity.trim() : undefined,
+        selfEmployedRegistered: mainCategory === 'SELF_EMPLOYED' ? selfEmployedRegistered : undefined,
         unofficialActivityType: mainCategory === 'UNOFFICIALLY_EMPLOYED' ? unofficialActivityType.trim() : undefined,
+        migrantCountry: mainCategory === 'MIGRANT' ? migrantCountry.trim() : undefined,
+        migrantDuration: mainCategory === 'MIGRANT' ? (migrantDuration.trim() || undefined) : undefined,
         noWishReason: mainCategory === 'NO_WISH_TO_WORK' ? noWishReason : undefined,
         unemployedDirections: mainCategory === 'UNEMPLOYED' ? unemployedDirections : undefined,
         unemployedAdditionalNote: mainCategory === 'UNEMPLOYED' ? unemployedAdditionalNote.trim() : undefined,
@@ -942,9 +970,9 @@ export const PublicSurveyPage: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* 5 ta Katta toifa kartochkalari */}
+                  {/* 6 ta Katta toifa kartochkalari */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* 2.4. Ishsiz (Tavsiya etilgan eng ko'p murojaat) */}
+                    {/* 2.5. Ishsiz (Tavsiya etilgan eng ko'p murojaat) */}
                     <div
                       onClick={() => setMainCategory('UNEMPLOYED')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
@@ -955,7 +983,7 @@ export const PublicSurveyPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-black text-rose-700 uppercase tracking-wider">
-                          2.4. Ishsizman (Yordam kerak)
+                          2.5. Ishsizman (Yordam kerak)
                         </span>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'UNEMPLOYED' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'}`}>
                           {mainCategory === 'UNEMPLOYED' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -988,7 +1016,29 @@ export const PublicSurveyPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* 2.2. Norasmiy band */}
+                    {/* 2.2. Oʻzini oʻzi band qilgan */}
+                    <div
+                      onClick={() => setMainCategory('SELF_EMPLOYED')}
+                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                        mainCategory === 'SELF_EMPLOYED'
+                          ? 'border-sky-500 bg-sky-50/30 ring-2 ring-sky-500/15'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-black text-sky-700 uppercase tracking-wider">
+                          2.2. Oʻzini oʻzi band qilganman
+                        </span>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'SELF_EMPLOYED' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}`}>
+                          {mainCategory === 'SELF_EMPLOYED' && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        Mustaqil faoliyat: hunarmandchilik, repetitorlik, taksichilik, IT/frilanserlik, tomorqachilik
+                      </p>
+                    </div>
+
+                    {/* 2.3. Norasmiy band */}
                     <div
                       onClick={() => setMainCategory('UNOFFICIALLY_EMPLOYED')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
@@ -999,18 +1049,40 @@ export const PublicSurveyPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
-                          2.2. Norasmiy bandman
+                          2.3. Norasmiy bandman
                         </span>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'UNOFFICIALLY_EMPLOYED' ? 'border-amber-600 bg-amber-600 text-white' : 'border-slate-300'}`}>
                           {mainCategory === 'UNOFFICIALLY_EMPLOYED' && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                       </div>
                       <p className="text-[11px] text-slate-600">
-                        Daromadga egaman, lekin shartnomasiz ishlayman (oʻzini oʻzi band qilgan, mavsumiy, mardikor)
+                        Daromadga egaman, lekin shartnomasiz ishlayman (kunlik mardikorlik, mavsumiy xizmatlar)
                       </p>
                     </div>
 
-                    {/* 2.3. Ishlash istagi yo'q */}
+                    {/* 2.4. Migrant */}
+                    <div
+                      onClick={() => setMainCategory('MIGRANT')}
+                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                        mainCategory === 'MIGRANT'
+                          ? 'border-violet-500 bg-violet-50/30 ring-2 ring-violet-500/15'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-black text-violet-700 uppercase tracking-wider">
+                          2.4. Migrantman (Xorijdaman)
+                        </span>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'MIGRANT' ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300'}`}>
+                          {mainCategory === 'MIGRANT' && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        Hozirda chet elda (Rossiya, Qozogʻiston, Turkiya, Koreya va h.k.) vaqtinchalik yoki doimiy ishlayapman
+                      </p>
+                    </div>
+
+                    {/* 2.6. Ishlash istagi yo'q */}
                     <div
                       onClick={() => setMainCategory('NO_WISH_TO_WORK')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
@@ -1021,7 +1093,7 @@ export const PublicSurveyPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-black text-indigo-700 uppercase tracking-wider">
-                          2.3. Hozircha ishlamayman
+                          2.6. Hozircha ishlamayman
                         </span>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'NO_WISH_TO_WORK' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300'}`}>
                           {mainCategory === 'NO_WISH_TO_WORK' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -1033,7 +1105,7 @@ export const PublicSurveyPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Agar 2.4 (Ishsiz) tanlansa -> Yordam yo'nalishlari */}
+                  {/* Agar 2.5 (Ishsiz) tanlansa -> Yordam yo'nalishlari */}
                   {mainCategory === 'UNEMPLOYED' && (
                     <div className="p-4 rounded-xl bg-rose-50/60 border border-rose-200 space-y-3">
                       <label className="block text-xs font-bold text-rose-900 uppercase tracking-wider">
@@ -1099,7 +1171,41 @@ export const PublicSurveyPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Agar 2.2 (Norasmiy band) tanlansa */}
+                  {/* Agar 2.2 (O'zini o'zi band qilgan) tanlansa */}
+                  {mainCategory === 'SELF_EMPLOYED' && (
+                    <div className="p-4 rounded-xl bg-sky-50/60 border border-sky-200 space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-sky-900 mb-1">
+                          Faoliyat yoʻnalishingiz <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Masalan: Tikuvchilik, Repetitorlik, IT va Frilanserlik, Taksichilik"
+                          value={selfEmployedActivity}
+                          onChange={(e) => setSelfEmployedActivity(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-sky-200 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-sky-500"
+                        />
+                      </div>
+
+                      <div
+                        onClick={() => setSelfEmployedRegistered(!selfEmployedRegistered)}
+                        className="flex items-center space-x-2.5 pt-1 cursor-pointer select-none"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selfEmployedRegistered}
+                          onChange={() => {}}
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                        <span className="text-xs text-slate-700 font-medium">
+                          Soliq organlarida (soliq.uz / my.soliq) oʻzini oʻzi band qilgan sifatida roʻyxatdan oʻtganman
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Agar 2.3 (Norasmiy band) tanlansa */}
                   {mainCategory === 'UNOFFICIALLY_EMPLOYED' && (
                     <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-2">
                       <label className="block text-xs font-bold text-amber-900">
@@ -1108,7 +1214,7 @@ export const PublicSurveyPage: React.FC = () => {
                       <input
                         type="text"
                         required
-                        placeholder="Masalan: Qurilishda usta, taksichilik, kosibchilik"
+                        placeholder="Masalan: Qurilishda kunlik usta, mardikorlik, mavsumiy ish"
                         value={unofficialActivityType}
                         onChange={(e) => setUnofficialActivityType(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-amber-200 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-amber-500"
@@ -1116,7 +1222,55 @@ export const PublicSurveyPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Agar 2.3 (Ishlash istagi yo'q) tanlansa */}
+                  {/* Agar 2.4 (Migrant) tanlansa */}
+                  {mainCategory === 'MIGRANT' && (
+                    <div className="p-4 rounded-xl bg-violet-50/60 border border-violet-200 space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-violet-900 mb-1.5">
+                          Qaysi davlatdasiz? (Tanlang yoki yozing) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {['Rossiya', 'Qozogʻiston', 'Turkiya', 'Janubiy Koreya', 'BAA', 'Buyuk Britaniya'].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setMigrantCountry(c)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                                migrantCountry === c
+                                  ? 'bg-violet-600 text-white border-violet-600'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Boshqa davlat nomi..."
+                          value={migrantCountry}
+                          onChange={(e) => setMigrantCountry(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-violet-200 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-violet-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-violet-900 mb-1">
+                          Ketgan muddatingiz yoki qaytish rejasi (ixtiyoriy)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Masalan: Mavsumiy (6 oy), Uzoq muddatli"
+                          value={migrantDuration}
+                          onChange={(e) => setMigrantDuration(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-violet-200 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-violet-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Agar 2.6 (Ishlash istagi yo'q) tanlansa */}
                   {mainCategory === 'NO_WISH_TO_WORK' && (
                     <div className="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200 space-y-2">
                       <label className="block text-xs font-bold text-indigo-900">

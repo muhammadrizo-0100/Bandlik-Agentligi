@@ -95,8 +95,16 @@ export class DashboardService {
         'officiallyEmployed',
       )
       .addSelect(
+        `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.SELF_EMPLOYED}' THEN 1 END)`,
+        'selfEmployed',
+      )
+      .addSelect(
         `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.UNOFFICIALLY_EMPLOYED}' THEN 1 END)`,
         'unofficiallyEmployed',
+      )
+      .addSelect(
+        `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.MIGRANT}' THEN 1 END)`,
+        'migrant',
       )
       .addSelect(
         `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.UNEMPLOYED}' THEN 1 END)`,
@@ -114,7 +122,9 @@ export class DashboardService {
 
     const total = parseInt(raw.total || '0', 10);
     const officiallyEmployed = parseInt(raw.officiallyEmployed || '0', 10);
+    const selfEmployed = parseInt(raw.selfEmployed || '0', 10);
     const unofficiallyEmployed = parseInt(raw.unofficiallyEmployed || '0', 10);
+    const migrant = parseInt(raw.migrant || '0', 10);
     const unemployed = parseInt(raw.unemployed || '0', 10);
     const noWishToWork = parseInt(raw.noWishToWork || '0', 10);
     const other = parseInt(raw.other || '0', 10);
@@ -125,9 +135,17 @@ export class DashboardService {
         count: officiallyEmployed,
         percentage: total > 0 ? Number(((officiallyEmployed / total) * 100).toFixed(1)) : 0,
       },
+      selfEmployed: {
+        count: selfEmployed,
+        percentage: total > 0 ? Number(((selfEmployed / total) * 100).toFixed(1)) : 0,
+      },
       unofficiallyEmployed: {
         count: unofficiallyEmployed,
         percentage: total > 0 ? Number(((unofficiallyEmployed / total) * 100).toFixed(1)) : 0,
+      },
+      migrant: {
+        count: migrant,
+        percentage: total > 0 ? Number(((migrant / total) * 100).toFixed(1)) : 0,
       },
       unemployed: {
         count: unemployed,
@@ -171,7 +189,9 @@ export class DashboardService {
 
     const labelMap: Record<string, string> = {
       [EmploymentCategory.OFFICIALLY_EMPLOYED]: 'Rasmiy band',
+      [EmploymentCategory.SELF_EMPLOYED]: 'Oʻzini oʻzi band qilgan',
       [EmploymentCategory.UNOFFICIALLY_EMPLOYED]: 'Norasmiy band',
+      [EmploymentCategory.MIGRANT]: 'Migrant',
       [EmploymentCategory.UNEMPLOYED]: 'Ishsiz yosh',
       [EmploymentCategory.NO_WISH_TO_WORK]: 'Ishlash istagi yo\'q',
       [EmploymentCategory.OTHER]: 'Boshqa holat',
@@ -214,8 +234,16 @@ export class DashboardService {
         'official',
       )
       .addSelect(
+        `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.SELF_EMPLOYED}' THEN 1 END)`,
+        'selfEmployed',
+      )
+      .addSelect(
         `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.UNOFFICIALLY_EMPLOYED}' THEN 1 END)`,
         'unofficial',
+      )
+      .addSelect(
+        `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.MIGRANT}' THEN 1 END)`,
+        'migrant',
       )
       .addSelect(
         `COUNT(CASE WHEN c.currentCategory = '${EmploymentCategory.UNEMPLOYED}' THEN 1 END)`,
@@ -241,7 +269,9 @@ export class DashboardService {
       mahallaName: r.mahallaName,
       total: parseInt(r.total || '0', 10),
       official: parseInt(r.official || '0', 10),
+      selfEmployed: parseInt(r.selfEmployed || '0', 10),
       unofficial: parseInt(r.unofficial || '0', 10),
+      migrant: parseInt(r.migrant || '0', 10),
       unemployed: parseInt(r.unemployed || '0', 10),
       noWish: parseInt(r.noWish || '0', 10),
       other: parseInt(r.other || '0', 10),
@@ -381,8 +411,16 @@ export class DashboardService {
         'official',
       )
       .addSelect(
+        `COUNT(CASE WHEN s.mainCategory = '${EmploymentCategory.SELF_EMPLOYED}' THEN 1 END)`,
+        'selfEmployed',
+      )
+      .addSelect(
         `COUNT(CASE WHEN s.mainCategory = '${EmploymentCategory.UNOFFICIALLY_EMPLOYED}' THEN 1 END)`,
         'unofficial',
+      )
+      .addSelect(
+        `COUNT(CASE WHEN s.mainCategory = '${EmploymentCategory.MIGRANT}' THEN 1 END)`,
+        'migrant',
       )
       .addSelect(
         `COUNT(CASE WHEN s.mainCategory = '${EmploymentCategory.UNEMPLOYED}' THEN 1 END)`,
@@ -401,7 +439,9 @@ export class DashboardService {
       date: r.date,
       count: parseInt(r.count, 10),
       official: parseInt(r.official || '0', 10),
+      selfEmployed: parseInt(r.selfEmployed || '0', 10),
       unofficial: parseInt(r.unofficial || '0', 10),
+      migrant: parseInt(r.migrant || '0', 10),
       unemployed: parseInt(r.unemployed || '0', 10),
       noWish: parseInt(r.noWish || '0', 10),
     }));

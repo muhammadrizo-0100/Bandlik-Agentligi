@@ -27,14 +27,18 @@ const getCategoryLabel = (category?: string) => {
   switch (category) {
     case 'OFFICIALLY_EMPLOYED':
       return '2.1. Rasmiy band';
+    case 'SELF_EMPLOYED':
+      return '2.2. Oʻzini oʻzi band qilgan';
     case 'UNOFFICIALLY_EMPLOYED':
-      return '2.2. Norasmiy band';
-    case 'NO_WISH_TO_WORK':
-      return '2.3. Ishlash istagi yoʻq';
+      return '2.3. Norasmiy band';
     case 'UNEMPLOYED':
       return '2.4. Ishsiz yosh';
+    case 'MIGRANT':
+      return '2.5. Migrant';
+    case 'NO_WISH_TO_WORK':
+      return '2.6. Ishlash istagi yoʻq';
     case 'OTHER':
-      return '2.5. Boshqa';
+      return '2.7. Boshqa';
     default:
       return category || '—';
   }
@@ -79,8 +83,16 @@ const formatDetailSummary = (survey: Survey) => {
   if (survey.mainCategory === 'OFFICIALLY_EMPLOYED') {
     return survey.officialWorkplace ? `Ish joyi: ${survey.officialWorkplace}` : 'Rasmiy ish joyiga ega';
   }
+  if (survey.mainCategory === 'SELF_EMPLOYED') {
+    const reg = survey.selfEmployedRegistered ? ' (Roʻyxatdan oʻtgan)' : '';
+    return survey.selfEmployedActivity ? `Faoliyat: ${survey.selfEmployedActivity}${reg}` : 'Oʻzini oʻzi band qilgan';
+  }
   if (survey.mainCategory === 'UNOFFICIALLY_EMPLOYED') {
     return survey.unofficialActivityType ? `Faoliyat turi: ${survey.unofficialActivityType}` : 'Norasmiy bandlik';
+  }
+  if (survey.mainCategory === 'MIGRANT') {
+    const dur = survey.migrantDuration ? `, Muddat: ${survey.migrantDuration}` : '';
+    return survey.migrantCountry ? `Davlat: ${survey.migrantCountry}${dur}` : 'Migrant';
   }
   if (survey.mainCategory === 'NO_WISH_TO_WORK') {
     const reasonText = getNoWishReasonLabel(survey.noWishReason);

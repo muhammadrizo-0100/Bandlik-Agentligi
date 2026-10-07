@@ -103,9 +103,23 @@ export class SurveyEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   officialWorkplace?: string;
 
-  // 2.2. Norasmiy band bo'lsa -> Faoliyat turi
+  // 2.2. O'zini o'zi band qilgan bo'lsa -> Faoliyat turi va soliq ro'yxati
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  selfEmployedActivity?: string;
+
+  @Column({ type: 'boolean', default: false })
+  selfEmployedRegistered?: boolean;
+
+  // 2.3. Norasmiy band bo'lsa -> Faoliyat turi
   @Column({ type: 'varchar', length: 255, nullable: true })
   unofficialActivityType?: string;
+
+  // 2.4. Migrant bo'lsa -> Qaysi davlat va muddati
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  migrantCountry?: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  migrantDuration?: string;
 
   // 2.3. Ishlash istagi yo'q bo'lsa -> Sababi (Bola tarbiyasida, Uy bekasi, O'ziga to'q, Abituriyent)
   @Column({

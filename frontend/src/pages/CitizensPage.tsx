@@ -278,12 +278,16 @@ export const CitizensPage: React.FC = () => {
     switch (cat) {
       case 'OFFICIALLY_EMPLOYED':
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700">Rasmiy band</span>;
+      case 'SELF_EMPLOYED':
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-700">Oʻzini oʻzi band</span>;
       case 'UNOFFICIALLY_EMPLOYED':
-        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-700">Norasmiy band</span>;
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700">Norasmiy band</span>;
+      case 'MIGRANT':
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-violet-50 text-violet-700">Migrant</span>;
       case 'UNEMPLOYED':
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-700">Ishsiz</span>;
       case 'NO_WISH_TO_WORK':
-        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700">Ishlash istagi yo'q</span>;
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">Ishlash istagi yoʻq</span>;
       case 'OTHER':
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">Boshqa</span>;
       default:
@@ -377,10 +381,12 @@ export const CitizensPage: React.FC = () => {
               options={[
                 { value: '', label: 'Barcha toifalar' },
                 { value: 'OFFICIALLY_EMPLOYED', label: '2.1. Rasmiy band' },
-                { value: 'UNOFFICIALLY_EMPLOYED', label: '2.2. Norasmiy band' },
+                { value: 'SELF_EMPLOYED', label: '2.2. Oʻzini oʻzi band qilgan' },
+                { value: 'UNOFFICIALLY_EMPLOYED', label: '2.3. Norasmiy band' },
                 { value: 'UNEMPLOYED', label: '2.4. Ishsiz yoshlar' },
-                { value: 'NO_WISH_TO_WORK', label: '2.3. Ishlash istagi yoʻq' },
-                { value: 'OTHER', label: '2.5. Boshqa' },
+                { value: 'MIGRANT', label: '2.5. Migrant' },
+                { value: 'NO_WISH_TO_WORK', label: '2.6. Ishlash istagi yoʻq' },
+                { value: 'OTHER', label: '2.7. Boshqa' },
               ]}
             />
           </div>
@@ -841,10 +847,12 @@ export const CitizensPage: React.FC = () => {
                   onChange={(val) => setEditForm({ ...editForm, currentCategory: val as EmploymentCategory })}
                   options={[
                     { value: 'OFFICIALLY_EMPLOYED', label: '2.1. Rasmiy band' },
-                    { value: 'UNOFFICIALLY_EMPLOYED', label: '2.2. Norasmiy band' },
-                    { value: 'NO_WISH_TO_WORK', label: '2.3. Ishlash istagi yoʻq' },
+                    { value: 'SELF_EMPLOYED', label: '2.2. Oʻzini oʻzi band qilgan' },
+                    { value: 'UNOFFICIALLY_EMPLOYED', label: '2.3. Norasmiy band' },
                     { value: 'UNEMPLOYED', label: '2.4. Ishsiz yoshlar' },
-                    { value: 'OTHER', label: '2.5. Boshqa' },
+                    { value: 'MIGRANT', label: '2.5. Migrant' },
+                    { value: 'NO_WISH_TO_WORK', label: '2.6. Ishlash istagi yoʻq' },
+                    { value: 'OTHER', label: '2.7. Boshqa' },
                   ]}
                 />
               </div>

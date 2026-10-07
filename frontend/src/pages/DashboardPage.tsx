@@ -28,6 +28,8 @@ import {
   History,
   X,
   Search,
+  Sparkles,
+  Globe,
 } from 'lucide-react';
 import {
   BarChart,
@@ -79,7 +81,9 @@ export const DashboardPage: React.FC = () => {
     subtitle: string;
     total: number;
     official: number;
+    selfEmployed: number;
     unofficial: number;
+    migrant: number;
     unemployed: number;
     noWish: number;
     events: Survey[];
@@ -436,7 +440,9 @@ export const DashboardPage: React.FC = () => {
         fullName: rawName.includes('MFY') ? rawName : `${rawName} MFY`,
         total: Number(m.total) || 0,
         official: Number(m.official ?? m.officiallyEmployed ?? 0),
+        selfEmployed: Number(m.selfEmployed ?? 0),
         unofficial: Number(m.unofficial ?? m.unofficiallyEmployed ?? 0),
+        migrant: Number(m.migrant ?? 0),
         unemployed: Number(m.unemployed ?? 0),
         noWish: Number(m.noWish ?? 0),
         other: Number(m.other ?? 0),
@@ -486,7 +492,9 @@ export const DashboardPage: React.FC = () => {
         displayDate: `${dd}.${mm}`,
         count,
         official: matched ? Number((matched as any).official) || 0 : 0,
+        selfEmployed: matched ? Number((matched as any).selfEmployed) || 0 : 0,
         unofficial: matched ? Number((matched as any).unofficial) || 0 : 0,
+        migrant: matched ? Number((matched as any).migrant) || 0 : 0,
         unemployed: matched ? Number((matched as any).unemployed) || 0 : 0,
         noWish: matched ? Number((matched as any).noWish) || 0 : 0,
         isToday: d.toDateString() === now.toDateString(),
@@ -528,7 +536,9 @@ export const DashboardPage: React.FC = () => {
         : 'Ushbu hudud boʻyicha oʻrganishlar jurnali',
       total: payload.total || 0,
       official: payload.official || 0,
+      selfEmployed: payload.selfEmployed || 0,
       unofficial: payload.unofficial || 0,
+      migrant: payload.migrant || 0,
       unemployed: payload.unemployed || 0,
       noWish: payload.noWish || 0,
       events: matchingSurveys,
@@ -559,11 +569,25 @@ export const DashboardPage: React.FC = () => {
             Rasmiy band
           </span>
         );
+      case 'SELF_EMPLOYED':
+        return (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5"></span>
+            Oʻzini oʻzi band
+          </span>
+        );
       case 'UNOFFICIALLY_EMPLOYED':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-[#163D5C] border border-sky-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#163D5C] mr-1.5"></span>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
             Norasmiy band
+          </span>
+        );
+      case 'MIGRANT':
+        return (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mr-1.5"></span>
+            Migrant
           </span>
         );
       case 'UNEMPLOYED':
@@ -605,9 +629,11 @@ export const DashboardPage: React.FC = () => {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2.5 text-[11px]">
+        <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
           <span className="text-emerald-400 font-semibold" title="Rasmiy band">● {data.official || 0}</span>
+          <span className="text-sky-400 font-semibold" title="Oʻzini oʻzi band">● {data.selfEmployed || 0}</span>
           <span className="text-amber-400 font-semibold" title="Norasmiy band">● {data.unofficial || 0}</span>
+          <span className="text-violet-400 font-semibold" title="Migrant">● {data.migrant || 0}</span>
           <span className="text-rose-400 font-semibold" title="Ishsiz">● {data.unemployed || 0}</span>
           <span className="text-slate-300 font-semibold" title="Istagi yoʻq">● {data.noWish || 0}</span>
           <span className="text-slate-400 font-bold ml-1 border-l border-slate-700 pl-2">
@@ -675,7 +701,9 @@ export const DashboardPage: React.FC = () => {
         {item.count > 0 && (
           <div className="grid grid-cols-2 gap-1 text-[10px] pt-1 border-t border-slate-100">
             <span className="text-emerald-700">Rasmiy: <b>{item.official}</b></span>
+            <span className="text-sky-700">Oʻzini oʻzi: <b>{item.selfEmployed}</b></span>
             <span className="text-amber-700">Norasmiy: <b>{item.unofficial}</b></span>
+            <span className="text-violet-700">Migrant: <b>{item.migrant}</b></span>
             <span className="text-rose-700">Ishsiz: <b>{item.unemployed}</b></span>
             <span className="text-slate-600">Istagi yoʻq: <b>{item.noWish}</b></span>
           </div>
@@ -1019,8 +1047,12 @@ export const DashboardPage: React.FC = () => {
                 Tanlangan toifa: <b>{
                   activeTab === 'OFFICIALLY_EMPLOYED'
                     ? 'Rasmiy band yoshlar'
+                    : activeTab === 'SELF_EMPLOYED'
+                    ? 'Oʻzini oʻzi band qilganlar'
                     : activeTab === 'UNOFFICIALLY_EMPLOYED'
                     ? 'Norasmiy band yoshlar'
+                    : activeTab === 'MIGRANT'
+                    ? 'Migrantlar'
                     : activeTab === 'UNEMPLOYED'
                     ? 'Ishsiz yoshlar'
                     : 'Tekshiruvdagi anketalar'
@@ -1049,12 +1081,12 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* 4. 4 ta Asosiy KPI Kartochkalari (Qalin borderli, interaktiv tanlov bilan) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      {/* 4. 6 ta Asosiy KPI Kartochkalari (Qalin borderli, interaktiv tanlov bilan) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         {/* Karta 1: Jami oʻrganilgan */}
         <div
           onClick={() => setActiveTab('ALL')}
-          className={`bg-white rounded-2xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+          className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
             activeTab === 'ALL'
               ? 'border-[#163D5C] ring-4 ring-[#163D5C]/10 shadow-sm'
               : 'border-slate-200 hover:border-slate-300'
@@ -1064,17 +1096,17 @@ export const DashboardPage: React.FC = () => {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Jami oʻrganilgan
             </span>
-            <div className="w-10 h-10 rounded-xl bg-[#163D5C]/10 text-[#163D5C] flex items-center justify-center">
-              <Users className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-[#163D5C]/10 text-[#163D5C] flex items-center justify-center">
+              <Users className="w-4 h-4" />
             </div>
           </div>
 
           <div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight my-1">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1">
               {(kpi?.totalCitizens || 0).toLocaleString()}
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-500">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#163D5C]/10 text-[#163D5C] border border-[#163D5C]/20">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#163D5C]/10 text-[#163D5C] border border-[#163D5C]/20 text-[11px]">
                 Umumiy
               </span>
               <span className="text-slate-400 font-medium text-[11px]">xatlovdan oʻtganlar</span>
@@ -1085,7 +1117,7 @@ export const DashboardPage: React.FC = () => {
         {/* Karta 2: Rasmiy band */}
         <div
           onClick={() => setActiveTab('OFFICIALLY_EMPLOYED')}
-          className={`bg-white rounded-2xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+          className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
             activeTab === 'OFFICIALLY_EMPLOYED'
               ? 'border-emerald-500 ring-4 ring-emerald-500/15 bg-emerald-50/20 shadow-sm'
               : 'border-slate-200 hover:border-emerald-300'
@@ -1095,31 +1127,65 @@ export const DashboardPage: React.FC = () => {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Rasmiy band
             </span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <UserCheck className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <UserCheck className="w-4 h-4" />
             </div>
           </div>
 
           <div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-2">
-              <span>{(kpi?.officiallyEmployed.count || 0).toLocaleString()}</span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-1.5">
+              <span>{(kpi?.officiallyEmployed?.count || 0).toLocaleString()}</span>
               <span className="text-xs font-extrabold text-emerald-600">
-                {kpi?.officiallyEmployed.percentage || 0}%
+                {kpi?.officiallyEmployed?.percentage || 0}%
               </span>
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-600">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px]">
                 Qonuniy
               </span>
-              <span className="text-slate-400 font-medium text-[11px]">mehnat shartnomasi</span>
+              <span className="text-slate-400 font-medium text-[11px]">shartnoma</span>
             </div>
           </div>
         </div>
 
-        {/* Karta 3: Norasmiy band */}
+        {/* Karta 3: Oʻzini oʻzi band */}
+        <div
+          onClick={() => setActiveTab('SELF_EMPLOYED')}
+          className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+            activeTab === 'SELF_EMPLOYED'
+              ? 'border-sky-500 ring-4 ring-sky-500/15 bg-sky-50/20 shadow-sm'
+              : 'border-slate-200 hover:border-sky-300'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Oʻzini oʻzi band
+            </span>
+            <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+              <Sparkles className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-1.5">
+              <span>{(kpi?.selfEmployed?.count || 0).toLocaleString()}</span>
+              <span className="text-xs font-extrabold text-sky-600">
+                {kpi?.selfEmployed?.percentage || 0}%
+              </span>
+            </div>
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 text-[11px]">
+                Mustaqil
+              </span>
+              <span className="text-slate-400 font-medium text-[11px]">2.2 toifa</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Karta 4: Norasmiy band */}
         <div
           onClick={() => setActiveTab('UNOFFICIALLY_EMPLOYED')}
-          className={`bg-white rounded-2xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+          className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
             activeTab === 'UNOFFICIALLY_EMPLOYED'
               ? 'border-amber-500 ring-4 ring-amber-500/15 bg-amber-50/20 shadow-sm'
               : 'border-slate-200 hover:border-amber-300'
@@ -1129,31 +1195,65 @@ export const DashboardPage: React.FC = () => {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Norasmiy band
             </span>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Briefcase className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Briefcase className="w-4 h-4" />
             </div>
           </div>
 
           <div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-2">
-              <span>{(kpi?.unofficiallyEmployed.count || 0).toLocaleString()}</span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-1.5">
+              <span>{(kpi?.unofficiallyEmployed?.count || 0).toLocaleString()}</span>
               <span className="text-xs font-extrabold text-amber-600">
-                {kpi?.unofficiallyEmployed.percentage || 0}%
+                {kpi?.unofficiallyEmployed?.percentage || 0}%
               </span>
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-500">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[11px]">
                 Mavsumiy
               </span>
-              <span className="text-slate-400 font-medium text-[11px]">legalizatsiya zarur</span>
+              <span className="text-slate-400 font-medium text-[11px]">legalizatsiya</span>
             </div>
           </div>
         </div>
 
-        {/* Karta 4: Ishsiz yoshlar */}
+        {/* Karta 5: Migrant */}
+        <div
+          onClick={() => setActiveTab('MIGRANT')}
+          className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+            activeTab === 'MIGRANT'
+              ? 'border-violet-500 ring-4 ring-violet-500/15 bg-violet-50/20 shadow-sm'
+              : 'border-slate-200 hover:border-violet-300'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Migrant
+            </span>
+            <div className="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
+              <Globe className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-1.5">
+              <span>{(kpi?.migrant?.count || 0).toLocaleString()}</span>
+              <span className="text-xs font-extrabold text-violet-600">
+                {kpi?.migrant?.percentage || 0}%
+              </span>
+            </div>
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-violet-600">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-200 text-[11px]">
+                Chet elda
+              </span>
+              <span className="text-slate-400 font-medium text-[11px]">2.5 toifa</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Karta 6: Ishsiz yoshlar */}
         <div
           onClick={() => setActiveTab('UNEMPLOYED')}
-          className={`bg-white rounded-2xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+          className={`bg-white rounded-2xl p-4 sm:p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
             activeTab === 'UNEMPLOYED'
               ? 'border-rose-500 ring-4 ring-rose-500/15 bg-rose-50/20 shadow-sm'
               : 'border-slate-200 hover:border-rose-300'
@@ -1163,23 +1263,23 @@ export const DashboardPage: React.FC = () => {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Ishsiz yoshlar
             </span>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <UserX className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <UserX className="w-4 h-4" />
             </div>
           </div>
 
           <div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-2">
-              <span>{(kpi?.unemployed.count || 0).toLocaleString()}</span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1 flex items-baseline space-x-1.5">
+              <span>{(kpi?.unemployed?.count || 0).toLocaleString()}</span>
               <span className="text-xs font-extrabold text-rose-600">
-                {kpi?.unemployed.percentage || 0}%
+                {kpi?.unemployed?.percentage || 0}%
               </span>
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-bold text-rose-600">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[11px]">
                 Chora talab
               </span>
-              <span className="text-slate-400 font-medium text-[11px]">2.4 yoʻnalishlar</span>
+              <span className="text-slate-400 font-medium text-[11px]">2.4 yoʻnalish</span>
             </div>
           </div>
         </div>
@@ -1358,8 +1458,16 @@ export const DashboardPage: React.FC = () => {
                 <span className="text-slate-700 font-semibold">Rasmiy</span>
               </span>
               <span className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                <span className="text-slate-700 font-semibold">Oʻzini oʻzi</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                 <span className="text-slate-700 font-semibold">Norasmiy</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                <span className="text-slate-700 font-semibold">Migrant</span>
               </span>
               <span className="flex items-center space-x-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
@@ -1383,7 +1491,7 @@ export const DashboardPage: React.FC = () => {
             <div
               className="h-64"
               style={{
-                minWidth: `${Math.max(barChartData.length * 76, 480)}px`,
+                minWidth: `${Math.max(barChartData.length * 100, 520)}px`,
                 width: '100%',
               }}
             >
@@ -1418,7 +1526,18 @@ export const DashboardPage: React.FC = () => {
                       name="Rasmiy band"
                       fill="#10B981"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 24 : 14}
+                      barSize={isMahallaOperator ? 20 : 10}
+                      minPointSize={3}
+                      cursor="pointer"
+                      onClick={(data) => openEventModal(data)}
+                    />
+                    {/* Moviy: Oʻzini oʻzi band */}
+                    <Bar
+                      dataKey="selfEmployed"
+                      name="Oʻzini oʻzi band"
+                      fill="#0284C7"
+                      radius={[6, 6, 0, 0]}
+                      barSize={isMahallaOperator ? 20 : 10}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1429,7 +1548,18 @@ export const DashboardPage: React.FC = () => {
                       name="Norasmiy band"
                       fill="#F59E0B"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 24 : 14}
+                      barSize={isMahallaOperator ? 20 : 10}
+                      minPointSize={3}
+                      cursor="pointer"
+                      onClick={(data) => openEventModal(data)}
+                    />
+                    {/* Binafsharang: Migrant */}
+                    <Bar
+                      dataKey="migrant"
+                      name="Migrant"
+                      fill="#8B5CF6"
+                      radius={[6, 6, 0, 0]}
+                      barSize={isMahallaOperator ? 20 : 10}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1440,7 +1570,7 @@ export const DashboardPage: React.FC = () => {
                       name="Ishsiz yoshlar"
                       fill="#EF4444"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 24 : 14}
+                      barSize={isMahallaOperator ? 20 : 10}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1451,7 +1581,7 @@ export const DashboardPage: React.FC = () => {
                       name="Ishlash istagi yoʻq"
                       fill="#94A3B8"
                       radius={[6, 6, 0, 0]}
-                      barSize={isMahallaOperator ? 24 : 14}
+                      barSize={isMahallaOperator ? 20 : 10}
                       minPointSize={3}
                       cursor="pointer"
                       onClick={(data) => openEventModal(data)}
@@ -1494,18 +1624,37 @@ export const DashboardPage: React.FC = () => {
                     <span>Rasmiy band</span>
                   </div>
                   <span className="font-bold text-emerald-600">
-                    {kpi?.officiallyEmployed.percentage || 0}% ({kpi?.officiallyEmployed.count || 0})
+                    {kpi?.officiallyEmployed?.percentage || 0}% ({kpi?.officiallyEmployed?.count || 0})
                   </span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(kpi?.officiallyEmployed.percentage || 0, 100)}%` }}
+                    style={{ width: `${Math.min(kpi?.officiallyEmployed?.percentage || 0, 100)}%` }}
                   ></div>
                 </div>
               </div>
 
-              {/* 2. Sariq: Norasmiy band */}
+              {/* 2. Moviy: Oʻzini oʻzi band */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center space-x-2 font-semibold text-slate-700">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                    <span>Oʻzini oʻzi band</span>
+                  </div>
+                  <span className="font-bold text-sky-600">
+                    {kpi?.selfEmployed?.percentage || 0}% ({kpi?.selfEmployed?.count || 0})
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(kpi?.selfEmployed?.percentage || 0, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* 3. Sariq: Norasmiy band */}
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center space-x-2 font-semibold text-slate-700">
@@ -1513,18 +1662,37 @@ export const DashboardPage: React.FC = () => {
                     <span>Norasmiy band</span>
                   </div>
                   <span className="font-bold text-amber-600">
-                    {kpi?.unofficiallyEmployed.percentage || 0}% ({kpi?.unofficiallyEmployed.count || 0})
+                    {kpi?.unofficiallyEmployed?.percentage || 0}% ({kpi?.unofficiallyEmployed?.count || 0})
                   </span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(kpi?.unofficiallyEmployed.percentage || 0, 100)}%` }}
+                    style={{ width: `${Math.min(kpi?.unofficiallyEmployed?.percentage || 0, 100)}%` }}
                   ></div>
                 </div>
               </div>
 
-              {/* 3. Qizil: Ishsiz yoshlar */}
+              {/* 4. Binafsharang: Migrant */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center space-x-2 font-semibold text-slate-700">
+                    <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                    <span>Migrant</span>
+                  </div>
+                  <span className="font-bold text-violet-600">
+                    {kpi?.migrant?.percentage || 0}% ({kpi?.migrant?.count || 0})
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(kpi?.migrant?.percentage || 0, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* 5. Qizil: Ishsiz yoshlar */}
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center space-x-2 font-semibold text-slate-700">
@@ -1532,18 +1700,18 @@ export const DashboardPage: React.FC = () => {
                     <span>Ishsiz yoshlar (ogohlik)</span>
                   </div>
                   <span className="font-bold text-rose-600">
-                    {kpi?.unemployed.percentage || 0}% ({kpi?.unemployed.count || 0})
+                    {kpi?.unemployed?.percentage || 0}% ({kpi?.unemployed?.count || 0})
                   </span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(kpi?.unemployed.percentage || 0, 100)}%` }}
+                    style={{ width: `${Math.min(kpi?.unemployed?.percentage || 0, 100)}%` }}
                   ></div>
                 </div>
               </div>
 
-              {/* 4. Kulrang: Istagi yo'qlar */}
+              {/* 6. Kulrang: Istagi yo'qlar */}
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center space-x-2 font-semibold text-slate-700">
@@ -1826,7 +1994,7 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* Tezkor Ko'rsatkichlar (KPI Pills) */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 my-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 my-4">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
                   <span className="text-[10px] font-bold text-slate-400 uppercase block">Jami</span>
                   <span className="text-base font-black text-slate-900">{selectedEventData.total}</span>
@@ -1835,9 +2003,17 @@ export const DashboardPage: React.FC = () => {
                   <span className="text-[10px] font-bold text-emerald-700 uppercase block">Rasmiy</span>
                   <span className="text-base font-black text-emerald-700">{selectedEventData.official}</span>
                 </div>
+                <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-center">
+                  <span className="text-[10px] font-bold text-sky-700 uppercase block">Oʻzini oʻzi</span>
+                  <span className="text-base font-black text-sky-700">{selectedEventData.selfEmployed || 0}</span>
+                </div>
                 <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-center">
                   <span className="text-[10px] font-bold text-amber-700 uppercase block">Norasmiy</span>
                   <span className="text-base font-black text-amber-700">{selectedEventData.unofficial}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-violet-50 border border-violet-200 text-center">
+                  <span className="text-[10px] font-bold text-violet-700 uppercase block">Migrant</span>
+                  <span className="text-base font-black text-violet-700">{selectedEventData.migrant || 0}</span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
                   <span className="text-[10px] font-bold text-rose-700 uppercase block">Ishsiz</span>

@@ -148,10 +148,30 @@ export class CreateSurveyDto {
   @IsString()
   officialWorkplace?: string;
 
-  // --- 2.2. Norasmiy band bo'lsa -> Faoliyat turi (Majburiy) ---
+  // --- 2.2. O'zini o'zi band qilgan bo'lsa -> Faoliyat turi va soliq ro'yxati ---
+  @ApiPropertyOptional({
+    example: 'Hunarmandchilik / Repetitorlik / Taksi',
+    description: '2.2. O\'zini o\'zi band qilganlik faoliyat turi',
+  })
+  @ValidateIf((o) => o.mainCategory === EmploymentCategory.SELF_EMPLOYED)
+  @IsNotEmpty({
+    message: 'O\'zini o\'zi band qilgan toifasida "Faoliyat yo\'nalishi" kiritilishi shart',
+  })
+  @IsString()
+  selfEmployedActivity?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Soliq organlaridan o\'zini o\'zi band qilgan sifatida ro\'yxatdan o\'tganmi',
+  })
+  @IsOptional()
+  @IsBoolean()
+  selfEmployedRegistered?: boolean;
+
+  // --- 2.3. Norasmiy band bo'lsa -> Faoliyat turi (Majburiy) ---
   @ApiPropertyOptional({
     example: 'Mavsumiy qurilish ishlari / Frilanserlik',
-    description: '2.2. Faoliyat turi',
+    description: '2.3. Faoliyat turi',
   })
   @ValidateIf((o) => o.mainCategory === EmploymentCategory.UNOFFICIALLY_EMPLOYED)
   @IsNotEmpty({
@@ -162,6 +182,26 @@ export class CreateSurveyDto {
   })
   @IsString()
   unofficialActivityType?: string;
+
+  // --- 2.4. Migrant bo'lsa -> Qaysi davlat va muddati ---
+  @ApiPropertyOptional({
+    example: 'Rossiya',
+    description: '2.4. Migratsiyadagi davlat nomi',
+  })
+  @ValidateIf((o) => o.mainCategory === EmploymentCategory.MIGRANT)
+  @IsNotEmpty({
+    message: 'Migrant toifasida davlat nomi kiritilishi shart',
+  })
+  @IsString()
+  migrantCountry?: string;
+
+  @ApiPropertyOptional({
+    example: 'Mavsumiy',
+    description: 'Ketgan muddati yoki rejasi',
+  })
+  @IsOptional()
+  @IsString()
+  migrantDuration?: string;
 
   // --- 2.3. Ishlash istagi yo'q bo'lsa -> Sababi (Majburiy) ---
   @ApiPropertyOptional({

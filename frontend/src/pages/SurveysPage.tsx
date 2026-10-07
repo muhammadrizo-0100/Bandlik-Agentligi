@@ -108,14 +108,18 @@ export const SurveysPage: React.FC = () => {
     switch (category) {
       case 'OFFICIALLY_EMPLOYED':
         return '2.1. Rasmiy band';
+      case 'SELF_EMPLOYED':
+        return '2.2. Oʻzini oʻzi band qilgan';
       case 'UNOFFICIALLY_EMPLOYED':
-        return '2.2. Norasmiy band';
-      case 'NO_WISH_TO_WORK':
-        return '2.3. Ishlash istagi yoʻq';
+        return '2.3. Norasmiy band';
       case 'UNEMPLOYED':
         return '2.4. Ishsiz yosh';
+      case 'MIGRANT':
+        return '2.5. Migrant';
+      case 'NO_WISH_TO_WORK':
+        return '2.6. Ishlash istagi yoʻq';
       case 'OTHER':
-        return '2.5. Boshqa';
+        return '2.7. Boshqa';
       default:
         return category;
     }

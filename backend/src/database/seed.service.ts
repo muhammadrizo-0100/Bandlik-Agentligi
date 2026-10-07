@@ -37,6 +37,7 @@ export class SeedService implements OnModuleInit, OnApplicationBootstrap {
     this.hasInitialized = true;
 
     try {
+      await this.upgradeEnumTypes();
       await this.seedRoles();
       const districts = await this.seedDistricts();
       await this.seedAllMahallas(districts);
@@ -47,6 +48,33 @@ export class SeedService implements OnModuleInit, OnApplicationBootstrap {
       await this.seedSuperAdmin();
     } catch (error: any) {
       this.logger.warn(`Seed jarayonida ogohlantirish: ${error.message}`);
+    }
+  }
+
+  /**
+   * PostgreSQL ENUM turlariga SELF_EMPLOYED va MIGRANT qiymatlarini xavfsiz qo'shish
+   */
+  private async upgradeEnumTypes() {
+    const enumTypes = [
+      'citizens_currentcategory_enum',
+      'surveys_maincategory_enum',
+      'employment_history_newcategory_enum',
+      'employment_history_previouscategory_enum',
+    ];
+    for (const enumType of enumTypes) {
+      try {
+        await this.roleRepository.query(`
+          DO $$ BEGIN
+            ALTER TYPE public."${enumType}" ADD VALUE IF NOT EXISTS 'SELF_EMPLOYED';
+            ALTER TYPE public."${enumType}" ADD VALUE IF NOT EXISTS 'MIGRANT';
+          EXCEPTION WHEN duplicate_object THEN null;
+          WHEN undefined_object THEN null;
+          WHEN others THEN null;
+          END $$;
+        `);
+      } catch {
+        // Ignored if type does not exist or already contains values
+      }
     }
   }
 
