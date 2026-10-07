@@ -85,7 +85,12 @@ export const PublicSurveyPage: React.FC = () => {
   const [specialty, setSpecialty] = useState<string>(initialDraft?.specialty || '');
 
   // 3-bosqich: Bandlik holati
-  const [mainCategory, setMainCategory] = useState<EmploymentCategory>(initialDraft?.mainCategory || 'UNEMPLOYED');
+  const [categorySelected, setCategorySelected] = useState<boolean>(
+    Boolean(initialDraft?.categorySelected),
+  );
+  const [mainCategory, setMainCategory] = useState<EmploymentCategory | ''>(
+    initialDraft?.categorySelected ? (initialDraft?.mainCategory || '') : '',
+  );
   const [officialWorkplace, setOfficialWorkplace] = useState<string>(initialDraft?.officialWorkplace || '');
   const [selfEmployedActivity, setSelfEmployedActivity] = useState<string>(initialDraft?.selfEmployedActivity || '');
   const [selfEmployedRegistered, setSelfEmployedRegistered] = useState<boolean>(initialDraft?.selfEmployedRegistered || false);
@@ -94,10 +99,16 @@ export const PublicSurveyPage: React.FC = () => {
   const [migrantDuration, setMigrantDuration] = useState<string>(initialDraft?.migrantDuration || '');
   const [noWishReason, setNoWishReason] = useState<NoWishReason>(initialDraft?.noWishReason || 'CHILD_CARE');
   const [unemployedDirections, setUnemployedDirections] = useState<UnemployedDirection[]>(
-    initialDraft?.unemployedDirections || ['PERMANENT_JOB'],
+    initialDraft?.unemployedDirections || [],
   );
   const [unemployedAdditionalNote, setUnemployedAdditionalNote] = useState<string>(initialDraft?.unemployedAdditionalNote || '');
   const [otherReasonNote, setOtherReasonNote] = useState<string>(initialDraft?.otherReasonNote || '');
+
+  const selectCategory = (category: EmploymentCategory) => {
+    setMainCategory(category);
+    setCategorySelected(true);
+    if (error) setError(null);
+  };
 
   // Qoralamani tozalash
   const clearDraft = () => {
@@ -117,7 +128,8 @@ export const PublicSurveyPage: React.FC = () => {
     setAddress('');
     setEducation('');
     setSpecialty('');
-    setMainCategory('UNEMPLOYED');
+    setCategorySelected(false);
+    setMainCategory('');
     setOfficialWorkplace('');
     setSelfEmployedActivity('');
     setSelfEmployedRegistered(false);
@@ -125,7 +137,7 @@ export const PublicSurveyPage: React.FC = () => {
     setMigrantCountry('');
     setMigrantDuration('');
     setNoWishReason('CHILD_CARE');
-    setUnemployedDirections(['PERMANENT_JOB']);
+    setUnemployedDirections([]);
     setUnemployedAdditionalNote('');
     setOtherReasonNote('');
     setPinflWarning(null);
@@ -160,6 +172,7 @@ export const PublicSurveyPage: React.FC = () => {
         address,
         education,
         specialty,
+        categorySelected,
         mainCategory,
         officialWorkplace,
         selfEmployedActivity,
@@ -191,6 +204,7 @@ export const PublicSurveyPage: React.FC = () => {
     address,
     education,
     specialty,
+    categorySelected,
     mainCategory,
     officialWorkplace,
     selfEmployedActivity,
@@ -404,12 +418,16 @@ export const PublicSurveyPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!mainCategory) {
+      setError('Iltimos, hozirgi bandlik holatingizni tanlang');
+      return;
+    }
     if (mainCategory === 'OFFICIALLY_EMPLOYED' && (!officialWorkplace.trim() || !hasLetters(officialWorkplace))) {
       setError('Rasmiy ish joyingiz va tashkilot nomini kiriting');
       return;
     }
     if (mainCategory === 'SELF_EMPLOYED' && (!selfEmployedActivity.trim() || !hasLetters(selfEmployedActivity))) {
-      setError('Oʻzini band qilgan faoliyat yoʻnalishingizni kiriting');
+      setError('Oʻzimni band qilgan faoliyat yoʻnalishingizni kiriting');
       return;
     }
     if (mainCategory === 'UNOFFICIALLY_EMPLOYED' && (!unofficialActivityType.trim() || !hasLetters(unofficialActivityType))) {
@@ -443,7 +461,7 @@ export const PublicSurveyPage: React.FC = () => {
         phone: phone.trim(),
         parentPhone: parentPhone.trim() || undefined,
         specialty: specialty.trim() || undefined,
-        mainCategory,
+        mainCategory: mainCategory as EmploymentCategory,
         officialWorkplace: mainCategory === 'OFFICIALLY_EMPLOYED' ? officialWorkplace.trim() : undefined,
         selfEmployedActivity: mainCategory === 'SELF_EMPLOYED' ? selfEmployedActivity.trim() : undefined,
         selfEmployedRegistered: mainCategory === 'SELF_EMPLOYED' ? selfEmployedRegistered : undefined,
@@ -974,7 +992,7 @@ export const PublicSurveyPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* 2.5. Ishsiz (Tavsiya etilgan eng ko'p murojaat) */}
                     <div
-                      onClick={() => setMainCategory('UNEMPLOYED')}
+                      onClick={() => selectCategory('UNEMPLOYED')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         mainCategory === 'UNEMPLOYED'
                           ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-500/15'
@@ -996,7 +1014,7 @@ export const PublicSurveyPage: React.FC = () => {
 
                     {/* 2.1. Rasmiy band */}
                     <div
-                      onClick={() => setMainCategory('OFFICIALLY_EMPLOYED')}
+                      onClick={() => selectCategory('OFFICIALLY_EMPLOYED')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         mainCategory === 'OFFICIALLY_EMPLOYED'
                           ? 'border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-500/15'
@@ -1016,9 +1034,9 @@ export const PublicSurveyPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* 2.2. Oʻzini oʻzi band qilgan */}
+                    {/* 2.2. Oʻzimni band qilganman */}
                     <div
-                      onClick={() => setMainCategory('SELF_EMPLOYED')}
+                      onClick={() => selectCategory('SELF_EMPLOYED')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         mainCategory === 'SELF_EMPLOYED'
                           ? 'border-sky-500 bg-sky-50/30 ring-2 ring-sky-500/15'
@@ -1027,7 +1045,7 @@ export const PublicSurveyPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-black text-sky-700 uppercase tracking-wider">
-                          2.2. Oʻzini band qilganman
+                          2.2. Oʻzimni band qilganman
                         </span>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mainCategory === 'SELF_EMPLOYED' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300'}`}>
                           {mainCategory === 'SELF_EMPLOYED' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -1040,7 +1058,7 @@ export const PublicSurveyPage: React.FC = () => {
 
                     {/* 2.3. Norasmiy band */}
                     <div
-                      onClick={() => setMainCategory('UNOFFICIALLY_EMPLOYED')}
+                      onClick={() => selectCategory('UNOFFICIALLY_EMPLOYED')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         mainCategory === 'UNOFFICIALLY_EMPLOYED'
                           ? 'border-amber-500 bg-amber-50/30 ring-2 ring-amber-500/15'
@@ -1062,7 +1080,7 @@ export const PublicSurveyPage: React.FC = () => {
 
                     {/* 2.4. Migrant */}
                     <div
-                      onClick={() => setMainCategory('MIGRANT')}
+                      onClick={() => selectCategory('MIGRANT')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         mainCategory === 'MIGRANT'
                           ? 'border-violet-500 bg-violet-50/30 ring-2 ring-violet-500/15'
@@ -1084,7 +1102,7 @@ export const PublicSurveyPage: React.FC = () => {
 
                     {/* 2.6. Ishlash istagi yo'q */}
                     <div
-                      onClick={() => setMainCategory('NO_WISH_TO_WORK')}
+                      onClick={() => selectCategory('NO_WISH_TO_WORK')}
                       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         mainCategory === 'NO_WISH_TO_WORK'
                           ? 'border-indigo-500 bg-indigo-50/30 ring-2 ring-indigo-500/15'
@@ -1171,7 +1189,7 @@ export const PublicSurveyPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Agar 2.2 (O'zini o'zi band qilgan) tanlansa */}
+                  {/* Agar 2.2 (Oʻzimni band qilgan) tanlansa */}
                   {mainCategory === 'SELF_EMPLOYED' && (
                     <div className="p-4 rounded-xl bg-sky-50/60 border border-sky-200 space-y-3">
                       <div>
@@ -1199,7 +1217,7 @@ export const PublicSurveyPage: React.FC = () => {
                           className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                         <span className="text-xs text-slate-700 font-medium">
-                          Soliq organlarida (soliq.uz / my.soliq) oʻzini band qilgan sifatida roʻyxatdan oʻtganman
+                          Soliq organlarida (soliq.uz / my.soliq) oʻzimni band qilgan sifatida roʻyxatdan oʻtganman
                         </span>
                       </div>
                     </div>
