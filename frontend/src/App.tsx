@@ -10,6 +10,7 @@ import { SurveysPage } from './pages/SurveysPage';
 import { ReviewQueuePage } from './pages/ReviewQueuePage';
 import { MahallasManagementPage } from './pages/MahallasManagementPage';
 import { UsersManagementPage } from './pages/UsersManagementPage';
+import { UserDetailPage } from './pages/UserDetailPage';
 import { PublicSurveyPage } from './pages/PublicSurveyPage';
 
 import { AreaFilterProvider } from './context/AreaFilterContext';
@@ -98,6 +99,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <UsersManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/:id"
+            element={
+              <ProtectedRoute>
+                <UserDetailPage />
               </ProtectedRoute>
             }
           />

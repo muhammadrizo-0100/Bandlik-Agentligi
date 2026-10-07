@@ -11,6 +11,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 import { RoleEntity } from '../../database/entities/role.entity';
 import { DistrictEntity } from '../../database/entities/district.entity';
 import { MahallaEntity } from '../../database/entities/mahalla.entity';
+import { SurveyEntity } from '../../database/entities/survey.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
@@ -235,6 +236,25 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`Foydalanuvchi topilmadi (ID: ${id})`);
     }
+
+    try {
+      const surveysCount = await this.userRepository.manager
+        .getRepository(SurveyEntity)
+        .count({ where: { operatorId: id } });
+
+      const reviewedCount = await this.userRepository.manager
+        .getRepository(SurveyEntity)
+        .count({ where: { reviewerId: id } });
+
+      (user as any).surveysCount = surveysCount;
+      (user as any).reviewedCount = reviewedCount;
+      (user as any).roleName = user.role?.name || user.roleCode;
+      (user as any).districtName = user.district?.name;
+      (user as any).mahallaName = user.mahalla?.name;
+    } catch {
+      // safe fallback
+    }
+
     return user;
   }
 
@@ -253,6 +273,20 @@ export class UsersService {
    */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
     const user = await this.findById(id);
+
+    // Login (username) o'zgargan bo'lsa
+    if (updateUserDto.username && updateUserDto.username.trim() !== user.username) {
+      const cleanUsername = updateUserDto.username.trim();
+      const existing = await this.userRepository.findOne({
+        where: { username: cleanUsername },
+      });
+      if (existing && existing.id !== id) {
+        throw new ConflictException(
+          `"${cleanUsername}" loginli foydalanuvchi allaqachon mavjud`,
+        );
+      }
+      user.username = cleanUsername;
+    }
 
     // Parol o'zgargan bo'lsa
     if (updateUserDto.password) {

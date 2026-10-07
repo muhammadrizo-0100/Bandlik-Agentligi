@@ -12,11 +12,16 @@ export interface User {
   phone?: string;
   role: UserRole;
   roleCode?: string;
+  roleName?: string;
   districtId?: string;
   districtName?: string;
   mahallaId?: string;
   mahallaName?: string;
   isActive: boolean;
+  surveysCount?: number;
+  reviewedCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {

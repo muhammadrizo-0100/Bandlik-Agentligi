@@ -98,7 +98,15 @@ export class UsersController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() currentUser: UserEntity,
   ) {
+    if (currentUser.roleCode !== UserRole.SUPER_ADMIN) {
+      if (updateUserDto.password || updateUserDto.username) {
+        throw new ForbiddenException(
+          'Faqat Bosh Administrator (Super Admin) login va parolni oʻzgartira oladi',
+        );
+      }
+    }
     return this.usersService.update(id, updateUserDto);
   }
 

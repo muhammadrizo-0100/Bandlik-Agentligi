@@ -129,6 +129,10 @@ export const monitoringApi = {
     return apiClient.get('/users', { params });
   },
 
+  getUserById: async (id: string): Promise<User> => {
+    return apiClient.get(`/users/${id}`);
+  },
+
   createUser: async (data: any): Promise<User> => {
     return apiClient.post('/users', data);
   },

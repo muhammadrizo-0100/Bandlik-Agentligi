@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { monitoringApi } from '../api/monitoring.api';
 import { User, UserRole } from '../types/auth.types';
@@ -8,10 +9,13 @@ import { Pagination } from '../components/ui/Pagination';
 import { useAuth } from '../context/AuthContext';
 import { formatUzPhone, isValidUzPhone } from '../utils/validators';
 import { formatMahallaName } from '../utils/formatters';
+import { EditUserModal } from '../components/users/EditUserModal';
+import { DeleteUserModal } from '../components/users/DeleteUserModal';
 import {
   Users,
   Plus,
   Trash2,
+  Pencil,
   Search,
   Eye,
   EyeOff,
@@ -27,6 +31,7 @@ import {
 type TabRoleFilter = 'ALL' | UserRole;
 
 export const UsersManagementPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user: currentUser, isSuperAdmin, isDistrictAdmin } = useAuth();
 
   // Sahifaning o'ziga xos lokal filtrlari (opshiydagi/sidebardagi tumanga ta'sir qilmaydi)
@@ -47,6 +52,10 @@ export const UsersManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabRoleFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState<number>(1);
+
+  // Tahrirlash va O'chirish modallari
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<User | null>(null);
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState<User | null>(null);
 
   // Modal State (Yangi xodim qo'shish)
   const [showAddModal, setShowAddModal] = useState(false);
@@ -243,16 +252,6 @@ export const UsersManagementPage: React.FC = () => {
       setError(err.message || 'Xodimni yaratishda xatolik yuz berdi');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`"${name}" xodimini o'chirishga ishonchingiz komilmi?`)) return;
-    try {
-      await monitoringApi.deleteUser(id);
-      fetchUsers();
-    } catch (err: any) {
-      alert(err.message || 'O\'chirishda xatolik yuz berdi');
     }
   };
 
@@ -620,17 +619,21 @@ export const UsersManagementPage: React.FC = () => {
                 {filteredUsers
                   .slice((page - 1) * 10, page * 10)
                   .map((u, idx) => (
-                  <tr key={u.id} className="hover:bg-slate-50/80 transition">
+                  <tr
+                    key={u.id}
+                    onClick={() => navigate(`/users/${u.id}`)}
+                    className="hover:bg-slate-50/90 transition cursor-pointer group"
+                  >
                     <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
                       {(page - 1) * 10 + idx + 1}
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-[#163D5C]/10 text-[#163D5C] border border-[#163D5C]/15 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#163D5C]/10 text-[#163D5C] border border-[#163D5C]/15 flex items-center justify-center font-bold text-xs uppercase shrink-0 group-hover:bg-[#163D5C] group-hover:text-white transition">
                           {u.fullName.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900">{u.fullName}</div>
+                          <div className="font-bold text-slate-900 group-hover:text-[#163D5C] transition">{u.fullName}</div>
                           <div className="text-[11px] text-slate-400">{u.email || '-'}</div>
                         </div>
                       </div>
@@ -680,17 +683,33 @@ export const UsersManagementPage: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-right">
-                      {isSuperAdmin && u.roleCode !== 'SUPER_ADMIN' && (
+                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end space-x-1">
                         <button
                           type="button"
-                          onClick={() => handleDelete(u.id, u.fullName)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                          title="Xodimni oʻchirish"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedUserForEdit(u);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#163D5C] hover:bg-slate-100 transition cursor-pointer"
+                          title="Xodimni tahrirlash"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Pencil className="w-4 h-4" />
                         </button>
-                      )}
+                        {isSuperAdmin && u.roleCode !== 'SUPER_ADMIN' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedUserForDelete(u);
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            title="Xodimni oʻchirish"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1035,6 +1054,33 @@ export const UsersManagementPage: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 6. Xodim ma'lumotlarini tahrirlash modali */}
+      {selectedUserForEdit && (
+        <EditUserModal
+          user={selectedUserForEdit}
+          isOpen={Boolean(selectedUserForEdit)}
+          onClose={() => setSelectedUserForEdit(null)}
+          onSuccess={() => {
+            setSelectedUserForEdit(null);
+            fetchUsers();
+          }}
+          districts={districts}
+        />
+      )}
+
+      {/* 7. Xodimni o'chirish tasdiqlash modali */}
+      {selectedUserForDelete && (
+        <DeleteUserModal
+          user={selectedUserForDelete}
+          isOpen={Boolean(selectedUserForDelete)}
+          onClose={() => setSelectedUserForDelete(null)}
+          onSuccess={() => {
+            setSelectedUserForDelete(null);
+            fetchUsers();
+          }}
+        />
       )}
     </DashboardLayout>
   );
