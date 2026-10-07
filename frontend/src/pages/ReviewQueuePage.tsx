@@ -8,6 +8,7 @@ import { formatUzPhone } from '../utils/validators';
 import { Pagination } from '../components/ui/Pagination';
 import { TableSkeleton } from '../components/ui/TableSkeleton';
 import { realtimeService } from '../services/realtime.service';
+import { useAreaFilter } from '../context/AreaFilterContext';
 import {
   AlertTriangle,
   AlertCircle,
@@ -97,6 +98,7 @@ const formatDetailSummary = (survey: Survey) => {
 
 export const ReviewQueuePage: React.FC = () => {
   const toast = useToast();
+  const { selectedDistrictId, selectedMahallaId } = useAreaFilter();
   const [queue, setQueue] = useState<Survey[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
@@ -120,6 +122,8 @@ export const ReviewQueuePage: React.FC = () => {
         limit: 10,
         page: pageNum || page,
         search: (query !== undefined ? query : search).trim() || undefined,
+        districtId: selectedDistrictId || undefined,
+        mahallaId: selectedMahallaId || undefined,
       });
       setQueue(res.items);
       setTotal(res.total);
@@ -131,12 +135,16 @@ export const ReviewQueuePage: React.FC = () => {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [selectedDistrictId, selectedMahallaId]);
+
+  useEffect(() => {
     const handler = setTimeout(() => {
       fetchQueue(search, page);
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [search, page]);
+  }, [search, page, selectedDistrictId, selectedMahallaId]);
 
   // Real-time yangi ariza kelganda jadvalni avtomatik yangilash
   useEffect(() => {

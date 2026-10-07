@@ -68,7 +68,7 @@ export const NewSurveyPage: React.FC = () => {
   const [step, setStep] = useState<number>(initialDraft?.step || 1);
   const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>(
-    initialDraft?.selectedDistrictId || (isSuperAdmin ? '' : user?.districtId || ''),
+    initialDraft?.selectedDistrictId || (isSuperAdmin ? globalDistrictId || '' : user?.districtId || ''),
   );
   const [mahallas, setMahallas] = useState<Mahalla[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,7 @@ export const NewSurveyPage: React.FC = () => {
 
   // Form State
   const [mahallaId, setMahallaId] = useState<string>(
-    initialDraft?.mahallaId || (isMahallaOperator ? user?.mahallaId || '' : ''),
+    initialDraft?.mahallaId || (isMahallaOperator ? user?.mahallaId || '' : globalMahallaId || ''),
   );
   const [surveyMethod, setSurveyMethod] = useState<SurveyMethod>(
     initialDraft?.surveyMethod || 'HOME_VISIT',

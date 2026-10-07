@@ -55,7 +55,7 @@ export const MahallasManagementPage: React.FC = () => {
       const [mRes, dRes] = await Promise.all([
         monitoringApi.getMahallas({
           districtId: globalDistrictId || undefined,
-          limit: 100,
+          limit: 500,
         }),
         isSuperAdmin ? monitoringApi.getDistricts() : Promise.resolve([]),
       ]);
@@ -164,6 +164,7 @@ export const MahallasManagementPage: React.FC = () => {
   });
 
   const filteredDistricts = districts.filter((d) => {
+    if (globalDistrictId && d.id !== globalDistrictId) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     const nameMatch = (d.name || '').toLowerCase().includes(q);
@@ -255,7 +256,7 @@ export const MahallasManagementPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedDistrictId(isDistrictAdmin ? user?.districtId || '' : '');
+                  setSelectedDistrictId(isDistrictAdmin ? user?.districtId || '' : (globalDistrictId || ''));
                   setMahallaName('');
                   setMahallaCode('');
                   setError(null);

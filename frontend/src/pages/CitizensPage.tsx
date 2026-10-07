@@ -10,6 +10,7 @@ import { isValidYouthAge } from '../utils/validators';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { Pagination } from '../components/ui/Pagination';
 import { TableSkeleton } from '../components/ui/TableSkeleton';
+import { useAreaFilter } from '../context/AreaFilterContext';
 import {
   Users,
   Search,
@@ -56,22 +57,28 @@ export const CitizensPage: React.FC = () => {
     };
   }, []);
 
-  // Sahifaning o'ziga xos lokal filtrlari (opshiydagi/sidebardagi tumanga ta'sir qilmaydi)
+  const {
+    selectedDistrictId,
+    setSelectedDistrictId,
+    selectedMahallaId,
+    setSelectedMahallaId,
+  } = useAreaFilter();
+
   const [search, setSearch] = useState<string>('');
-  const [filterDistrictId, setFilterDistrictId] = useState<string>(() => {
-    if (isDistrictAdmin) return user?.districtId || '';
-    return searchParams.get('districtId') || '';
-  });
-  const [filterMahallaId, setFilterMahallaId] = useState<string>(() => {
-    if (isMahallaOperator) return user?.mahallaId || '';
-    return searchParams.get('mahallaId') || '';
-  });
   const [selectedCategory, setSelectedCategory] = useState<string>(
     searchParams.get('category') || '',
   );
 
-  const currentDistrictId = isDistrictAdmin ? user?.districtId || '' : filterDistrictId;
-  const currentMahallaId = isMahallaOperator ? user?.mahallaId || '' : filterMahallaId;
+  const currentDistrictId = isDistrictAdmin ? user?.districtId || '' : selectedDistrictId;
+  const currentMahallaId = isMahallaOperator ? user?.mahallaId || '' : selectedMahallaId;
+
+  // URL query params orqali kelganda filtrlarni o'rnatish
+  useEffect(() => {
+    const qDist = searchParams.get('districtId');
+    const qMah = searchParams.get('mahallaId');
+    if (qDist && isSuperAdmin) setSelectedDistrictId(qDist);
+    if (qMah && !isMahallaOperator) setSelectedMahallaId(qMah);
+  }, []);
 
   // Modal State (Batafsil ma'lumot va bandlik tarixi)
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
@@ -134,6 +141,10 @@ export const CitizensPage: React.FC = () => {
         .catch(() => {});
     }
   }, [isSuperAdmin]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [currentDistrictId, currentMahallaId]);
 
   // Avtomatik to'g'ridan-to'g'ri (debounced live search) qidirish
   useEffect(() => {
@@ -317,10 +328,10 @@ export const CitizensPage: React.FC = () => {
               <CustomSelect
                 placeholder="Barcha tumanlar"
                 searchable={true}
-                value={filterDistrictId}
+                value={selectedDistrictId}
                 onChange={(val) => {
-                  setFilterDistrictId(val);
-                  setFilterMahallaId('');
+                  setSelectedDistrictId(val);
+                  setSelectedMahallaId('');
                   setPage(1);
                 }}
                 options={[
@@ -339,9 +350,9 @@ export const CitizensPage: React.FC = () => {
               <CustomSelect
                 placeholder="Barcha mahallalar"
                 searchable={true}
-                value={filterMahallaId}
+                value={selectedMahallaId}
                 onChange={(val) => {
-                  setFilterMahallaId(val);
+                  setSelectedMahallaId(val);
                   setPage(1);
                 }}
                 options={[

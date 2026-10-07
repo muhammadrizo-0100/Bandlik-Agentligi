@@ -73,6 +73,12 @@ export class ReviewQueueService {
       }
     }
 
+    if (filterDto.districtId) {
+      queryBuilder.andWhere('mahalla.districtId = :filterDistrictId', {
+        filterDistrictId: filterDto.districtId,
+      });
+    }
+
     if (filterDto.mahallaId) {
       queryBuilder.andWhere('s.mahallaId = :mahallaId', {
         mahallaId: filterDto.mahallaId,
